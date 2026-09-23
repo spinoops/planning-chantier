@@ -86,8 +86,9 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
       })
       setWorkerIds(a.workers.map((w) => w.id))
     } else {
-      // Plage venue du calendrier (sélection) ; sinon horaires de chantier par défaut.
-      const fromCalendar = target.start_time !== undefined
+      // Plage horaire venue du calendrier (vue Jour) ; un clic sur un jour entier
+      // (Mois, Semaine, Par ouvrier) garde les horaires de chantier par défaut.
+      const fromCalendar = target.start_time != null
       reset({
         chantier_id: chantiers[0] ? String(chantiers[0].id) : '',
         date: target.date,
