@@ -57,3 +57,228 @@ body {
   background: color-mix(in oklab, var(--color-primary) 8%, white);
   box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--color-primary) 45%, white);
 }
+
+/* ------------------------------------------------------------------------- */
+/*  FullCalendar : thème aligné sur le kit (bordures douces, couleur primaire) */
+/* ------------------------------------------------------------------------- */
+.pc-calendar .fc {
+  --fc-border-color: var(--color-gray-200);
+  --fc-page-bg-color: #fff;
+  --fc-neutral-bg-color: var(--color-gray-50);
+  --fc-today-bg-color: color-mix(in oklab, var(--color-primary) 6%, white);
+  --fc-now-indicator-color: var(--color-primary);
+  --fc-highlight-color: color-mix(in oklab, var(--color-primary) 14%, white);
+  --fc-event-border-color: transparent;
+  --fc-list-event-hover-bg-color: var(--color-gray-50);
+  --fc-small-font-size: 0.75rem;
+  font-size: 0.875rem;
+}
+.pc-calendar .fc a {
+  color: inherit;
+  text-decoration: none;
+}
+.pc-calendar .fc .fc-col-header-cell-cushion,
+.pc-calendar .fc .fc-timeline-slot-cushion,
+.pc-calendar .fc .fc-list-day-cushion {
+  padding: 0.5rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-gray-500);
+}
+.pc-calendar .fc .fc-col-header-cell-cushion {
+  font-size: 0.72rem;
+}
+.pc-calendar .fc .fc-daygrid-day-number {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+.pc-calendar .fc .fc-day-today .fc-daygrid-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  margin: 0.2rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  color: #fff;
+}
+.pc-calendar .fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--color-gray-400);
+}
+.pc-calendar .fc .fc-daygrid-day-frame {
+  min-height: 7rem;
+}
+.pc-calendar .fc .fc-timegrid-slot {
+  height: 2.6rem;
+}
+.pc-calendar .fc .fc-timegrid-slot-label-cushion,
+.pc-calendar .fc .fc-timegrid-axis-cushion {
+  font-size: 0.7rem;
+  color: var(--color-gray-500);
+}
+.pc-calendar .fc .fc-day-sat,
+.pc-calendar .fc .fc-day-sun {
+  background: color-mix(in oklab, var(--color-gray-50) 60%, white);
+}
+.pc-calendar .fc .fc-daygrid-more-link {
+  margin: 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+}
+.pc-calendar .fc .fc-scrollgrid {
+  border-width: 0;
+}
+.pc-calendar .fc .fc-scrollgrid td:last-of-type,
+.pc-calendar .fc .fc-scrollgrid th:last-of-type {
+  border-right-width: 0;
+}
+.pc-calendar .fc .fc-list {
+  border-width: 0;
+}
+.pc-calendar .fc .fc-list-event td {
+  padding: 0.6rem 0.75rem;
+}
+.pc-calendar .fc .fc-list-event-dot {
+  border-width: 5px;
+}
+.pc-calendar .fc .fc-resource-timeline .fc-datagrid-cell-cushion {
+  padding: 0.45rem 0.6rem;
+}
+.pc-calendar .fc .fc-timeline-lane-frame {
+  min-height: 3.2rem;
+}
+
+/* Cartes d'affectation (teintées par la couleur du chantier via inline style). */
+.pc-calendar .fc .pc-event {
+  border-width: 1px;
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.04);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.pc-calendar .fc .pc-event:hover {
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
+}
+.pc-calendar .fc .fc-event-dragging.pc-event,
+.pc-calendar .fc .fc-event-resizing.pc-event {
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.18);
+  transform: scale(1.02);
+}
+.pc-calendar .fc .fc-event-mirror {
+  opacity: 0.6;
+}
+.pc-calendar .fc .fc-daygrid-event.pc-event,
+.pc-calendar .fc .fc-timeline-event.pc-event {
+  margin: 1px 3px;
+  padding: 0;
+}
+.pc-calendar .fc .fc-timegrid-event.pc-event {
+  padding: 0;
+}
+.pc-event__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.3rem 0.45rem;
+  min-width: 0;
+  overflow: hidden;
+}
+.pc-event__head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.pc-event__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: none;
+  border-radius: 9999px;
+}
+.pc-event__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.pc-event__time {
+  flex: none;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+.pc-event__count {
+  position: absolute;
+  right: 0.4rem;
+  top: 0.3rem;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+.pc-event__conflict {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--color-amber-100);
+  color: var(--color-amber-700);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.pc-event--conflict {
+  outline: 2px solid color-mix(in oklab, var(--color-amber-500) 55%, white);
+  outline-offset: -1px;
+}
+.pc-event__people {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+}
+.pc-event__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1.5px #fff;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  margin-right: -0.3rem;
+}
+.pc-event__more {
+  margin-left: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+.pc-calendar .fc .fc-daygrid-event.pc-event .pc-event__inner {
+  padding: 0.15rem 0.4rem;
+}
+.pc-calendar .fc .fc-dayGridWeek-view .fc-daygrid-day-frame {
+  min-height: 26rem;
+}
+.pc-calendar .fc .fc-dayGridWeek-view .fc-daygrid-event.pc-event {
+  margin: 3px 4px;
+}
+.pc-calendar .fc .fc-dayGridWeek-view .fc-daygrid-day-events {
+  margin-top: 0.25rem;
+}

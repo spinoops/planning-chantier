@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
 import Button from '@/components/ui/Button'
 
-export type CalendarView = 'month' | 'week' | 'agenda'
+export type CalendarView = 'month' | 'week' | 'day' | 'list' | 'team'
 
-const VIEWS: { value: CalendarView; label: string }[] = [
+const VIEWS: { value: CalendarView; label: string; mobile?: boolean }[] = [
   { value: 'month', label: 'Mois' },
   { value: 'week', label: 'Semaine' },
-  { value: 'agenda', label: 'Liste' },
+  { value: 'day', label: 'Jour', mobile: true },
+  { value: 'list', label: 'Liste', mobile: true },
+  { value: 'team', label: 'Par ouvrier' },
 ]
 
 interface CalendarToolbarProps {
@@ -68,29 +70,44 @@ export default function CalendarToolbar({
         </div>
 
         <div className="flex min-w-0 items-baseline gap-2">
-          <h2 className="truncate text-lg font-semibold text-gray-900 sm:text-xl">{title}</h2>
+          <h2 className="truncate text-lg font-semibold capitalize text-gray-900 sm:text-xl">{title}</h2>
           {subtitle && <span className="hidden text-sm text-gray-500 sm:inline">{subtitle}</span>}
           {busy && <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-primary" aria-label="Chargement" />}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
           {view && onViewChange && (
-            <div className="inline-flex rounded-lg bg-gray-100 p-0.5" role="tablist" aria-label="Vue du calendrier">
-              {VIEWS.map((v) => (
-                <button
-                  key={v.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={view === v.value}
-                  onClick={() => onViewChange(v.value)}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition sm:text-sm ${
-                    view === v.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Petits écrans : un sélecteur compact. */}
+              <select
+                value={view}
+                onChange={(e) => onViewChange(e.target.value as CalendarView)}
+                aria-label="Vue du calendrier"
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm md:hidden"
+              >
+                {VIEWS.map((v) => (
+                  <option key={v.value} value={v.value}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+              <div className="hidden rounded-lg bg-gray-100 p-0.5 md:inline-flex" role="tablist" aria-label="Vue du calendrier">
+                {VIEWS.map((v) => (
+                  <button
+                    key={v.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={view === v.value}
+                    onClick={() => onViewChange(v.value)}
+                    className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                      view === v.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           {actions}
         </div>

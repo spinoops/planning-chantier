@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { useOpenChantiers } from '@/hooks/useChantiers'
@@ -6,61 +6,49 @@ import { useCopyWeek, usePlanning, useUpdateAffectation } from '@/hooks/usePlann
 import { useWorkers } from '@/hooks/useWorkers'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { getErrorMessage } from '@/lib/errors'
-import {
-  addDays,
-  addMonths,
-  formatMonthYear,
-  formatWeekRange,
-  fromKey,
-  isoWeek,
-  monthGrid,
-  startOfWeek,
-  toKey,
-  todayKey,
-  weekDays,
-} from '@/lib/dates'
+import { addDays, fromKey, isoWeek, startOfWeek, toKey, todayKey } from '@/lib/dates'
 import { isPlanner } from '@/lib/navigation'
 import { toast } from '@/lib/toast'
 import type { Affectation } from '@/types'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
-import Spinner from '@/components/ui/Spinner'
-import EmptyState from '@/components/ui/EmptyState'
 import AffectationModal from '@/components/planning/AffectationModal'
 import type { AffectationTarget } from '@/components/planning/AffectationModal'
-import AgendaList from '@/components/planning/AgendaList'
 import CalendarToolbar from '@/components/planning/CalendarToolbar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
-import MonthView from '@/components/planning/MonthView'
-import WeekView from '@/components/planning/WeekView'
+import PlanningCalendar from '@/components/planning/PlanningCalendar'
+import type { CalendarRange, CreateRequest, MoveRequest, PlanningCalendarHandle } from '@/components/planning/PlanningCalendar'
 
 const VIEW_KEY = 'planning_view'
+const ALL_VIEWS: CalendarView[] = ['month', 'week', 'day', 'list', 'team']
 
 function defaultView(): CalendarView {
   try {
     const stored = localStorage.getItem(VIEW_KEY) as CalendarView | null
-    if (stored === 'month' || stored === 'week' || stored === 'agenda') return stored
+    if (stored && ALL_VIEWS.includes(stored)) return stored
   } catch {
     // stockage indisponible
   }
-  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'agenda' : 'week'
+  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'week'
 }
 
 /**
- * Calendrier du planning (planificateurs) : vue mois / semaine / liste,
- * filtres par chantier et par ouvrier, création par clic, déplacement par
- * glisser-déposer, copie de la semaine précédente.
- * L'état (vue, date, filtres) vit dans l'URL : ?view=week&d=2026-09-21&chantier=3.
+ * Calendrier du planning (planificateurs), sur FullCalendar : vues mois / semaine /
+ * jour / liste / par ouvrier, filtres par chantier et par ouvrier, création en
+ * sélectionnant une plage, déplacement et redimensionnement par glisser-déposer,
+ * copie de la semaine précédente. L'état (vue, date, filtres) vit dans l'URL :
+ * ?view=week&d=2026-09-21&chantier=3&ouvrier=5.
  */
 export default function PlanningPage() {
   const { user } = useAuth()
   const canEdit = isPlanner(user)
   const [searchParams, setSearchParams] = useSearchParams()
   const confirm = useConfirm()
+  const calendar = useRef<PlanningCalendarHandle>(null)
 
-  const view = (searchParams.get('view') as CalendarView | null) ?? defaultView()
-  const cursorKey = searchParams.get('d') ?? todayKey()
-  const cursor = useMemo(() => fromKey(cursorKey), [cursorKey])
+  const viewParam = searchParams.get('view') as CalendarView | null
+  const view = viewParam && ALL_VIEWS.includes(viewParam) ? viewParam : defaultView()
+  const [initialDate] = useState(() => fromKey(searchParams.get('d') ?? todayKey()))
   const chantierFilter = Number(searchParams.get('chantier')) || 0
   const workerFilter = Number(searchParams.get('ouvrier')) || 0
 
@@ -89,23 +77,23 @@ export default function PlanningPage() {
     }
   }, [view])
 
-  // Période chargée selon la vue.
-  const range = useMemo(() => {
-    if (view === 'month') {
-      const grid = monthGrid(cursor)
-      return { from: toKey(grid[0][0]), to: toKey(grid[grid.length - 1][6]) }
-    }
-    const days = weekDays(cursor)
-    return { from: toKey(days[0]), to: toKey(days[6]) }
-  }, [view, cursor])
+  // Période visible, fournie par FullCalendar (datesSet) : pilote le chargement et l'URL.
+  const [range, setRange] = useState<CalendarRange | null>(null)
+  const onRangeChange = useCallback(
+    (r: CalendarRange) => {
+      setRange(r)
+      setParams({ d: toKey(r.current) })
+    },
+    [setParams],
+  )
 
-  const { data: affectations = [], isLoading, isFetching } = usePlanning({
-    ...range,
-    chantier_id: chantierFilter || undefined,
-    worker_id: workerFilter || undefined,
-  })
+  const query = { from: range?.from ?? todayKey(), to: range?.to ?? todayKey() }
+  const { data: affectations = [], isLoading, isFetching } = usePlanning(
+    { ...query, chantier_id: chantierFilter || undefined, worker_id: workerFilter || undefined },
+    range !== null,
+  )
   // Pour signaler les doublons du jour on a besoin de tout le monde, même filtré.
-  const { data: allAffectations = [] } = usePlanning(range, Boolean(chantierFilter || workerFilter))
+  const { data: allAffectations = [] } = usePlanning(query, range !== null && Boolean(chantierFilter || workerFilter))
   const { data: chantiers = [] } = useOpenChantiers()
   const { data: workers = [] } = useWorkers(canEdit)
   const updateAffectation = useUpdateAffectation()
@@ -127,38 +115,41 @@ export default function PlanningPage() {
     return set
   }, [affectations, allAffectations, chantierFilter, workerFilter])
 
-  function navigate(direction: -1 | 0 | 1) {
-    if (direction === 0) return setParams({ d: todayKey() })
-    const next = view === 'month' ? addMonths(cursor, direction) : addDays(cursor, 7 * direction)
-    setParams({ d: toKey(next) })
-  }
+  const onCreate = useCallback((req: CreateRequest) => {
+    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, workerIds: req.workerId ? [req.workerId] : [] })
+  }, [])
 
-  function openDay(key: string) {
-    setParams({ d: key, view: 'agenda' })
-  }
+  const onEdit = useCallback((a: Affectation) => setTarget({ affectation: a }), [])
 
-  function moveAffectation(id: number, key: string) {
-    const current = affectations.find((a) => a.id === id)
-    if (!current || current.date === key) return
-    updateAffectation.mutate(
-      { id, payload: { date: key } },
-      {
-        onSuccess: () => toast(`${current.chantier.name} déplacé.`, 'success'),
-        onError: (err) => toast(getErrorMessage(err, 'Déplacement impossible.'), 'error'),
-      },
-    )
-  }
+  const onMove = useCallback(
+    async (req: MoveRequest) => {
+      const current = affectations.find((a) => a.id === req.id)
+      try {
+        await updateAffectation.mutateAsync({ id: req.id, payload: req.patch })
+        if (req.workerChange) {
+          const to = workers.find((w) => w.id === req.workerChange?.to)
+          toast(to ? `${current?.chantier.name ?? 'Affectation'} : ${to.name} affecté(e).` : 'Personne retirée de l’affectation.', 'success')
+        } else {
+          toast(`${current?.chantier.name ?? 'Affectation'} déplacé.`, 'success')
+        }
+      } catch (err) {
+        toast(getErrorMessage(err, 'Déplacement impossible.'), 'error')
+        throw err
+      }
+    },
+    [affectations, updateAffectation, workers],
+  )
 
   async function onCopyPreviousWeek() {
-    const monday = startOfWeek(cursor)
+    const monday = startOfWeek(range?.current ?? new Date())
     const from = toKey(addDays(monday, -7))
     const to = toKey(monday)
-    const hasCurrent = affectations.length > 0
     const ok = await confirm({
       title: 'Copier la semaine précédente ?',
-      message: hasCurrent
-        ? 'Les affectations de la semaine précédente seront ajoutées à celles déjà présentes cette semaine.'
-        : 'Chantiers, horaires et équipes de la semaine précédente seront recopiés sur cette semaine.',
+      message:
+        affectations.length > 0
+          ? 'Les affectations de la semaine précédente seront ajoutées à celles déjà présentes cette semaine.'
+          : 'Chantiers, horaires et équipes de la semaine précédente seront recopiés sur cette semaine.',
       confirmLabel: 'Copier',
     })
     if (!ok) return
@@ -171,24 +162,23 @@ export default function PlanningPage() {
     )
   }
 
-  const title = view === 'month' ? formatMonthYear(cursor) : formatWeekRange(cursor)
-  const subtitle = view === 'month' ? undefined : `Semaine ${isoWeek(cursor)}`
-  const weekDaysList = useMemo(() => weekDays(cursor), [cursor])
-
-  const openCreate = (key?: string) => setTarget({ date: key ?? (range.from <= todayKey() && todayKey() <= range.to ? todayKey() : cursorKey) })
-  const openEdit = (a: Affectation) => setTarget({ affectation: a })
+  const subtitle = range && view !== 'month' ? `Semaine ${isoWeek(range.current)}` : undefined
+  const newDate = () => {
+    const t = todayKey()
+    return range && range.from <= t && t <= range.to ? t : toKey(range?.current ?? new Date())
+  }
 
   return (
     <div>
       <CalendarToolbar
-        title={title}
+        title={range?.title ?? ''}
         subtitle={subtitle}
         view={view}
         onViewChange={(v) => setParams({ view: v })}
-        onPrev={() => navigate(-1)}
-        onNext={() => navigate(1)}
-        onToday={() => navigate(0)}
-        busy={isFetching && !isLoading}
+        onPrev={() => calendar.current?.prev()}
+        onNext={() => calendar.current?.next()}
+        onToday={() => calendar.current?.today()}
+        busy={isFetching || isLoading}
         filters={
           <>
             <Select value={chantierFilter || ''} onChange={(e) => setParams({ chantier: e.target.value })} className="w-auto min-w-44 py-1.5" aria-label="Filtrer par chantier">
@@ -199,7 +189,7 @@ export default function PlanningPage() {
                 </option>
               ))}
             </Select>
-            {canEdit && (
+            {canEdit && view !== 'team' && (
               <Select value={workerFilter || ''} onChange={(e) => setParams({ ouvrier: e.target.value })} className="w-auto min-w-44 py-1.5" aria-label="Filtrer par ouvrier">
                 <option value="">Toute l'équipe</option>
                 {workers.map((w) => (
@@ -217,7 +207,7 @@ export default function PlanningPage() {
             {conflicts.size > 0 && (
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold">!</span>
-                Doublons : {conflicts.size} affectation{conflicts.size > 1 ? 's' : ''} en conflit
+                Doublons : {conflicts.size} personne{conflicts.size > 1 ? 's' : ''} affectée{conflicts.size > 1 ? 's' : ''} deux fois
               </span>
             )}
           </>
@@ -230,7 +220,7 @@ export default function PlanningPage() {
                   Copier sem. précédente
                 </Button>
               )}
-              <Button size="sm" onClick={() => openCreate()}>
+              <Button size="sm" onClick={() => setTarget({ date: newDate() })}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                 </svg>
@@ -241,50 +231,25 @@ export default function PlanningPage() {
         }
       />
 
-      {isLoading ? (
-        <Spinner block />
-      ) : view === 'month' ? (
-        <MonthView
-          cursor={cursor}
-          affectations={affectations}
-          conflicts={conflicts}
-          canEdit={canEdit}
-          onSelectDay={openDay}
-          onCreateAt={openCreate}
-          onSelectAffectation={openEdit}
-          onMoveAffectation={moveAffectation}
-        />
-      ) : view === 'week' ? (
-        <WeekView
-          cursor={cursor}
-          affectations={affectations}
-          conflicts={conflicts}
-          canEdit={canEdit}
-          onCreateAt={openCreate}
-          onSelectAffectation={openEdit}
-          onMoveAffectation={moveAffectation}
-        />
-      ) : affectations.length === 0 ? (
-        <div className="rounded-card border border-gray-200 bg-white shadow-sm">
-          <EmptyState
-            title="Aucune affectation cette semaine."
-            description={canEdit ? 'Ajoute un chantier sur un jour, ou copie la semaine précédente.' : undefined}
-            action={canEdit ? <Button onClick={() => openCreate()}>Nouvelle affectation</Button> : undefined}
-          />
-        </div>
-      ) : (
-        <AgendaList
-          days={weekDaysList}
-          affectations={affectations}
-          conflicts={conflicts}
-          canEdit={canEdit}
-          onCreateAt={openCreate}
-          onSelectAffectation={openEdit}
-        />
-      )}
+      <PlanningCalendar
+        ref={calendar}
+        view={view}
+        initialDate={initialDate}
+        affectations={affectations}
+        workers={view === 'team' && workerFilter ? workers.filter((w) => w.id === workerFilter) : workers}
+        conflicts={conflicts}
+        canEdit={canEdit}
+        onRangeChange={onRangeChange}
+        onCreate={onCreate}
+        onEdit={onEdit}
+        onMove={onMove}
+      />
 
-      {canEdit && view !== 'month' && (
-        <p className="mt-3 text-xs text-gray-400">Astuce : glisse une carte sur un autre jour pour la déplacer. Double-clic sur une case du mois pour créer.</p>
+      {canEdit && (
+        <p className="mt-3 text-xs text-gray-400">
+          Astuce : sélectionne une plage pour créer, glisse une carte pour la déplacer, étire-la pour changer l'horaire. En vue « Par ouvrier », glisse une
+          carte sur une autre ligne pour changer de personne.
+        </p>
       )}
 
       <AffectationModal target={target} onClose={() => setTarget(null)} chantiers={chantiers} workers={workers} existing={affectations} />

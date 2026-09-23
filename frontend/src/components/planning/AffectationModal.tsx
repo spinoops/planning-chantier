@@ -26,7 +26,17 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 /** Ce que la modale reçoit : une affectation à modifier, ou une date pour en créer une. */
-export type AffectationTarget = { affectation: Affectation; date?: undefined } | { affectation?: undefined; date: string }
+export type AffectationTarget =
+  | { affectation: Affectation; date?: undefined }
+  | {
+      affectation?: undefined
+      date: string
+      /** Plage sélectionnée dans le calendrier (null = journée). */
+      start_time?: string | null
+      end_time?: string | null
+      /** Présélection d'équipe (vue « Par ouvrier »). */
+      workerIds?: number[]
+    }
 
 interface AffectationModalProps {
   target: AffectationTarget | null
@@ -76,8 +86,16 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
       })
       setWorkerIds(a.workers.map((w) => w.id))
     } else {
-      reset({ chantier_id: chantiers[0] ? String(chantiers[0].id) : '', date: target.date, start_time: '07:00', end_time: '16:30', note: '' })
-      setWorkerIds([])
+      // Plage venue du calendrier (sélection) ; sinon horaires de chantier par défaut.
+      const fromCalendar = target.start_time !== undefined
+      reset({
+        chantier_id: chantiers[0] ? String(chantiers[0].id) : '',
+        date: target.date,
+        start_time: fromCalendar ? (target.start_time ?? '') : '07:00',
+        end_time: fromCalendar ? (target.end_time ?? '') : '16:30',
+        note: '',
+      })
+      setWorkerIds(target.workerIds ?? [])
     }
   }, [target, reset, chantiers])
 

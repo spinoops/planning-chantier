@@ -47,10 +47,17 @@ La version installée sous WAMP est **8.4.24** :
 - Pages : `PlanningPage` (calendrier, état dans l'URL `?view=&d=&chantier=&ouvrier=`),
   `ChantiersPage` (cartes + formulaire), `MyPlanningPage` (`/mon-planning`, vue ouvrier),
   `DashboardPage` (état du jour). Accueil `/` → `HomeRedirect` selon le rôle.
-- Composants calendrier : `components/planning/` (`CalendarToolbar`, `MonthView`, `WeekView`,
-  `AgendaList`, `AffectationCard`, `AffectationModal`, `WorkerPicker`). Glisser-déposer natif
-  (HTML5) pour déplacer une affectation ; `lib/dates.ts` (semaines lundi→dimanche, clés
-  `YYYY-MM-DD`), `lib/planning.ts` (`groupByDay`).
+- Calendrier : **FullCalendar 6** (même bibliothèque qu'ela-planning) dans
+  `components/planning/PlanningCalendar.tsx` : vues `dayGridMonth` (Mois), `dayGridWeek` (Semaine,
+  cartes empilées), `timeGridDay` (Jour, horaires), `listWeek` (Liste), `resourceTimelineWeek`
+  (« Par ouvrier », plugin premium : clé `VITE_FC_LICENSE_KEY`, sinon clé d'évaluation non
+  commerciale). Header FullCalendar masqué : la barre est `CalendarToolbar` (pilotage via ref
+  `prev/next/today`). Sélection d'une plage → création, clic → modale, `eventDrop`/`eventResize`
+  → `PUT /planning/{id}` (revert si erreur) ; en vue « Par ouvrier », changer de ligne réaffecte
+  la personne (`worker_ids`). Événements construits dans `PlanningCalendar` (couleur du chantier
+  en `backgroundColor`/`borderColor`, rendu `eventContent`), thème CSS `.pc-calendar` / `.pc-event`
+  dans `index.css`. Autres composants : `AffectationCard` (tableau de bord), `AffectationModal`,
+  `WorkerPicker`. `lib/dates.ts` : semaines lundi→dimanche, clés `YYYY-MM-DD`.
 - Couleur d'un chantier : variable CSS `--chantier` + classes `.chantier-card` / `.chantier-dot`
   (`index.css`). Avatars : `components/ui/Avatar.tsx` (couleur du compte ou dérivée du nom).
 - Hooks : `useChantiers` / `useOpenChantiers`, `usePlanning` (+ create/update/delete/copyWeek),
