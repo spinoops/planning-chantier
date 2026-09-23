@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\{{ class }}Factory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+/**
+ * {{ label }} — généré par `make:crud`.
+ */
+class {{ class }} extends Model
+{
+    /** @use HasFactory<{{ class }}Factory> */
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+{{ fillable }}
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+{{ casts }}
+        ];
+    }
+
+    /**
+     * Recherche simple (?search=) sur les colonnes texte.
+     *
+     * @param  Builder<{{ class }}>  $query
+     */
+    public function scopeSearch(Builder $query, ?string $term): void
+    {
+        $term = trim((string) $term);
+        $columns = [{{ searchColumns }}];
+        if ($term === '' || $columns === []) {
+            return;
+        }
+
+        $query->where(function (Builder $q) use ($term, $columns) {
+            foreach ($columns as $column) {
+                $q->orWhere($column, 'like', "%{$term}%");
+            }
+        });
+    }
+
+    /**
+     * Journal d'activité : les champs modifiés, uniquement s'ils changent.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([{{ logOnly }}])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+}

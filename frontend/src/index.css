@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/*
+ * Thème de l'application.
+ *
+ * `--color-primary` est la couleur principale, modifiable à chaud depuis la
+ * page Configuration (lib/branding.ts la réécrit sur <html>). Les utilitaires
+ * Tailwind `bg-primary`, `text-primary`, `ring-primary`, `bg-primary-hover`,
+ * `bg-primary-soft` en découlent automatiquement.
+ */
+@theme {
+  --color-primary: #ea580c;
+  --color-primary-hover: color-mix(in oklab, var(--color-primary) 85%, black);
+  --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
+  --color-primary-ring: color-mix(in oklab, var(--color-primary) 40%, white);
+
+  --radius-card: 0.875rem;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  margin: 0;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+/* Masque la barre de défilement (menus horizontaux) sans empêcher le scroll. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Calendrier : une carte d'affectation prend la couleur de son chantier via --chantier. */
+.chantier-card {
+  --chantier: #2563eb;
+  background: color-mix(in oklab, var(--chantier) 9%, white);
+  border-color: color-mix(in oklab, var(--chantier) 28%, white);
+  color: color-mix(in oklab, var(--chantier) 70%, black);
+}
+.chantier-card:hover {
+  background: color-mix(in oklab, var(--chantier) 15%, white);
+  border-color: color-mix(in oklab, var(--chantier) 45%, white);
+}
+.chantier-card.is-dragging {
+  opacity: 0.45;
+}
+.chantier-dot {
+  background: var(--chantier);
+}
+.day-cell.is-drop-target {
+  background: color-mix(in oklab, var(--color-primary) 8%, white);
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--color-primary) 45%, white);
+}

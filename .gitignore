@@ -1,0 +1,19 @@
+# Dépendances et builds (chaque sous-projet a aussi son propre .gitignore)
+backend/vendor/
+backend/node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Environnement
+backend/.env
+frontend/.env
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Réglages locaux Claude Code (personnels, non partagés)
+.claude/settings.local.json

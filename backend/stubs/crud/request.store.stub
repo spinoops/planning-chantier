@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class Store{{ class }}Request extends FormRequest
+{
+    /**
+     * L'accès est filtré par les middlewares de la route (auth / admin).
+     * Affine ici avec une Policy si besoin : $this->user()->can('create', {{ class }}::class).
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+{{ storeRules }}
+        ];
+    }
+}

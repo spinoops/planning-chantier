@@ -1,0 +1,154 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useCreate{{ class }}, useDelete{{ class }}, useUpdate{{ class }}, use{{ classPlural }} } from '@/hooks/use{{ classPlural }}'
+import { useListParams } from '@/hooks/useListParams'
+import { useConfirm } from '@/components/ui/ConfirmDialog'
+import { applyValidationErrors, getErrorMessage } from '@/lib/errors'
+{{ frontFormatImport }}import { toast } from '@/lib/toast'
+import type { {{ class }} } from '@/types'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+{{ frontFieldImports }}import DataTable from '@/components/ui/DataTable'
+import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
+import PageHeader from '@/components/ui/PageHeader'
+import Pagination from '@/components/ui/Pagination'
+import SearchInput from '@/components/ui/SearchInput'
+
+/*
+ * Page {{ labelPlural }} — générée par `make:crud`.
+ * Liste paginée (recherche, tri) + modale de création/édition + suppression.
+ * Les valeurs du formulaire sont des chaînes ; `toPayload` les convertit pour l'API.
+ */
+
+const schema = z.object({
+{{ zodFields }}
+})
+
+type FormValues = z.infer<typeof schema>
+
+const EMPTY: FormValues = { {{ formDefaults }} }
+
+function fromRow(row: {{ class }}): FormValues {
+  return { {{ formFromRow }} }
+}
+
+function toPayload(values: FormValues) {
+  return {
+{{ payloadFields }}
+  }
+}
+
+export default function {{ classPlural }}Page() {
+  const { params, setPage, setSearch, setSort } = useListParams()
+  const { data, isLoading, isFetching } = use{{ classPlural }}(params)
+  const create = useCreate{{ class }}()
+  const update = useUpdate{{ class }}()
+  const remove = useDelete{{ class }}()
+  const confirm = useConfirm()
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState<{{ class }} | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: EMPTY })
+
+  function openCreate() {
+    setEditing(null)
+    setFormError(null)
+    reset(EMPTY)
+    setModalOpen(true)
+  }
+
+  function openEdit(row: {{ class }}) {
+    setEditing(row)
+    setFormError(null)
+    reset(fromRow(row))
+    setModalOpen(true)
+  }
+
+  function onSubmit(values: FormValues) {
+    setFormError(null)
+    const payload = toPayload(values)
+    const onSuccess = () => {
+      setModalOpen(false)
+      toast(editing ? '{{ label }} mis(e) à jour.' : '{{ label }} créé(e).', 'success')
+    }
+    const onError = (err: unknown) => {
+      if (!applyValidationErrors(err, setError)) setFormError(getErrorMessage(err))
+    }
+    if (editing) update.mutate({ id: editing.id, payload }, { onSuccess, onError })
+    else create.mutate(payload, { onSuccess, onError })
+  }
+
+  async function onDelete(row: {{ class }}) {
+    if (!(await confirm({ title: 'Supprimer ?', message: 'Cette action est réversible par un administrateur (corbeille).', danger: true }))) return
+    remove.mutate(row.id, {
+      onSuccess: () => toast('{{ label }} supprimé(e).', 'success'),
+      onError: (err) => toast(getErrorMessage(err), 'error'),
+    })
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="{{ labelPlural }}"
+        subtitle="Gère les {{ labelPlural }} de l'application."
+        action={<Button onClick={openCreate}>Nouveau</Button>}
+      />
+
+      <div className="mb-4">
+        <SearchInput value={params.search} onChange={setSearch} placeholder="Rechercher…" />
+      </div>
+
+      <Card flush>
+        <DataTable
+          rows={data?.data ?? []}
+          rowKey={(row) => row.id}
+          loading={isLoading}
+          busy={isFetching}
+          empty="Aucun élément pour l'instant."
+          sort={{ key: params.sort, dir: params.dir }}
+          onSort={setSort}
+          columns={[
+{{ tableColumns }}
+          ]}
+          actions={(row) => (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
+                Modifier
+              </Button>
+              <Button variant="ghost" size="sm" className="text-red-600" onClick={() => onDelete(row)}>
+                Supprimer
+              </Button>
+            </>
+          )}
+        />
+        <Pagination meta={data?.meta} onPageChange={setPage} />
+      </Card>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier' : 'Nouveau'}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+{{ formInputs }}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" loading={create.isPending || update.isPending}>
+              {editing ? 'Enregistrer' : 'Créer'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  )
+}

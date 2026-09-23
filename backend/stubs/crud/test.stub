@@ -1,0 +1,81 @@
+<?php
+
+use App\Models\{{ class }};
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Role;
+
+/**
+ * Tests CRUD {{ labelPlural }} — générés par `make:crud`.
+ * Les routes sont sous le middleware « {{ middleware }} ».
+ */
+beforeEach(function () {
+    Role::findOrCreate('admin');
+    Role::findOrCreate('user');
+    $this->actor = User::factory()->create();
+    $this->actor->assignRole('{{ middleware }}' === 'admin' ? 'admin' : 'user');
+    Sanctum::actingAs($this->actor);
+});
+
+it('refuse un utilisateur sans le rôle requis', function () {
+    $other = User::factory()->create();
+    $other->assignRole('user');
+    Sanctum::actingAs($other);
+
+    $this->getJson('/api/{{ slug }}')->assertForbidden();
+})->skip('{{ middleware }}' !== 'admin', 'Routes ouvertes à tout utilisateur connecté.');
+
+it('liste les {{ labelPlural }} (paginé)', function () {
+    {{ class }}::factory()->count(3)->create();
+
+    $this->getJson('/api/{{ slug }}')
+        ->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJsonStructure(['data', 'meta', 'links']);
+});
+
+it('crée un(e) {{ label }}', function () {
+    $payload = {{ class }}::factory()->make()->toArray();
+
+    $response = $this->postJson('/api/{{ slug }}', $payload)->assertCreated();
+
+    $this->assertDatabaseHas('{{ table }}', ['id' => $response->json('data.id')]);
+});
+
+it('valide les données à la création (422)', function () {
+    $this->postJson('/api/{{ slug }}', [])->assertStatus(422);
+});
+
+it('affiche un(e) {{ label }}', function () {
+    ${{ variable }} = {{ class }}::factory()->create();
+
+    $this->getJson("/api/{{ slug }}/{${{ variable }}->id}")
+        ->assertOk()
+        ->assertJsonPath('data.id', ${{ variable }}->id);
+});
+
+it('met à jour un(e) {{ label }}', function () {
+    ${{ variable }} = {{ class }}::factory()->create();
+
+    $this->putJson("/api/{{ slug }}/{${{ variable }}->id}", [{{ testUpdatePayload }}])
+        ->assertOk()
+        {{ testUpdateAssert }};
+});
+
+it('supprime un(e) {{ label }} (soft delete)', function () {
+    ${{ variable }} = {{ class }}::factory()->create();
+
+    $this->deleteJson("/api/{{ slug }}/{${{ variable }}->id}")->assertOk();
+
+    $this->assertSoftDeleted('{{ table }}', ['id' => ${{ variable }}->id]);
+});
+
+it('journalise la création (activity log)', function () {
+    ${{ variable }} = {{ class }}::factory()->create();
+
+    $this->assertDatabaseHas('activity_log', [
+        'subject_type' => {{ class }}::class,
+        'subject_id' => ${{ variable }}->id,
+        'event' => 'created',
+    ]);
+});

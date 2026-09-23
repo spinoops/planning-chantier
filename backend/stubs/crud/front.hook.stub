@@ -1,0 +1,54 @@
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import type { ListParams } from '@/hooks/useListParams'
+import type { Paginated, {{ class }} } from '@/types'
+
+/** Données envoyées à l'API (POST/PUT /api/{{ slug }}). */
+export type {{ class }}Payload = Record<string, string | number | boolean | null>
+
+const KEY = '{{ slug }}'
+
+/** Liste paginée des {{ labelPlural }} (recherche, tri, page). */
+export function use{{ classPlural }}(params: ListParams) {
+  return useQuery({
+    queryKey: [KEY, params],
+    queryFn: async () => (await api.get<Paginated<{{ class }}>>(`/${KEY}`, { params })).data,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function use{{ class }}(id: number | null) {
+  return useQuery({
+    queryKey: [KEY, 'detail', id],
+    queryFn: async () => (await api.get<{ data: {{ class }} }>(`/${KEY}/${id}`)).data.data,
+    enabled: id !== null,
+  })
+}
+
+export function useCreate{{ class }}() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: {{ class }}Payload) =>
+      (await api.post<{ data: {{ class }} }>(`/${KEY}`, payload)).data.data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
+  })
+}
+
+export function useUpdate{{ class }}() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: {{ class }}Payload }) =>
+      (await api.put<{ data: {{ class }} }>(`/${KEY}/${id}`, payload)).data.data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
+  })
+}
+
+export function useDelete{{ class }}() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/${KEY}/${id}`)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
+  })
+}

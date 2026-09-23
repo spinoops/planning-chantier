@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\Store{{ class }}Request;
+use App\Http\Requests\Update{{ class }}Request;
+use App\Http\Resources\{{ class }}Resource;
+use App\Models\{{ class }};
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
+
+/**
+ * CRUD {{ labelPlural }} — généré par `make:crud`.
+ */
+class {{ class }}Controller extends Controller
+{
+    /**
+     * Liste paginée : ?search=, ?sort=, ?dir=asc|desc, ?per_page=.
+     */
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', Rule::in([{{ sortable }}])],
+            'dir' => ['nullable', Rule::in(['asc', 'desc'])],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        ${{ variablePlural }} = {{ class }}::query()
+            ->search($filters['search'] ?? null)
+            ->orderBy($filters['sort'] ?? 'created_at', $filters['dir'] ?? 'desc')
+            ->orderByDesc('id')
+            ->paginate((int) ($filters['per_page'] ?? 15))
+            ->withQueryString();
+
+        return {{ class }}Resource::collection(${{ variablePlural }});
+    }
+
+    public function store(Store{{ class }}Request $request): JsonResponse
+    {
+        ${{ variable }} = {{ class }}::create($request->validated());
+
+        return {{ class }}Resource::make(${{ variable }})
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function show({{ class }} ${{ variable }}): {{ class }}Resource
+    {
+        return {{ class }}Resource::make(${{ variable }});
+    }
+
+    public function update(Update{{ class }}Request $request, {{ class }} ${{ variable }}): {{ class }}Resource
+    {
+        ${{ variable }}->update($request->validated());
+
+        return {{ class }}Resource::make(${{ variable }}->refresh());
+    }
+
+    /**
+     * Suppression douce (soft delete) : la ligne reste en base avec deleted_at.
+     */
+    public function destroy({{ class }} ${{ variable }}): JsonResponse
+    {
+        ${{ variable }}->delete();
+
+        return response()->json(['message' => '{{ label }} supprimé(e).']);
+    }
+}
