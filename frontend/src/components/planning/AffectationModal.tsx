@@ -35,8 +35,10 @@ export type AffectationTarget =
       /** Plage sélectionnée dans le calendrier (null = journée). */
       start_time?: string | null
       end_time?: string | null
-      /** Présélection d'équipe (vue « Par équipe », ligne cliquée). */
+      /** Présélection d'équipe (vue « Par équipe », ligne cliquée, ou équipe déposée). */
       equipeId?: number
+      /** Personnes présélectionnées (personne déposée depuis la colonne de gauche). */
+      workerIds?: number[]
     }
 
 interface AffectationModalProps {
@@ -98,7 +100,8 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
       // Plage horaire venue du calendrier (vue Jour / Semaine) ; un clic sur un
       // jour entier (Mois, Par équipe) garde les horaires de chantier par défaut.
       const fromCalendar = target.start_time != null
-      const equipeId = target.equipeId ?? (equipes.length === 1 ? equipes[0].id : undefined)
+      // Personne déposée → affectation individuelle (pas d'équipe) ; sinon équipe déposée / ligne cliquée.
+      const equipeId = target.workerIds ? undefined : (target.equipeId ?? (equipes.length === 1 ? equipes[0].id : undefined))
       reset({
         chantier_id: chantiers[0] ? String(chantiers[0].id) : '',
         equipe_id: equipeId ? String(equipeId) : '',
@@ -107,7 +110,7 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
         end_time: fromCalendar ? (target.end_time ?? '') : '16:30',
         note: '',
       })
-      setWorkerIds(membersOf(equipeId))
+      setWorkerIds(target.workerIds ?? membersOf(equipeId))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, reset, chantiers, equipes])

@@ -147,7 +147,7 @@ export default function PlanningPage() {
   }, [loaded])
 
   const onCreate = useCallback((req: CreateRequest) => {
-    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, equipeId: req.equipeId })
+    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, equipeId: req.equipeId, workerIds: req.workerIds })
   }, [])
 
   const onEdit = useCallback((a: Affectation) => setTarget({ affectation: a }), [])
@@ -201,9 +201,10 @@ export default function PlanningPage() {
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="lg:sticky lg:top-20 lg:w-60 lg:shrink-0">
+      <div className="lg:sticky lg:top-20 lg:w-64 lg:shrink-0">
         <TeamSidebar
           equipes={equipes}
+          workers={workers}
           hidden={hidden}
           counts={counts}
           canManage={canEdit}

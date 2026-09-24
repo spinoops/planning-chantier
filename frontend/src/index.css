@@ -376,3 +376,27 @@ body {
 .pc-calendar .fc .fc-timegrid-event-harness > .fc-timegrid-event {
   min-width: 0;
 }
+
+/* Colonne des équipes : cartes de dépôt et miroir de glisser. */
+.team-card {
+  --team: #2563eb;
+  background: color-mix(in oklab, var(--team) 4%, white);
+}
+.team-card.is-over {
+  border-color: var(--team);
+  background: color-mix(in oklab, var(--team) 12%, white);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--team) 25%, white);
+}
+.dnd-mirror {
+  pointer-events: none;
+  cursor: grabbing;
+}
+.dnd-mirror .person-chip {
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.18);
+  transform: scale(1.05);
+}
+/* Aperçu FullCalendar pendant le survol d'un dépôt externe. */
+.pc-calendar .fc .fc-event-mirror.fc-timegrid-event,
+.pc-calendar .fc .fc-highlight {
+  border-radius: 0.45rem;
+}

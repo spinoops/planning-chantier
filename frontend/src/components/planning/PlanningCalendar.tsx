@@ -4,7 +4,7 @@ import type { DateSelectArg, DatesSetArg, EventClickArg, EventContentArg, EventD
 import frLocale from '@fullcalendar/core/locales/fr'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import type { EventResizeDoneArg } from '@fullcalendar/interaction'
+import type { DropArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import resourcePlugin from '@fullcalendar/resource'
 import type { ResourceLabelContentArg } from '@fullcalendar/resource'
@@ -45,8 +45,10 @@ export interface CreateRequest {
   date: string
   start_time: string | null
   end_time: string | null
-  /** Vue « Par équipe » : ligne sur laquelle on a cliqué. */
+  /** Vue « Par équipe » : ligne sur laquelle on a cliqué, ou équipe déposée depuis la colonne de gauche. */
   equipeId?: number
+  /** Personne déposée depuis la colonne de gauche (affectation individuelle). */
+  workerIds?: number[]
 }
 
 /** Ce qu'un glisser-déposer / redimensionnement demande à l'API. */
@@ -189,6 +191,31 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
       }
       const sameDay = toKey(arg.start) === toKey(new Date(arg.end.getTime() - 1))
       onCreate({ date: toKey(arg.start), start_time: hhmm(arg.start), end_time: sameDay ? hhmm(arg.end) : null, equipeId })
+    },
+    [onCreate],
+  )
+
+  // Dépôt d'une équipe ou d'une personne venue de la colonne de gauche (data-fc-drag).
+  const handleDrop = useCallback(
+    (arg: DropArg) => {
+      const raw = arg.draggedEl.getAttribute('data-fc-drag')
+      if (!raw) return
+      const payload = JSON.parse(raw) as { kind: 'team' | 'person'; id: number }
+      const rowEquipe = arg.resource && arg.resource.id !== UNASSIGNED ? Number(arg.resource.id) : undefined
+      let start_time: string | null = null
+      let end_time: string | null = null
+      if (!arg.allDay) {
+        start_time = hhmm(arg.date)
+        const end = new Date(arg.date.getTime() + 4 * 3600_000)
+        end_time = toKey(end) === toKey(arg.date) ? hhmm(end) : '19:00'
+      }
+      onCreate({
+        date: toKey(arg.date),
+        start_time,
+        end_time,
+        equipeId: payload.kind === 'team' ? payload.id : rowEquipe,
+        workerIds: payload.kind === 'person' ? [payload.id] : undefined,
+      })
     },
     [onCreate],
   )
@@ -378,7 +405,9 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         eventStartEditable={canEdit}
         eventDurationEditable={canEdit && !isTeam}
         eventResourceEditable={canEdit}
-        droppable={false}
+        droppable={canEdit}
+        dropAccept="[data-fc-drag]"
+        drop={handleDrop}
         selectable={canEdit}
         selectMirror
         unselectAuto

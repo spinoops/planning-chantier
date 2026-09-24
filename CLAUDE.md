@@ -68,8 +68,16 @@ La version installée sous WAMP est **8.4.24** :
   changer de ligne envoie `equipe_id` (l'API remplace les ouvriers). Cartes : titre = chantier,
   adresse, horaire (rendu `eventContent`), couleur de l'équipe ; cartes étroites → titre seul
   (container query). Thème CSS `.pc-calendar` / `.pc-event` dans `index.css`.
-- `TeamSidebar` : liste des équipes avec case colorée (afficher / masquer, double-clic = seule),
-  masquage persisté dans `localStorage` (`planning_hidden_equipes`), filtrage côté client.
+- `TeamSidebar` : équipes avec case colorée (afficher / masquer, double-clic = seule ; persisté dans
+  `localStorage` `planning_hidden_equipes`, filtrage côté client) **et glisser-déposer** :
+  - **dnd-kit** (`@dnd-kit/core`) pour recomposer les équipes : personne → autre équipe (`PUT /equipes/{id}`
+    avec `member_ids`), → « Sans équipe », → « Nouvelle équipe » (création nommée du prénom) ;
+    équipe déposée sur une équipe = fusion des membres. Renommage / couleur / suppression inline (crayon).
+  - **FullCalendar `ThirdPartyDraggable`** (même conteneur, `itemSelector: [data-fc-drag]`,
+    `mirrorSelector: .dnd-mirror`, `create: false`) : déposer une équipe ou une personne sur le
+    calendrier appelle `drop` de `PlanningCalendar` → modale de création pré-remplie (équipe ou
+    personne, jour, créneau de 4 h depuis l'heure de dépôt). Ne pas remplacer par du HTML5 natif :
+    FullCalendar 6 ne le reçoit pas.
   Doublons = même personne sur deux créneaux qui se chevauchent (`timesOverlap` de `lib/dates.ts`).
 - Autres composants : `AffectationCard` (tableau de bord), `AffectationModal` (sélecteur d'équipe
   qui pré-coche ses membres), `WorkerPicker`. `lib/dates.ts` : semaines lundi→dimanche, clés `YYYY-MM-DD`.
