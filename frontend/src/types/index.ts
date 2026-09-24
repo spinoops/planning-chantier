@@ -7,6 +7,9 @@ export interface User {
   job_title: string | null
   /** Couleur d'avatar (#rrggbb) ; sinon dérivée du nom. */
   color: string | null
+  /** Équipe de rattachement (planification par équipe). */
+  equipe_id: number | null
+  equipe?: EquipeRef | null
   roles: string[]
   /** Permissions effectives (directes + héritées des rôles). */
   permissions: string[]
@@ -176,13 +179,41 @@ export interface Worker {
   phone: string | null
   job_title: string | null
   color: string | null
+  equipe_id: number | null
   roles?: string[]
+}
+
+/** Référence légère à une équipe (embarquée dans une affectation ou un compte). */
+export interface EquipeRef {
+  id: number
+  name: string
+  color: string
+}
+
+/** Équipe planifiable : un ou plusieurs employés, une couleur (GET /api/equipes). */
+export interface Equipe extends EquipeRef {
+  sort_order: number
+  members: Worker[]
+  affectations_count?: number
+  created_at: string
+  updated_at: string
+}
+
+export interface EquipePayload {
+  name: string
+  color: string
+  sort_order?: number
+  /** Membres exacts : un employé quitte automatiquement son ancienne équipe. */
+  member_ids: number[]
 }
 
 /** Un chantier placé sur un jour du calendrier, avec son équipe (GET /api/planning). */
 export interface Affectation {
   id: number
   chantier_id: number
+  /** Équipe planifiée (sa couleur teinte l'événement) ; null = ouvriers choisis un à un. */
+  equipe_id: number | null
+  equipe?: EquipeRef | null
   /** YYYY-MM-DD */
   date: string
   /** HH:MM ou null (journée). */
@@ -197,6 +228,7 @@ export interface Affectation {
 
 export interface AffectationPayload {
   chantier_id: number
+  equipe_id?: number | null
   date: string
   start_time: string | null
   end_time: string | null

@@ -5,9 +5,9 @@ import { z } from 'zod'
 import { useCreateAffectation, useDeleteAffectation, useUpdateAffectation } from '@/hooks/usePlanning'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { applyValidationErrors, getErrorMessage } from '@/lib/errors'
-import { formatLongDay, fromKey } from '@/lib/dates'
+import { formatLongDay, fromKey, timesOverlap } from '@/lib/dates'
 import { toast } from '@/lib/toast'
-import type { Affectation, Chantier, Worker } from '@/types'
+import type { Affectation, Chantier, Equipe, Worker } from '@/types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
@@ -17,6 +17,7 @@ import WorkerPicker from '@/components/planning/WorkerPicker'
 
 const schema = z.object({
   chantier_id: z.string().min(1, 'Choisis un chantier.'),
+  equipe_id: z.string(),
   date: z.string().min(1, 'Date requise.'),
   start_time: z.string(),
   end_time: z.string(),
@@ -34,21 +35,26 @@ export type AffectationTarget =
       /** Plage sélectionnée dans le calendrier (null = journée). */
       start_time?: string | null
       end_time?: string | null
-      /** Présélection d'équipe (vue « Par ouvrier »). */
-      workerIds?: number[]
+      /** Présélection d'équipe (vue « Par équipe », ligne cliquée). */
+      equipeId?: number
     }
 
 interface AffectationModalProps {
   target: AffectationTarget | null
   onClose: () => void
   chantiers: Chantier[]
+  equipes: Equipe[]
   workers: Worker[]
   /** Affectations déjà chargées (pour signaler « déjà sur X » le même jour). */
   existing: Affectation[]
 }
 
-/** Création / modification / suppression d'une affectation (chantier + jour + équipe). */
-export default function AffectationModal({ target, onClose, chantiers, workers, existing }: AffectationModalProps) {
+/**
+ * Création / modification / suppression d'une affectation : un chantier, un
+ * jour et un créneau, pour une équipe (ses membres sont pré-cochés) ou pour
+ * des personnes choisies une à une.
+ */
+export default function AffectationModal({ target, onClose, chantiers, equipes, workers, existing }: AffectationModalProps) {
   const editing = target?.affectation ?? null
   const open = target !== null
   const create = useCreateAffectation()
@@ -68,8 +74,10 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { chantier_id: '', date: '', start_time: '07:00', end_time: '16:30', note: '' },
+    defaultValues: { chantier_id: '', equipe_id: '', date: '', start_time: '07:30', end_time: '16:30', note: '' },
   })
+
+  const membersOf = (equipeId: number | null | undefined) => equipes.find((e) => e.id === equipeId)?.members.map((m) => m.id) ?? []
 
   // (Ré)initialise le formulaire à chaque ouverture.
   useEffect(() => {
@@ -79,6 +87,7 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
       const a = target.affectation
       reset({
         chantier_id: String(a.chantier_id),
+        equipe_id: a.equipe_id ? String(a.equipe_id) : '',
         date: a.date,
         start_time: a.start_time ?? '',
         end_time: a.end_time ?? '',
@@ -86,22 +95,34 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
       })
       setWorkerIds(a.workers.map((w) => w.id))
     } else {
-      // Plage horaire venue du calendrier (vue Jour) ; un clic sur un jour entier
-      // (Mois, Semaine, Par ouvrier) garde les horaires de chantier par défaut.
+      // Plage horaire venue du calendrier (vue Jour / Semaine) ; un clic sur un
+      // jour entier (Mois, Par équipe) garde les horaires de chantier par défaut.
       const fromCalendar = target.start_time != null
+      const equipeId = target.equipeId ?? (equipes.length === 1 ? equipes[0].id : undefined)
       reset({
         chantier_id: chantiers[0] ? String(chantiers[0].id) : '',
+        equipe_id: equipeId ? String(equipeId) : '',
         date: target.date,
-        start_time: fromCalendar ? (target.start_time ?? '') : '07:00',
+        start_time: fromCalendar ? (target.start_time ?? '') : '07:30',
         end_time: fromCalendar ? (target.end_time ?? '') : '16:30',
         note: '',
       })
-      setWorkerIds(target.workerIds ?? [])
+      setWorkerIds(membersOf(equipeId))
     }
-  }, [target, reset, chantiers])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, reset, chantiers, equipes])
 
   const date = watch('date')
   const chantierId = Number(watch('chantier_id'))
+  const equipeId = Number(watch('equipe_id')) || null
+  const startTime = watch('start_time') || null
+  const endTime = watch('end_time') || null
+
+  // Choisir une équipe pré-coche ses membres (modifiables ensuite).
+  function onEquipeChange(value: string) {
+    const id = Number(value) || null
+    if (id) setWorkerIds(membersOf(id))
+  }
 
   // Le chantier de l'affectation en cours peut être terminé (absent des chantiers ouverts) : on l'ajoute au choix.
   const options = useMemo(() => {
@@ -109,22 +130,27 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
     return chantiers
   }, [chantiers, editing])
 
-  // Personnes déjà affectées ailleurs le même jour.
+  // Personnes déjà affectées ailleurs sur un créneau qui chevauche celui-ci.
   const busy = useMemo(() => {
     const map = new Map<number, string>()
+    const slot = { start_time: startTime, end_time: endTime }
     for (const a of existing) {
-      if (a.date !== date || a.id === editing?.id) continue
-      for (const w of a.workers) if (!map.has(w.id)) map.set(w.id, a.chantier.name)
+      if (a.date !== date || a.id === editing?.id || !timesOverlap(a, slot)) continue
+      for (const w of a.workers) if (!map.has(w.id)) map.set(w.id, `${a.chantier.name} (${a.start_time ?? 'journée'}${a.end_time ? `–${a.end_time}` : ''})`)
     }
     return map
-  }, [existing, date, editing])
+  }, [existing, date, editing, startTime, endTime])
 
   const busySelected = workerIds.filter((id) => busy.has(id))
+  const team = equipes.find((e) => e.id === equipeId)
+  const teamMembers = team?.members.map((m) => m.id) ?? []
+  const differsFromTeam = team && (teamMembers.length !== workerIds.length || teamMembers.some((id) => !workerIds.includes(id)))
 
   function onSubmit(values: FormValues) {
     setFormError(null)
     const payload = {
       chantier_id: Number(values.chantier_id),
+      equipe_id: Number(values.equipe_id) || null,
       date: values.date,
       start_time: values.start_time || null,
       end_time: values.end_time || null,
@@ -146,7 +172,7 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
     if (!editing) return
     const ok = await confirm({
       title: 'Supprimer cette affectation ?',
-      message: `${editing.chantier.name} · ${formatLongDay(fromKey(editing.date))}. Les ouvriers n'y seront plus attendus.`,
+      message: `${editing.chantier.name} · ${formatLongDay(fromKey(editing.date))}. L'équipe n'y sera plus attendue.`,
       confirmLabel: 'Supprimer',
       danger: true,
     })
@@ -169,7 +195,7 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
+          <div>
             <Select label="Chantier" error={errors.chantier_id?.message} {...register('chantier_id')}>
               {options.length === 0 && <option value="">Aucun chantier ouvert</option>}
               {options.map((c) => (
@@ -181,8 +207,31 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
             </Select>
             {selectedChantier && (
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: selectedChantier.color }} />
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: selectedChantier.color }} />
                 {[selectedChantier.client, selectedChantier.address, selectedChantier.city].filter(Boolean).join(' · ') || 'Sans adresse'}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Select
+              label="Équipe"
+              error={errors.equipe_id?.message}
+              {...register('equipe_id', { onChange: (e) => onEquipeChange(e.target.value) })}
+            >
+              <option value="">— Personnes choisies une à une —</option>
+              {equipes.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                  {e.members.length > 1 ? ` (${e.members.length})` : ''}
+                </option>
+              ))}
+            </Select>
+            {team && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: team.color }} />
+                {team.members.map((m) => m.name).join(', ') || 'Aucun membre'}
+                {differsFromTeam && <span className="text-amber-600">· équipe ajustée pour ce jour</span>}
               </p>
             )}
           </div>
@@ -201,7 +250,7 @@ export default function AffectationModal({ target, onClose, chantiers, workers, 
           </p>
         )}
 
-        <Textarea label="Consigne / note (optionnel)" rows={2} placeholder="Ex. livraison béton à 8h, prendre la scie…" error={errors.note?.message} {...register('note')} />
+        <Textarea label="Consigne / note (optionnel)" rows={2} placeholder="Ex. prendre la remorque, clé chez le voisin…" error={errors.note?.message} {...register('note')} />
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <div>

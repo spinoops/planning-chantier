@@ -27,6 +27,7 @@ class StoreUserRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:40'],
             'job_title' => ['nullable', 'string', 'max:100'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'equipe_id' => ['nullable', 'integer', Rule::exists('equipes', 'id')],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => [Rule::exists('roles', 'name')],
         ];

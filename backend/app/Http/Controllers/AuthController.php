@@ -43,7 +43,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => UserResource::make($user->load('roles')),
+            'user' => UserResource::make($user->load(['roles', 'equipe'])),
         ]);
     }
 
@@ -72,6 +72,6 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        return response()->json(UserResource::make($request->user()->load('roles')));
+        return response()->json(UserResource::make($request->user()->load(['roles', 'equipe'])));
     }
 }

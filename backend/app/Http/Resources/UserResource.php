@@ -25,6 +25,8 @@ class UserResource extends JsonResource
             'phone' => $this->phone,
             'job_title' => $this->job_title,
             'color' => $this->color,
+            'equipe_id' => $this->equipe_id,
+            'equipe' => $this->whenLoaded('equipe', fn () => $this->equipe ? ['id' => $this->equipe->id, 'name' => $this->equipe->name, 'color' => $this->equipe->color] : null),
             'roles' => $this->getRoleNames(),
             // Permissions effectives (directes + héritées des rôles), pour des
             // contrôles fins côté front (`can('facture.create')`).

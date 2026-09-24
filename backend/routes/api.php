@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ChantierController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PasswordResetController;
@@ -90,9 +91,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/chantiers/{chantier}', [ChantierController::class, 'show']);
     Route::get('/planning', [PlanningController::class, 'index']);
     Route::get('/planning/{affectation}', [PlanningController::class, 'show']);
+    Route::get('/equipes', [EquipeController::class, 'index']);
 
     Route::middleware('role:'.implode('|', (array) config('roles.planners', ['admin'])))->group(function () {
         Route::apiResource('chantiers', ChantierController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('equipes', EquipeController::class)->only(['store', 'update', 'destroy']);
         Route::get('/workers', [WorkerController::class, 'index']);
         Route::post('/planning', [PlanningController::class, 'store']);
         Route::post('/planning/copy-week', [PlanningController::class, 'copyWeek']);

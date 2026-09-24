@@ -8,7 +8,7 @@ const VIEWS: { value: CalendarView; label: string; mobile?: boolean }[] = [
   { value: 'week', label: 'Semaine' },
   { value: 'day', label: 'Jour', mobile: true },
   { value: 'list', label: 'Liste', mobile: true },
-  { value: 'team', label: 'Par ouvrier' },
+  { value: 'team', label: 'Par équipe' },
 ]
 
 interface CalendarToolbarProps {

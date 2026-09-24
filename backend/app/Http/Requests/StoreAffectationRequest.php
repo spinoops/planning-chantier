@@ -20,11 +20,13 @@ class StoreAffectationRequest extends FormRequest
     {
         return [
             'chantier_id' => ['required', 'integer', Rule::exists('chantiers', 'id')->whereNull('deleted_at')],
+            // Équipe planifiée : sans `worker_ids`, ses membres sont recopiés dans l'affectation.
+            'equipe_id' => ['nullable', 'integer', Rule::exists('equipes', 'id')],
             'date' => ['required', 'date_format:Y-m-d'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
             'note' => ['nullable', 'string', 'max:2000'],
-            'worker_ids' => ['present', 'array'],
+            'worker_ids' => ['sometimes', 'array'],
             'worker_ids.*' => ['integer', 'distinct', Rule::exists('users', 'id')->whereNull('deleted_at')],
         ];
     }

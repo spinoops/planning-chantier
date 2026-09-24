@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Affectation;
 use App\Models\Chantier;
+use App\Models\Equipe;
 use App\Models\Setting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -14,12 +15,14 @@ use Spatie\Permission\Models\Role;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Rôles + comptes de démonstration + jeu de données planning (idempotent).
+     * Rôles + comptes + équipes + jeu de données planning (idempotent).
      *
      * Identifiants (mot de passe : password) :
-     *   admin@baseapp.test   — administrateur
-     *   chef@baseapp.test    — chef de chantier (planifie)
-     *   ouvrier@baseapp.test — ouvrier (voit son planning)
+     *   admin@baseapp.test — administrateur
+     *   robin@baseapp.test — Robin Braun, chef (planifie)
+     *   leo@baseapp.test, davison@baseapp.test, etienne@baseapp.test, david@baseapp.test — ouvriers
+     *
+     * Chaque employé a son équipe (individuelle) avec la couleur de son calendrier.
      */
     public function run(): void
     {
@@ -27,32 +30,32 @@ class DatabaseSeeder extends Seeder
             Role::firstOrCreate(['name' => $role]);
         }
 
-        // Identité par défaut de l'app (modifiable dans Configuration).
         if (Setting::query()->where('key', 'app_color')->doesntExist()) {
             Setting::setMany(['app_color' => '#ea580c']);
         }
 
-        $admin = $this->account('admin@baseapp.test', 'Admin', 'admin', ['job_title' => 'Direction', 'color' => '#111827']);
+        $this->account('admin@baseapp.test', 'Admin', 'admin', ['job_title' => 'Direction', 'color' => '#111827']);
 
-        $chef = $this->account('chef@baseapp.test', 'Marc Favre', 'chef', [
-            'job_title' => 'Chef de chantier',
-            'phone' => '+41 79 200 10 01',
-            'color' => '#0f766e',
-        ]);
+        // Employés : [email, prénom, nom, rôle, métier, couleur (= couleur de l'équipe)]
+        $staff = [
+            ['robin@baseapp.test', 'Robin', 'Braun', 'chef', 'Chef de chantier', '#ef4444'],
+            ['leo@baseapp.test', 'Léo', 'Lançon', 'ouvrier', 'Ouvrier', '#eab308'],
+            ['davison@baseapp.test', 'Davison', 'Da Silva Setubal', 'ouvrier', 'Bureau / atelier', '#22c55e'],
+            ['etienne@baseapp.test', 'Étienne', 'Armand', 'ouvrier', 'Ouvrier', '#3b82f6'],
+            ['david@baseapp.test', 'David', 'Batista Setubal', 'ouvrier', 'Ouvrier', '#a855f7'],
+        ];
 
-        $workers = collect([
-            ['ouvrier@baseapp.test', 'Luca Bernasconi', 'Maçon', '#2563eb'],
-            ['j.dupont@baseapp.test', 'Julien Dupont', 'Maçon', '#7c3aed'],
-            ['a.rossi@baseapp.test', 'Andrea Rossi', 'Coffreur', '#db2777'],
-            ['s.meier@baseapp.test', 'Samuel Meier', 'Grutier', '#ca8a04'],
-            ['n.silva@baseapp.test', 'Nuno Silva', 'Manœuvre', '#16a34a'],
-            ['k.oliveira@baseapp.test', 'Karim Oliveira', 'Ferrailleur', '#dc2626'],
-            ['t.girard@baseapp.test', 'Thomas Girard', 'Apprenti', '#0891b2'],
-        ])->map(fn (array $w, int $i) => $this->account($w[0], $w[1], 'ouvrier', [
-            'job_title' => $w[2],
-            'color' => $w[3],
-            'phone' => '+41 79 300 20 '.str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT),
-        ]));
+        $equipes = [];
+        foreach ($staff as $i => [$email, $first, $last, $role, $job, $color]) {
+            $equipe = Equipe::firstOrCreate(['name' => $first], ['color' => $color, 'sort_order' => $i]);
+            $this->account($email, "{$first} {$last}", $role, [
+                'job_title' => $job,
+                'color' => $color,
+                'phone' => '+41 79 300 20 '.str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT),
+                'equipe_id' => $equipe->id,
+            ]);
+            $equipes[$first] = $equipe;
+        }
 
         // Jeu de données planning : seulement si aucun chantier n'existe encore.
         if (Chantier::query()->exists()) {
@@ -61,44 +64,62 @@ class DatabaseSeeder extends Seeder
 
         $monday = CarbonImmutable::today()->startOfWeek();
 
+        // Chantiers = clients, dans l'esprit des calendriers actuels (client + adresse).
         $chantiers = collect([
-            ['Villa Les Cèdres', 'Famille Roulet', 'Chemin des Cèdres 12', 'Lausanne', '#2563eb', 'active', -6, 10],
-            ['Immeuble Rue du Lac', 'Régie Lémanique SA', 'Rue du Lac 45', 'Vevey', '#ea580c', 'active', -10, 20],
-            ['Rénovation école', 'Commune de Pully', 'Avenue de Lavaux 8', 'Pully', '#16a34a', 'active', -2, 6],
-            ['Halle industrielle', 'Logistique Plus SA', 'Route de Genève 120', 'Crissier', '#9333ea', 'planned', 2, 14],
-            ['Mur de soutènement', 'M. Perrin', 'Route du Village 3', 'Cully', '#0891b2', 'done', -12, -2],
-        ])->map(fn (array $c) => Chantier::create([
+            ['Joray François', 'Rue des Pèlerins 35', 'Porrentruy', '#2563eb', 'active'],
+            ['Chételat Nicolas', 'Chemin du Bruye 16', 'Courgenay', '#0891b2', 'active'],
+            ['Migy Eloi', 'Dos les Laves 136', 'Alle', '#16a34a', 'active'],
+            ['Varin Bernard', 'En Chaudron 4', 'Cornol', '#9333ea', 'active'],
+            ['Rausis Gérard', 'Chemin de la Fiole 13', 'Fontenais', '#ea580c', 'active'],
+            ['Regalo Celeste', 'Impasse en Cortio 3', 'Bressaucourt', '#db2777', 'planned'],
+            ['Bureau', 'Atelier', 'Porrentruy', '#78716c', 'active'],
+        ])->mapWithKeys(fn (array $c) => [$c[0] => Chantier::create([
             'name' => $c[0],
-            'client' => $c[1],
-            'address' => $c[2],
-            'city' => $c[3],
-            'color' => $c[4],
-            'status' => $c[5],
-            'start_date' => $monday->addWeeks($c[6])->toDateString(),
-            'end_date' => $monday->addWeeks($c[7])->toDateString(),
-        ]));
+            'client' => $c[0] === 'Bureau' ? null : $c[0],
+            'address' => $c[1],
+            'city' => $c[2],
+            'color' => $c[3],
+            'status' => $c[4],
+            'start_date' => $monday->subWeeks(2)->toDateString(),
+            'end_date' => $monday->addWeeks(8)->toDateString(),
+        ])]);
 
-        [$villa, $immeuble, $ecole, $halle] = $chantiers;
-        $ids = $workers->pluck('id')->values();
+        $robin = User::where('email', 'robin@baseapp.test')->first();
 
-        // Semaine précédente, courante et suivante : équipes stables du lundi au vendredi.
-        foreach ([-1, 0, 1] as $week) {
-            for ($d = 0; $d < 5; $d++) {
-                $date = $monday->addWeeks($week)->addDays($d)->toDateString();
+        // Semaine courante et suivante : demi-journées par équipe, comme dans les calendriers.
+        foreach ([0, 1] as $week) {
+            $d = fn (int $day) => $monday->addWeeks($week)->addDays($day)->toDateString();
 
-                $this->affect($villa, $date, '07:00', '16:30', [$ids[0], $ids[1], $ids[6]], $chef, $d === 0 ? 'Livraison béton 8h.' : null);
-                $this->affect($immeuble, $date, '07:00', '17:00', [$ids[2], $ids[3], $ids[5], $chef->id], $chef);
+            // Léo : Joray lundi (journée), Chételat mardi matin, Vantaggiato… simplifié.
+            $this->affect($chantiers['Joray François'], $equipes['Léo'], $d(0), '08:00', '12:00', $robin);
+            $this->affect($chantiers['Joray François'], $equipes['Léo'], $d(0), '13:00', '14:45', $robin);
+            $this->affect($chantiers['Regalo Celeste'], $equipes['Léo'], $d(0), '14:45', '17:00', $robin);
+            $this->affect($chantiers['Chételat Nicolas'], $equipes['Léo'], $d(1), '08:00', '12:00', $robin);
+            $this->affect($chantiers['Migy Eloi'], $equipes['Léo'], $d(3), '08:00', '12:00', $robin);
+            $this->affect($chantiers['Migy Eloi'], $equipes['Léo'], $d(3), '13:00', '17:00', $robin);
+            $this->affect($chantiers['Varin Bernard'], $equipes['Léo'], $d(4), '08:00', '12:00', $robin);
 
-                if ($d < 3) {
-                    $this->affect($ecole, $date, '08:00', '16:00', [$ids[4]], $chef, $d === 2 ? 'Fin des travaux de démolition.' : null);
-                } else {
-                    $this->affect($villa, $date, '13:00', '16:30', [$ids[4]], $chef, 'Renfort après-midi.');
-                }
+            // Étienne et David : ensemble chez Rausis, puis Varin.
+            foreach (['Étienne', 'David'] as $name) {
+                $this->affect($chantiers['Rausis Gérard'], $equipes[$name], $d(0), '07:30', '12:00', $robin);
+                $this->affect($chantiers['Rausis Gérard'], $equipes[$name], $d(0), '13:00', '16:45', $robin);
+                $this->affect($chantiers['Rausis Gérard'], $equipes[$name], $d(1), '07:30', '12:00', $robin);
+                $this->affect($chantiers['Varin Bernard'], $equipes[$name], $d(2), '07:30', '16:45', $robin, 'Prendre la remorque.');
+                $this->affect($chantiers['Chételat Nicolas'], $equipes[$name], $d(3), '07:30', '16:45', $robin);
+                $this->affect($chantiers['Migy Eloi'], $equipes[$name], $d(4), '07:30', '12:00', $robin);
             }
-        }
 
-        // Semaine +2 : démarrage de la halle, un jour de préparation.
-        $this->affect($halle, $monday->addWeeks(2)->toDateString(), '07:30', '12:00', [$chef->id, $ids[3], $ids[4]], $chef, 'Implantation et installation de chantier.');
+            // Davison : bureau / atelier.
+            for ($day = 0; $day < 5; $day++) {
+                $this->affect($chantiers['Bureau'], $equipes['Davison'], $d($day), '07:30', '11:45', $robin);
+                $this->affect($chantiers['Bureau'], $equipes['Davison'], $d($day), '13:15', '17:30', $robin);
+            }
+
+            // Robin : passages sur les chantiers.
+            $this->affect($chantiers['Rausis Gérard'], $equipes['Robin'], $d(2), '08:00', '13:00', $robin, 'Contrôle et métrés.');
+            $this->affect($chantiers['Joray François'], $equipes['Robin'], $d(0), '10:30', '12:00', $robin);
+            $this->affect($chantiers['Bureau'], $equipes['Robin'], $d(3), '07:45', '09:30', $robin, 'Devis et téléphones.');
+        }
     }
 
     /**
@@ -122,19 +143,17 @@ class DatabaseSeeder extends Seeder
         return $user;
     }
 
-    /**
-     * @param  list<int>  $workerIds
-     */
-    private function affect(Chantier $chantier, string $date, string $start, string $end, array $workerIds, User $author, ?string $note = null): void
+    private function affect(Chantier $chantier, Equipe $equipe, string $date, string $start, string $end, User $author, ?string $note = null): void
     {
         $affectation = Affectation::create([
             'chantier_id' => $chantier->id,
+            'equipe_id' => $equipe->id,
             'date' => $date,
             'start_time' => $start,
             'end_time' => $end,
             'note' => $note,
             'created_by' => $author->id,
         ]);
-        $affectation->workers()->sync($workerIds);
+        $affectation->workers()->sync($equipe->members()->pluck('users.id'));
     }
 }

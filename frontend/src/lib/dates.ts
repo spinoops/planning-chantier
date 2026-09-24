@@ -141,3 +141,17 @@ export function formatTimeRange(start: string | null, end: string | null): strin
   if (end) return `jusqu'à ${end}`
   return 'Journée'
 }
+
+/**
+ * Deux créneaux du même jour se chevauchent-ils ? Un créneau sans heure
+ * (journée entière) chevauche tout ; une heure de fin absente vaut « jusqu'au soir ».
+ */
+export function timesOverlap(
+  a: { start_time: string | null; end_time: string | null },
+  b: { start_time: string | null; end_time: string | null },
+): boolean {
+  if (!a.start_time || !b.start_time) return true
+  const aEnd = a.end_time ?? '23:59'
+  const bEnd = b.end_time ?? '23:59'
+  return a.start_time < bEnd && b.start_time < aEnd
+}

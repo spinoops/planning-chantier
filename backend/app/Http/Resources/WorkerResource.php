@@ -24,6 +24,7 @@ class WorkerResource extends JsonResource
             'phone' => $this->phone,
             'job_title' => $this->job_title,
             'color' => $this->color,
+            'equipe_id' => $this->equipe_id,
             'roles' => $this->whenLoaded('roles', fn () => $this->getRoleNames()),
         ];
     }

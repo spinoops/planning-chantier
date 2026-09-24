@@ -6,6 +6,7 @@ import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
 import PlanningPage from '@/pages/PlanningPage'
 import ChantiersPage from '@/pages/ChantiersPage'
+import EquipesPage from '@/pages/EquipesPage'
 import MyPlanningPage from '@/pages/MyPlanningPage'
 import ProfilePage from '@/pages/ProfilePage'
 import InvitationsPage from '@/pages/InvitationsPage'
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/chantiers" element={<ChantiersPage />} />
+            <Route path="/equipes" element={<EquipesPage />} />
           </Route>
 
           {/* Module « invitations » (admins, ou tous selon config/invitations.php) */}

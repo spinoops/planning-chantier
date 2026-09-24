@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { useOpenChantiers } from '@/hooks/useChantiers'
+import { useEquipes } from '@/hooks/useEquipes'
 import { useCopyWeek, usePlanning, useUpdateAffectation } from '@/hooks/usePlanning'
 import { useWorkers } from '@/hooks/useWorkers'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { getErrorMessage } from '@/lib/errors'
-import { addDays, fromKey, isoWeek, startOfWeek, toKey, todayKey } from '@/lib/dates'
+import { addDays, fromKey, isoWeek, startOfWeek, timesOverlap, toKey, todayKey } from '@/lib/dates'
 import { isPlanner } from '@/lib/navigation'
 import { toast } from '@/lib/toast'
 import type { Affectation } from '@/types'
@@ -18,8 +19,11 @@ import CalendarToolbar from '@/components/planning/CalendarToolbar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
 import PlanningCalendar from '@/components/planning/PlanningCalendar'
 import type { CalendarRange, CreateRequest, MoveRequest, PlanningCalendarHandle } from '@/components/planning/PlanningCalendar'
+import TeamSidebar, { NO_TEAM } from '@/components/planning/TeamSidebar'
+import type { TeamKey } from '@/components/planning/TeamSidebar'
 
 const VIEW_KEY = 'planning_view'
+const HIDDEN_KEY = 'planning_hidden_equipes'
 const ALL_VIEWS: CalendarView[] = ['month', 'week', 'day', 'list', 'team']
 
 function defaultView(): CalendarView {
@@ -32,12 +36,22 @@ function defaultView(): CalendarView {
   return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'week'
 }
 
+function loadHidden(): Set<TeamKey> {
+  try {
+    const raw = localStorage.getItem(HIDDEN_KEY)
+    if (raw) return new Set(JSON.parse(raw) as TeamKey[])
+  } catch {
+    // ignore
+  }
+  return new Set()
+}
+
 /**
- * Calendrier du planning (planificateurs), sur FullCalendar : vues mois / semaine /
- * jour / liste / par ouvrier, filtres par chantier et par ouvrier, création en
- * sélectionnant une plage, déplacement et redimensionnement par glisser-déposer,
- * copie de la semaine précédente. L'état (vue, date, filtres) vit dans l'URL :
- * ?view=week&d=2026-09-21&chantier=3&ouvrier=5.
+ * Planning (planificateurs) : à gauche les équipes (couleur + case pour les
+ * afficher ou non), à droite le calendrier FullCalendar. Vue semaine horaire
+ * façon Apple Calendrier : sélectionner une plage crée une affectation pour
+ * une équipe, glisser-déposer / étirer déplace et change l'horaire.
+ * L'état (vue, date, chantier) vit dans l'URL : ?view=week&d=2026-09-21&chantier=3.
  */
 export default function PlanningPage() {
   const { user } = useAuth()
@@ -50,7 +64,6 @@ export default function PlanningPage() {
   const view = viewParam && ALL_VIEWS.includes(viewParam) ? viewParam : defaultView()
   const [initialDate] = useState(() => fromKey(searchParams.get('d') ?? todayKey()))
   const chantierFilter = Number(searchParams.get('chantier')) || 0
-  const workerFilter = Number(searchParams.get('ouvrier')) || 0
 
   const setParams = useCallback(
     (patch: Record<string, string | number | null>) => {
@@ -77,6 +90,16 @@ export default function PlanningPage() {
     }
   }, [view])
 
+  // Équipes masquées dans le calendrier (persisté par navigateur).
+  const [hidden, setHidden] = useState<Set<TeamKey>>(loadHidden)
+  useEffect(() => {
+    try {
+      localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hidden]))
+    } catch {
+      // ignore
+    }
+  }, [hidden])
+
   // Période visible, fournie par FullCalendar (datesSet) : pilote le chargement et l'URL.
   const [range, setRange] = useState<CalendarRange | null>(null)
   const onRangeChange = useCallback(
@@ -88,47 +111,55 @@ export default function PlanningPage() {
   )
 
   const query = { from: range?.from ?? todayKey(), to: range?.to ?? todayKey() }
-  const { data: affectations = [], isLoading, isFetching } = usePlanning(
-    { ...query, chantier_id: chantierFilter || undefined, worker_id: workerFilter || undefined },
-    range !== null,
-  )
-  // Pour signaler les doublons du jour on a besoin de tout le monde, même filtré.
-  const { data: allAffectations = [] } = usePlanning(query, range !== null && Boolean(chantierFilter || workerFilter))
+  const { data: loaded = [], isLoading, isFetching } = usePlanning({ ...query, chantier_id: chantierFilter || undefined }, range !== null)
   const { data: chantiers = [] } = useOpenChantiers()
+  const { data: equipes = [] } = useEquipes()
   const { data: workers = [] } = useWorkers(canEdit)
   const updateAffectation = useUpdateAffectation()
   const copyWeek = useCopyWeek()
 
   const [target, setTarget] = useState<AffectationTarget | null>(null)
 
+  const teamKey = (a: Affectation): TeamKey => a.equipe_id ?? NO_TEAM
+  const affectations = useMemo(() => loaded.filter((a) => !hidden.has(teamKey(a))), [loaded, hidden])
+
+  const counts = useMemo(() => {
+    const map = new Map<TeamKey, number>()
+    for (const a of loaded) map.set(teamKey(a), (map.get(teamKey(a)) ?? 0) + 1)
+    return map
+  }, [loaded])
+
+  // Doublons : une personne sur deux créneaux qui se chevauchent le même jour
+  // (deux demi-journées ne comptent pas). Calculé sur tout ce qui est chargé, même masqué.
   const conflicts = useMemo(() => {
-    const seen = new Map<string, number>()
-    const set = new Set<string>()
-    const source = chantierFilter || workerFilter ? allAffectations : affectations
-    for (const a of source) {
+    const byWorkerDay = new Map<string, Affectation[]>()
+    for (const a of loaded) {
       for (const w of a.workers) {
         const key = `${a.date}:${w.id}`
-        seen.set(key, (seen.get(key) ?? 0) + 1)
-        if ((seen.get(key) ?? 0) > 1) set.add(key)
+        byWorkerDay.set(key, [...(byWorkerDay.get(key) ?? []), a])
       }
     }
+    const set = new Set<string>()
+    for (const [key, list] of byWorkerDay) {
+      if (list.some((a, i) => list.some((b, j) => j > i && timesOverlap(a, b)))) set.add(key)
+    }
     return set
-  }, [affectations, allAffectations, chantierFilter, workerFilter])
+  }, [loaded])
 
   const onCreate = useCallback((req: CreateRequest) => {
-    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, workerIds: req.workerId ? [req.workerId] : [] })
+    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, equipeId: req.equipeId })
   }, [])
 
   const onEdit = useCallback((a: Affectation) => setTarget({ affectation: a }), [])
 
   const onMove = useCallback(
     async (req: MoveRequest) => {
-      const current = affectations.find((a) => a.id === req.id)
+      const current = loaded.find((a) => a.id === req.id)
       try {
         await updateAffectation.mutateAsync({ id: req.id, payload: req.patch })
-        if (req.workerChange) {
-          const to = workers.find((w) => w.id === req.workerChange?.to)
-          toast(to ? `${current?.chantier.name ?? 'Affectation'} : ${to.name} affecté(e).` : 'Personne retirée de l’affectation.', 'success')
+        if (req.equipeChange) {
+          const to = equipes.find((e) => e.id === req.equipeChange?.to)
+          toast(to ? `${current?.chantier.name ?? 'Affectation'} → équipe ${to.name}.` : `${current?.chantier.name ?? 'Affectation'} sans équipe.`, 'success')
         } else {
           toast(`${current?.chantier.name ?? 'Affectation'} déplacé.`, 'success')
         }
@@ -137,7 +168,7 @@ export default function PlanningPage() {
         throw err
       }
     },
-    [affectations, updateAffectation, workers],
+    [loaded, updateAffectation, equipes],
   )
 
   async function onCopyPreviousWeek() {
@@ -147,9 +178,9 @@ export default function PlanningPage() {
     const ok = await confirm({
       title: 'Copier la semaine précédente ?',
       message:
-        affectations.length > 0
+        loaded.length > 0
           ? 'Les affectations de la semaine précédente seront ajoutées à celles déjà présentes cette semaine.'
-          : 'Chantiers, horaires et équipes de la semaine précédente seront recopiés sur cette semaine.',
+          : 'Chantiers, équipes, horaires et notes de la semaine précédente seront recopiés sur cette semaine.',
       confirmLabel: 'Copier',
     })
     if (!ok) return
@@ -169,90 +200,101 @@ export default function PlanningPage() {
   }
 
   return (
-    <div>
-      <CalendarToolbar
-        title={range?.title ?? ''}
-        subtitle={subtitle}
-        view={view}
-        onViewChange={(v) => setParams({ view: v })}
-        onPrev={() => calendar.current?.prev()}
-        onNext={() => calendar.current?.next()}
-        onToday={() => calendar.current?.today()}
-        busy={isFetching || isLoading}
-        filters={
-          <>
-            <Select value={chantierFilter || ''} onChange={(e) => setParams({ chantier: e.target.value })} className="w-auto min-w-44 py-1.5" aria-label="Filtrer par chantier">
-              <option value="">Tous les chantiers</option>
-              {chantiers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-            {canEdit && view !== 'team' && (
-              <Select value={workerFilter || ''} onChange={(e) => setParams({ ouvrier: e.target.value })} className="w-auto min-w-44 py-1.5" aria-label="Filtrer par ouvrier">
-                <option value="">Toute l'équipe</option>
-                {workers.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="lg:sticky lg:top-20 lg:w-60 lg:shrink-0">
+        <TeamSidebar
+          equipes={equipes}
+          hidden={hidden}
+          counts={counts}
+          canManage={canEdit}
+          onToggle={(key) =>
+            setHidden((prev) => {
+              const next = new Set(prev)
+              if (next.has(key)) next.delete(key)
+              else next.add(key)
+              return next
+            })
+          }
+          onOnly={(key) => setHidden(new Set<TeamKey>([...equipes.map((e) => e.id as TeamKey), NO_TEAM].filter((k) => k !== key)))}
+          onShowAll={() => setHidden(new Set())}
+        />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <CalendarToolbar
+          title={range?.title ?? ''}
+          subtitle={subtitle}
+          view={view}
+          onViewChange={(v) => setParams({ view: v })}
+          onPrev={() => calendar.current?.prev()}
+          onNext={() => calendar.current?.next()}
+          onToday={() => calendar.current?.today()}
+          busy={isFetching || isLoading}
+          filters={
+            <>
+              <Select value={chantierFilter || ''} onChange={(e) => setParams({ chantier: e.target.value })} className="w-auto min-w-44 py-1.5" aria-label="Filtrer par chantier">
+                <option value="">Tous les chantiers</option>
+                {chantiers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </Select>
-            )}
-            {(chantierFilter || workerFilter) !== 0 && (
-              <button type="button" onClick={() => setParams({ chantier: null, ouvrier: null })} className="text-sm text-gray-500 hover:text-gray-800">
-                Effacer les filtres
-              </button>
-            )}
-            {conflicts.size > 0 && (
-              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold">!</span>
-                Doublons : {conflicts.size} personne{conflicts.size > 1 ? 's' : ''} affectée{conflicts.size > 1 ? 's' : ''} deux fois
-              </span>
-            )}
-          </>
-        }
-        actions={
-          canEdit && (
-            <>
-              {view !== 'month' && (
-                <Button variant="secondary" size="sm" onClick={onCopyPreviousWeek} loading={copyWeek.isPending} className="hidden sm:inline-flex">
-                  Copier sem. précédente
-                </Button>
+              {chantierFilter !== 0 && (
+                <button type="button" onClick={() => setParams({ chantier: null })} className="text-sm text-gray-500 hover:text-gray-800">
+                  Effacer le filtre
+                </button>
               )}
-              <Button size="sm" onClick={() => setTarget({ date: newDate() })}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-                <span className="hidden sm:inline">Affectation</span>
-              </Button>
+              {conflicts.size > 0 && (
+                <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold">!</span>
+                  Doublons : {conflicts.size} personne{conflicts.size > 1 ? 's' : ''} affectée{conflicts.size > 1 ? 's' : ''} deux fois
+                </span>
+              )}
             </>
-          )
-        }
-      />
+          }
+          actions={
+            canEdit && (
+              <>
+                {view !== 'month' && (
+                  <Button variant="secondary" size="sm" onClick={onCopyPreviousWeek} loading={copyWeek.isPending} className="hidden sm:inline-flex">
+                    Copier sem. précédente
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => setTarget({ date: newDate() })}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  <span className="hidden sm:inline">Affectation</span>
+                </Button>
+              </>
+            )
+          }
+        />
 
-      <PlanningCalendar
-        ref={calendar}
-        view={view}
-        initialDate={initialDate}
-        affectations={affectations}
-        workers={view === 'team' && workerFilter ? workers.filter((w) => w.id === workerFilter) : workers}
-        conflicts={conflicts}
-        canEdit={canEdit}
-        onRangeChange={onRangeChange}
-        onCreate={onCreate}
-        onEdit={onEdit}
-        onMove={onMove}
-      />
+        <PlanningCalendar
+          ref={calendar}
+          view={view}
+          initialDate={initialDate}
+          affectations={affectations}
+          equipes={equipes.filter((e) => !hidden.has(e.id))}
+          conflicts={conflicts}
+          canEdit={canEdit}
+          onRangeChange={onRangeChange}
+          onCreate={onCreate}
+          onEdit={onEdit}
+          onMove={onMove}
+        />
 
-      {canEdit && (
-        <p className="mt-3 text-xs text-gray-400">
-          Astuce : sélectionne une plage pour créer, glisse une carte pour la déplacer, étire-la pour changer l'horaire. En vue « Par ouvrier », glisse une
-          carte sur une autre ligne pour changer de personne.
-        </p>
-      )}
+        {canEdit && (
+          <p className="mt-3 text-xs text-gray-400">
+            Astuce : sélectionne une plage horaire pour créer, glisse une carte pour la déplacer, étire-la pour changer l'horaire. En vue « Par équipe »,
+            glisse une carte sur une autre ligne pour changer d'équipe.
+          </p>
+        )}
 
-      <AffectationModal target={target} onClose={() => setTarget(null)} chantiers={chantiers} workers={workers} existing={affectations} />
+        <AffectationModal target={target} onClose={() => setTarget(null)} chantiers={chantiers} equipes={equipes} workers={workers} existing={loaded} />
+      </div>
     </div>
   )
 }

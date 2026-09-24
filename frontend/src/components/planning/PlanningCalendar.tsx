@@ -11,22 +11,23 @@ import type { ResourceLabelContentArg } from '@fullcalendar/resource'
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { toKey } from '@/lib/dates'
-import type { Affectation, AffectationPayload, Worker } from '@/types'
-import Avatar, { colorFor } from '@/components/ui/Avatar'
+import type { Affectation, AffectationPayload, Equipe } from '@/types'
+import Avatar, { AvatarGroup } from '@/components/ui/Avatar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
 
 /** Vues FullCalendar derrière chaque vue de la barre d'outils. */
 const FC_VIEWS: Record<CalendarView, string> = {
   month: 'dayGridMonth',
-  // Semaine en « cartes empilées » (lisible avec plusieurs chantiers par jour) ; le jour est horaire.
-  week: 'dayGridWeek',
+  // Semaine horaire (comme Apple Calendrier) : les équipes se placent côte à côte.
+  week: 'timeGridWeek',
   day: 'timeGridDay',
   list: 'listWeek',
   team: 'resourceTimelineWeek',
 }
 
-/** Ressource virtuelle de la vue « Par ouvrier » pour les affectations sans équipe. */
+/** Ressource virtuelle de la vue « Par équipe » pour les affectations sans équipe. */
 const UNASSIGNED = '__unassigned__'
+const NO_TEAM_COLOR = '#9ca3af'
 
 /** Clé Scheduler : commerciale via VITE_FC_LICENSE_KEY, sinon évaluation non commerciale (comme ela-planning). */
 const LICENSE_KEY = import.meta.env.VITE_FC_LICENSE_KEY || 'CC-Attribution-NonCommercial-NoDerivatives'
@@ -44,16 +45,16 @@ export interface CreateRequest {
   date: string
   start_time: string | null
   end_time: string | null
-  /** Vue « Par ouvrier » : ligne sur laquelle on a cliqué. */
-  workerId?: number
+  /** Vue « Par équipe » : ligne sur laquelle on a cliqué. */
+  equipeId?: number
 }
 
 /** Ce qu'un glisser-déposer / redimensionnement demande à l'API. */
 export interface MoveRequest {
   id: number
   patch: Partial<AffectationPayload>
-  /** Vue « Par ouvrier » : changement de ligne (ouvrier). */
-  workerChange?: { from: number | null; to: number | null }
+  /** Vue « Par équipe » : changement de ligne. */
+  equipeChange?: { from: number | null; to: number | null }
 }
 
 export interface PlanningCalendarHandle {
@@ -67,7 +68,7 @@ interface PlanningCalendarProps {
   view: CalendarView
   initialDate: Date
   affectations: Affectation[]
-  workers: Worker[]
+  equipes: Equipe[]
   /** Clés « date:workerId » des ouvriers affectés deux fois le même jour. */
   conflicts: Set<string>
   canEdit: boolean
@@ -86,14 +87,33 @@ function tint(color: string, pct: number): string {
   return `color-mix(in oklab, ${color} ${pct}%, white)`
 }
 
+/** Couleur d'une affectation : celle de son équipe, sinon celle du chantier. */
+function eventColor(a: Affectation): string {
+  return a.equipe?.color ?? a.chantier.color
+}
+
+const PinIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+    <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </svg>
+)
+const ClockIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" strokeLinecap="round" />
+  </svg>
+)
+
 /**
  * Calendrier du planning bâti sur FullCalendar (même bibliothèque qu'ela-planning) :
  * sélection d'une plage pour créer, clic pour modifier, glisser-déposer et
- * redimensionnement pour déplacer, vue « Par ouvrier » (timeline ressources) où
- * changer de ligne réaffecte la personne.
+ * redimensionnement pour déplacer. Les événements prennent la couleur de leur
+ * équipe ; la vue « Par équipe » (timeline) permet de changer d'équipe en
+ * changeant de ligne.
  */
 const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProps>(function PlanningCalendar(
-  { view, initialDate, affectations, workers, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove },
+  { view, initialDate, affectations, equipes, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove },
   ref,
 ) {
   const calRef = useRef<FullCalendar>(null)
@@ -119,53 +139,34 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
   const resources = useMemo(() => {
     if (!isTeam) return undefined
     return [
-      ...workers.map((w) => ({
-        id: String(w.id),
-        title: w.name,
-        extendedProps: { worker: w, order: 0 },
-      })),
-      // Toujours en dernière ligne (resourceOrder="order,title").
-      { id: UNASSIGNED, title: 'Sans équipe', extendedProps: { worker: null, order: 1 } },
+      ...equipes.map((e, i) => ({ id: String(e.id), title: e.name, extendedProps: { equipe: e, order: i } })),
+      // Toujours en dernière ligne (resourceOrder="order").
+      { id: UNASSIGNED, title: 'Sans équipe', extendedProps: { equipe: null, order: 9999 } },
     ]
-  }, [isTeam, workers])
+  }, [isTeam, equipes])
 
-  const events = useMemo<EventInput[]>(() => {
-    const base = (a: Affectation) => {
-      const color = a.chantier.color
-      const timed = Boolean(a.start_time)
-      const start = timed ? `${a.date}T${a.start_time}:00` : a.date
-      const end = timed && a.end_time ? `${a.date}T${a.end_time}:00` : undefined
-      const hasConflict = a.workers.some((w) => conflicts.has(`${a.date}:${w.id}`))
-      return {
-        title: a.chantier.name,
-        start,
-        end,
-        allDay: !timed,
-        backgroundColor: tint(color, 14),
-        borderColor: color,
-        textColor: `color-mix(in oklab, ${color} 70%, black)`,
-        classNames: ['pc-event', hasConflict ? 'pc-event--conflict' : ''],
-        extendedProps: { affectationId: a.id, color, hasConflict },
-      }
-    }
-
-    if (!isTeam) return affectations.map((a) => ({ id: String(a.id), ...base(a) }))
-
-    // Vue « Par ouvrier » : un événement par (affectation, ouvrier), en journée entière sur la timeline.
-    return affectations.flatMap((a): EventInput[] => {
-      const common = { ...base(a), allDay: true, start: a.date, end: undefined }
-      if (a.workers.length === 0) {
-        return [{ id: `${a.id}:${UNASSIGNED}`, resourceId: UNASSIGNED, ...common, extendedProps: { ...common.extendedProps, workerId: null } }]
-      }
-      return a.workers.map((w) => ({
-        id: `${a.id}:${w.id}`,
-        resourceId: String(w.id),
-        ...common,
-        classNames: [...common.classNames, conflicts.has(`${a.date}:${w.id}`) ? 'pc-event--conflict' : ''],
-        extendedProps: { ...common.extendedProps, workerId: w.id },
-      }))
-    })
-  }, [affectations, conflicts, isTeam])
+  const events = useMemo<EventInput[]>(
+    () =>
+      affectations.map((a) => {
+        const color = eventColor(a)
+        const timed = Boolean(a.start_time)
+        const hasConflict = a.workers.some((w) => conflicts.has(`${a.date}:${w.id}`))
+        return {
+          id: String(a.id),
+          resourceId: isTeam ? (a.equipe_id ? String(a.equipe_id) : UNASSIGNED) : undefined,
+          title: a.chantier.name,
+          start: timed && !isTeam ? `${a.date}T${a.start_time}:00` : a.date,
+          end: timed && !isTeam && a.end_time ? `${a.date}T${a.end_time}:00` : undefined,
+          allDay: !timed || isTeam,
+          backgroundColor: tint(color, 16),
+          borderColor: color,
+          textColor: `color-mix(in oklab, ${color} 62%, black)`,
+          classNames: ['pc-event', hasConflict ? 'pc-event--conflict' : ''],
+          extendedProps: { affectationId: a.id, color, hasConflict },
+        }
+      }),
+    [affectations, conflicts, isTeam],
+  )
 
   /* ------------------------------------------------------------ interactions */
 
@@ -181,18 +182,13 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
   const handleSelect = useCallback(
     (arg: DateSelectArg) => {
       api()?.unselect()
-      const workerId = arg.resource && arg.resource.id !== UNASSIGNED ? Number(arg.resource.id) : undefined
+      const equipeId = arg.resource && arg.resource.id !== UNASSIGNED ? Number(arg.resource.id) : undefined
       if (arg.allDay) {
-        onCreate({ date: toKey(arg.start), start_time: null, end_time: null, workerId })
+        onCreate({ date: toKey(arg.start), start_time: null, end_time: null, equipeId })
         return
       }
       const sameDay = toKey(arg.start) === toKey(new Date(arg.end.getTime() - 1))
-      onCreate({
-        date: toKey(arg.start),
-        start_time: hhmm(arg.start),
-        end_time: sameDay ? hhmm(arg.end) : null,
-        workerId,
-      })
+      onCreate({ date: toKey(arg.start), start_time: hhmm(arg.start), end_time: sameDay ? hhmm(arg.end) : null, equipeId })
     },
     [onCreate],
   )
@@ -224,18 +220,17 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         }
       }
 
-      let workerChange: MoveRequest['workerChange']
+      let equipeChange: MoveRequest['equipeChange']
       if ('newResource' in arg && arg.newResource && arg.oldResource && arg.newResource.id !== arg.oldResource.id) {
         const to = arg.newResource.id === UNASSIGNED ? null : Number(arg.newResource.id)
         const from = arg.oldResource.id === UNASSIGNED ? null : Number(arg.oldResource.id)
-        workerChange = { from, to }
-        const ids = a.workers.map((w) => w.id).filter((wid) => wid !== from)
-        if (to !== null && !ids.includes(to)) ids.push(to)
-        patch.worker_ids = ids
+        equipeChange = { from, to }
+        // Sans worker_ids, l'API remplace les ouvriers par les membres de la nouvelle équipe.
+        patch.equipe_id = to
       }
 
       try {
-        await onMove({ id, patch, workerChange })
+        await onMove({ id, patch, equipeChange })
       } catch {
         arg.revert()
       }
@@ -249,16 +244,20 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
     (arg: EventContentArg) => {
       const a = byId.get(Number(arg.event.extendedProps.affectationId))
       const conflict = Boolean(arg.event.extendedProps.hasConflict)
-      const color = String(arg.event.extendedProps.color)
       const type = arg.view.type
-      // Mois et timeline : une ligne par carte. Semaine (cartes empilées) et jour : titre + horaire + équipe.
-      const compact = type === 'dayGridMonth' || type.startsWith('resourceTimeline')
+      const address = a ? [a.chantier.address, a.chantier.city].filter(Boolean).join(', ') : ''
+      const time = a?.start_time ? `${a.start_time}${a.end_time ? ` – ${a.end_time}` : ''}` : 'Journée'
 
       if (type.startsWith('list')) {
         return (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="font-semibold text-gray-900">{arg.event.title}</span>
-            {a?.chantier.city && <span className="text-xs text-gray-500">{a.chantier.city}</span>}
+            {address && <span className="text-xs text-gray-500">{address}</span>}
+            {a?.equipe && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-white" style={{ backgroundColor: a.equipe.color }}>
+                {a.equipe.name}
+              </span>
+            )}
             {a && a.workers.length > 0 && (
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-700">
                 {a.workers.map((w) => (
@@ -274,33 +273,42 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         )
       }
 
+      // Mois et timeline : une ligne compacte.
+      if (type === 'dayGridMonth' || type.startsWith('resourceTimeline')) {
+        return (
+          <div className="pc-event__inner pc-event__inner--compact" title={a ? `${a.chantier.name} · ${time}${a.equipe ? ` · ${a.equipe.name}` : ''}` : undefined}>
+            <div className="pc-event__head">
+              <span className="pc-event__title">{arg.event.title}</span>
+              {conflict && <span className="pc-event__conflict" title="Ouvrier affecté deux fois ce jour">!</span>}
+              {a?.start_time && <span className="pc-event__time">{a.start_time}</span>}
+            </div>
+          </div>
+        )
+      }
+
+      // Semaine / jour (grille horaire) : titre, adresse, horaire — comme Apple Calendrier.
       return (
-        <div className="pc-event__inner" title={a ? `${a.chantier.name} · ${a.workers.map((w) => w.name).join(', ') || 'Personne'}` : undefined}>
+        <div className="pc-event__inner" title={a ? `${a.chantier.name}${address ? ` · ${address}` : ''} · ${time}${a.equipe ? ` · ${a.equipe.name}` : ''}` : undefined}>
           <div className="pc-event__head">
-            <span className="pc-event__dot" style={{ backgroundColor: color }} />
             <span className="pc-event__title">{arg.event.title}</span>
             {conflict && <span className="pc-event__conflict" title="Ouvrier affecté deux fois ce jour">!</span>}
-            {!compact && arg.timeText && <span className="pc-event__time">{arg.timeText}</span>}
           </div>
-          {!compact && a && (
-            <div className="pc-event__people">
-              {a.workers.length === 0 ? (
-                <span className="italic opacity-60">Personne</span>
-              ) : (
-                a.workers.slice(0, 6).map((w) => (
-                  <span key={w.id} className="pc-event__avatar" style={{ backgroundColor: colorFor(w.name, w.color) }} title={w.name}>
-                    {w.name
-                      .split(/\s+/)
-                      .slice(0, 2)
-                      .map((p) => p[0]?.toUpperCase())
-                      .join('')}
-                  </span>
-                ))
-              )}
-              {a.workers.length > 6 && <span className="pc-event__more">+{a.workers.length - 6}</span>}
+          {address && (
+            <div className="pc-event__meta">
+              <PinIcon />
+              <span>{address}</span>
             </div>
           )}
-          {compact && a && type === 'dayGridMonth' && <span className="pc-event__count">{a.workers.length}</span>}
+          <div className="pc-event__meta">
+            <ClockIcon />
+            <span>{time}</span>
+          </div>
+          {a && (a.equipe ? a.workers.length > 1 : a.workers.length > 0) && (
+            <div className="pc-event__people">
+              <AvatarGroup people={a.workers} max={4} size="xs" />
+            </div>
+          )}
+          {a?.note && <div className="pc-event__note">{a.note}</div>}
         </div>
       )
     },
@@ -308,14 +316,14 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
   )
 
   const renderResource = useCallback((arg: ResourceLabelContentArg) => {
-    const w = arg.resource.extendedProps.worker as Worker | null
-    if (!w) return <span className="text-sm italic text-gray-500">Sans équipe</span>
+    const e = arg.resource.extendedProps.equipe as Equipe | null
+    if (!e) return <span className="text-sm italic text-gray-500">Sans équipe</span>
     return (
       <span className="flex items-center gap-2">
-        <Avatar name={w.name} color={w.color} size="sm" />
+        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
         <span className="min-w-0">
-          <span className="block truncate text-sm font-medium text-gray-900">{w.name}</span>
-          <span className="block truncate text-[11px] text-gray-500">{w.job_title ?? '—'}</span>
+          <span className="block truncate text-sm font-medium text-gray-900">{e.name}</span>
+          <span className="block truncate text-[11px] text-gray-500">{e.members.map((m) => m.name.split(' ')[0]).join(', ') || 'Aucun membre'}</span>
         </span>
       </span>
     )
@@ -338,31 +346,34 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         nowIndicator
         weekNumbers={false}
         moreLinkText={(n) => `+ ${n} autre${n > 1 ? 's' : ''}`}
-        slotEventOverlap={false}
         slotMinTime="06:00:00"
-        slotMaxTime="20:00:00"
+        slotMaxTime="19:30:00"
         slotDuration="00:30:00"
         snapDuration="00:15:00"
+        slotEventOverlap={false}
         slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
         eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
         allDaySlot
         allDayText="Journée"
+        dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
         views={{
-          dayGridMonth: { dayMaxEvents: 4 },
-          dayGridWeek: { dayMaxEvents: false, dayHeaderFormat: { weekday: 'short', day: 'numeric', month: 'numeric' } },
+          dayGridMonth: { dayMaxEvents: 4, dayHeaderFormat: { weekday: 'short' } },
+          timeGridWeek: { dayHeaderFormat: { weekday: 'short', day: 'numeric' } },
+          timeGridDay: { dayHeaderFormat: { weekday: 'long', day: 'numeric', month: 'long' } },
           resourceTimelineWeek: {
             slotDuration: { days: 1 },
             slotLabelFormat: [{ weekday: 'short', day: 'numeric' }],
-            resourceAreaHeaderContent: 'Équipe',
-            resourceAreaWidth: '240px',
+            resourceAreaHeaderContent: 'Équipes',
+            resourceAreaWidth: '220px',
           },
         }}
         resources={resources}
-        resourceOrder="order,title"
+        resourceOrder="order"
         resourceLabelContent={renderResource}
         events={events}
         eventContent={renderEvent}
         eventOrder="start,title"
+        eventMinHeight={26}
         editable={canEdit}
         eventStartEditable={canEdit}
         eventDurationEditable={canEdit && !isTeam}
@@ -377,6 +388,7 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         eventResize={handleChange}
         datesSet={handleDatesSet}
         noEventsText="Aucune affectation sur cette période."
+        eventBackgroundColor={tint(NO_TEAM_COLOR, 16)}
       />
     </div>
   )

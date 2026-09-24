@@ -6,13 +6,15 @@ interface WorkerPickerProps {
   workers: Worker[]
   value: number[]
   onChange: (ids: number[]) => void
-  /** id → nom du chantier où la personne est déjà affectée ce jour-là. */
+  /** id → nom du chantier (ou de l'équipe) où la personne est déjà prise. */
   busy?: Map<number, string>
+  /** Préfixe de la mention (« déjà sur Villa… », « déjà dans Équipe… »). */
+  busyLabel?: string
   disabled?: boolean
 }
 
 /** Sélecteur multiple d'ouvriers : recherche + cases cochables avec avatars. */
-export default function WorkerPicker({ workers, value, onChange, busy, disabled = false }: WorkerPickerProps) {
+export default function WorkerPicker({ workers, value, onChange, busy, busyLabel = 'déjà sur', disabled = false }: WorkerPickerProps) {
   const [search, setSearch] = useState('')
   const selected = useMemo(() => new Set(value), [value])
 
@@ -72,7 +74,11 @@ export default function WorkerPicker({ workers, value, onChange, busy, disabled 
                   <span className="block truncate text-sm font-medium text-gray-900">{w.name}</span>
                   <span className="block truncate text-xs text-gray-500">
                     {w.job_title ?? '—'}
-                    {elsewhere && <span className="ml-1 font-medium text-amber-600">· déjà sur {elsewhere}</span>}
+                    {elsewhere && (
+                      <span className="ml-1 font-medium text-amber-600">
+                        · {busyLabel} {elsewhere}
+                      </span>
+                    )}
                   </span>
                 </span>
               </label>

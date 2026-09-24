@@ -19,7 +19,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->fill($request->validated())->save();
 
-        return response()->json(UserResource::make($user->load('roles')));
+        return response()->json(UserResource::make($user->load(['roles', 'equipe'])));
     }
 
     /**

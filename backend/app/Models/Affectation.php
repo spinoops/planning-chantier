@@ -21,6 +21,7 @@ class Affectation extends Model
 
     protected $fillable = [
         'chantier_id',
+        'equipe_id',
         'date',
         'start_time',
         'end_time',
@@ -39,6 +40,12 @@ class Affectation extends Model
     public function chantier(): BelongsTo
     {
         return $this->belongsTo(Chantier::class);
+    }
+
+    /** Équipe planifiée (ses membres sont recopiés dans `workers` à la création). @return BelongsTo<Equipe, $this> */
+    public function equipe(): BelongsTo
+    {
+        return $this->belongsTo(Equipe::class);
     }
 
     /** Ouvriers (et chefs) envoyés sur le chantier ce jour-là. @return BelongsToMany<User, $this> */

@@ -31,7 +31,7 @@ class UserController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $users = User::with('roles')
+        $users = User::with(['roles', 'equipe'])
             ->search($filters['search'] ?? null)
             ->when($filters['role'] ?? null, fn ($q, $role) => $q->role($role))
             ->when($filters['trashed'] ?? false, fn ($q) => $q->onlyTrashed())
@@ -48,7 +48,7 @@ class UserController extends Controller
      */
     public function show(User $user): UserResource
     {
-        return UserResource::make($user->load('roles'));
+        return UserResource::make($user->load(['roles', 'equipe']));
     }
 
     /**
@@ -65,10 +65,11 @@ class UserController extends Controller
             'phone' => $data['phone'] ?? null,
             'job_title' => $data['job_title'] ?? null,
             'color' => $data['color'] ?? null,
+            'equipe_id' => $data['equipe_id'] ?? null,
         ]);
         $user->syncRoles($data['roles']);
 
-        return UserResource::make($user->load('roles'))
+        return UserResource::make($user->load(['roles', 'equipe']))
             ->response()
             ->setStatusCode(201);
     }
@@ -90,6 +91,7 @@ class UserController extends Controller
         $user->phone = $data['phone'] ?? null;
         $user->job_title = $data['job_title'] ?? null;
         $user->color = $data['color'] ?? null;
+        $user->equipe_id = $data['equipe_id'] ?? null;
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
             // Nouveau mot de passe imposé : les sessions existantes sont révoquées.
@@ -98,7 +100,7 @@ class UserController extends Controller
         $user->save();
         $user->syncRoles($data['roles']);
 
-        return UserResource::make($user->load('roles'));
+        return UserResource::make($user->load(['roles', 'equipe']));
     }
 
     /**
@@ -128,6 +130,6 @@ class UserController extends Controller
 
         $user->restore();
 
-        return UserResource::make($user->load('roles'));
+        return UserResource::make($user->load(['roles', 'equipe']));
     }
 }

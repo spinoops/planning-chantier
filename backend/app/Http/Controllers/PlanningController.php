@@ -7,6 +7,7 @@ use App\Http\Requests\StoreAffectationRequest;
 use App\Http\Requests\UpdateAffectationRequest;
 use App\Http\Resources\AffectationResource;
 use App\Models\Affectation;
+use App\Models\Equipe;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,11 +16,13 @@ use Illuminate\Support\Facades\DB;
 
 class PlanningController extends Controller
 {
+    private const RELATIONS = ['chantier', 'equipe', 'workers'];
+
     /**
      * Affectations d'une période (calendrier).
      *
      * ?from=YYYY-MM-DD&to=YYYY-MM-DD (max 100 jours, par défaut la semaine courante)
-     * ?chantier_id= et ?worker_id= filtrent ; ?mine=1 limite à l'utilisateur connecté.
+     * ?chantier_id=, ?equipe_id= et ?worker_id= filtrent ; ?mine=1 limite à l'utilisateur connecté.
      * Un utilisateur non planificateur (ouvrier) ne voit que ses propres affectations.
      */
     public function index(Request $request): AnonymousResourceCollection
@@ -28,6 +31,7 @@ class PlanningController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
             'chantier_id' => ['nullable', 'integer'],
+            'equipe_id' => ['nullable', 'integer'],
             'worker_id' => ['nullable', 'integer'],
             'mine' => ['nullable', 'boolean'],
         ]);
@@ -45,12 +49,13 @@ class PlanningController extends Controller
         $onlyMine = ($filters['mine'] ?? false) || ! $user->isPlanner();
 
         $affectations = Affectation::query()
-            ->with(['chantier', 'workers'])
+            ->with(self::RELATIONS)
             ->whereHas('chantier')
             ->between($from->toDateString(), $to->toDateString())
             ->when($onlyMine, fn ($q) => $q->forWorker($user->id))
             ->when(! $onlyMine && ($filters['worker_id'] ?? null), fn ($q, $id) => $q->forWorker((int) $id))
             ->when($filters['chantier_id'] ?? null, fn ($q, $id) => $q->where('chantier_id', $id))
+            ->when($filters['equipe_id'] ?? null, fn ($q, $id) => $q->where('equipe_id', $id))
             ->orderBy('date')
             ->orderByRaw('start_time is null, start_time')
             ->orderBy('id')
@@ -68,9 +73,13 @@ class PlanningController extends Controller
             abort(403, 'Action non autorisée.');
         }
 
-        return AffectationResource::make($affectation->load(['chantier', 'workers']));
+        return AffectationResource::make($affectation->load(self::RELATIONS));
     }
 
+    /**
+     * Crée une affectation. Sans `worker_ids`, l'équipe choisie fournit les
+     * ouvriers (copie de ses membres à cet instant).
+     */
     public function store(StoreAffectationRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -80,28 +89,37 @@ class PlanningController extends Controller
                 ...collect($data)->except('worker_ids')->all(),
                 'created_by' => $request->user()->id,
             ]);
-            $affectation->workers()->sync($data['worker_ids']);
+            $affectation->workers()->sync($this->resolveWorkers($data, $data['equipe_id'] ?? null));
 
             return $affectation;
         });
 
-        return AffectationResource::make($affectation->load(['chantier', 'workers']))
+        return AffectationResource::make($affectation->load(self::RELATIONS))
             ->response()
             ->setStatusCode(201);
     }
 
+    /**
+     * Met à jour une affectation. Un changement d'équipe sans `worker_ids`
+     * (glisser-déposer sur une autre ligne) remplace les ouvriers par les
+     * membres de la nouvelle équipe.
+     */
     public function update(UpdateAffectationRequest $request, Affectation $affectation): AffectationResource
     {
         $data = $request->validated();
 
         DB::transaction(function () use ($data, $affectation) {
+            $previousEquipe = $affectation->equipe_id;
             $affectation->fill(collect($data)->except('worker_ids')->all())->save();
+
             if (array_key_exists('worker_ids', $data)) {
                 $affectation->workers()->sync($data['worker_ids']);
+            } elseif (array_key_exists('equipe_id', $data) && $data['equipe_id'] !== $previousEquipe) {
+                $affectation->workers()->sync($this->resolveWorkers([], $data['equipe_id']));
             }
         });
 
-        return AffectationResource::make($affectation->fresh(['chantier', 'workers']));
+        return AffectationResource::make($affectation->fresh(self::RELATIONS));
     }
 
     public function destroy(Affectation $affectation): JsonResponse
@@ -113,8 +131,8 @@ class PlanningController extends Controller
 
     /**
      * Duplique toutes les affectations de la semaine `from` (lundi) sur la
-     * semaine `to` (lundi), en conservant chantiers, horaires, notes et équipes.
-     * Avec `replace`, la semaine cible est d'abord vidée.
+     * semaine `to` (lundi), en conservant chantiers, équipes, horaires, notes
+     * et ouvriers. Avec `replace`, la semaine cible est d'abord vidée.
      */
     public function copyWeek(CopyWeekRequest $request): JsonResponse
     {
@@ -138,6 +156,7 @@ class PlanningController extends Controller
             foreach ($source as $item) {
                 $copy = Affectation::create([
                     'chantier_id' => $item->chantier_id,
+                    'equipe_id' => $item->equipe_id,
                     'date' => $item->date->addDays($offset)->toDateString(),
                     'start_time' => $item->start_time,
                     'end_time' => $item->end_time,
@@ -155,5 +174,23 @@ class PlanningController extends Controller
             'message' => $created > 0 ? "{$created} affectation(s) copiée(s)." : 'Aucune affectation à copier sur la semaine source.',
             'created' => $created,
         ]);
+    }
+
+    /**
+     * Ouvriers d'une affectation : ceux fournis, sinon les membres de l'équipe.
+     *
+     * @param  array<string, mixed>  $data
+     * @return list<int>
+     */
+    private function resolveWorkers(array $data, ?int $equipeId): array
+    {
+        if (array_key_exists('worker_ids', $data)) {
+            return array_values($data['worker_ids']);
+        }
+        if ($equipeId === null) {
+            return [];
+        }
+
+        return Equipe::find($equipeId)?->members()->pluck('users.id')->all() ?? [];
     }
 }

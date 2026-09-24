@@ -64,7 +64,7 @@ class RegistrationController extends Controller
 
         return response()->json([
             'token' => $user->createToken('spa')->plainTextToken,
-            'user' => UserResource::make($user->load('roles')),
+            'user' => UserResource::make($user->load(['roles', 'equipe'])),
         ], 201);
     }
 

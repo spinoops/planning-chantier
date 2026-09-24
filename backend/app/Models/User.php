@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -31,6 +32,7 @@ class User extends Authenticatable
         'phone',
         'job_title',
         'color',
+        'equipe_id',
     ];
 
     /**
@@ -70,6 +72,16 @@ class User extends Authenticatable
     public function isPlanner(): bool
     {
         return $this->hasAnyRole((array) config('roles.planners', ['admin']));
+    }
+
+    /**
+     * Équipe de rattachement (planification par équipe).
+     *
+     * @return BelongsTo<Equipe, $this>
+     */
+    public function equipe(): BelongsTo
+    {
+        return $this->belongsTo(Equipe::class);
     }
 
     /**

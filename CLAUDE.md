@@ -18,15 +18,24 @@ La version installée sous WAMP est **8.4.24** :
 ## Démarrer
 - **`dev.bat`** (racine) lance le backend (**:8002**) + le frontend (**:5175**, hot-reload).
   **WAMP (MySQL) doit tourner.** Base : `app_planningchantier`.
-- Comptes de démo (mot de passe `password`) :
-  `admin@baseapp.test` (admin) · `chef@baseapp.test` (chef de chantier) · `ouvrier@baseapp.test` (ouvrier).
-  Le seeder crée aussi 6 autres ouvriers, 5 chantiers et 3 semaines d'affectations.
+- Comptes de démo (mot de passe `password`) : `admin@baseapp.test` (admin) ·
+  `robin@baseapp.test` (Robin Braun, chef : planifie) · `leo@`, `davison@`, `etienne@`, `david@baseapp.test`
+  (ouvriers). Ce sont les vrais employés (Robin Braun, Davison Da Silva Setubal, Léo Lançon,
+  Étienne Armand, David Batista Setubal), chacun dans une équipe individuelle à la couleur de son
+  ancien calendrier Apple (réf. `_construction/*.pdf`). Le seeder ajoute des chantiers (clients)
+  et deux semaines d'affectations en demi-journées.
 - Réinitialiser les données de démo : `backend\artisan.bat migrate:fresh --seed`.
 
 ## Métier
 - **Rôles** (`config/roles.php`) : `admin`, `chef` (planifie), `ouvrier` (consulte).
   `planners` = rôles autorisés à écrire (chantiers + planning) ; `assignable` = rôles
   qu'on peut placer sur un chantier (ouvrier + chef). `User::isPlanner()`, `User::assignable()`.
+- **Équipe** (`equipes`) : nom, couleur, ordre ; un employé a **une** équipe au plus (`users.equipe_id`,
+  `PUT /equipes/{id}` avec `member_ids` retire les membres de leur ancienne équipe). Le planning se
+  fait par équipe : `affectations.equipe_id` + **copie des membres** dans `affectation_user` à la
+  création (snapshot ; l'équipe peut être ajustée pour un jour). Changer l'`equipe_id` d'une
+  affectation sans `worker_ids` remplace ses ouvriers par ceux de la nouvelle équipe.
+  Couleur d'un événement = couleur de l'équipe (sinon celle du chantier).
 - **Chantier** (`chantiers`) : nom, client, adresse, ville, couleur (#rrggbb, affichée dans le
   calendrier), statut `planned|active|paused|done`, dates, notes. Soft delete.
 - **Affectation** (`affectations` + pivot `affectation_user`) : un chantier sur un jour,
@@ -38,26 +47,32 @@ La version installée sous WAMP est **8.4.24** :
 ## API planning (`routes/api.php`, sous `auth:sanctum`)
 - `GET /chantiers` (tous), `GET /planning?from&to[&chantier_id&worker_id&mine]` (max 100 jours ;
   un non-planificateur ne reçoit que ses affectations), `GET /planning/{id}`.
-- Planificateurs (`role:admin|chef`) : `POST/PUT/DELETE /chantiers`, `GET /workers`,
+- `GET /equipes` (tous, avec membres) ; `GET /planning` accepte aussi `&equipe_id=`.
+- Planificateurs (`role:admin|chef`) : `POST/PUT/DELETE /chantiers`, `POST/PUT/DELETE /equipes`, `GET /workers`,
   `POST /planning`, `PUT /planning/{id}` (champs optionnels : `{date}` seul = déplacement),
   `DELETE /planning/{id}`, `POST /planning/copy-week {from, to, replace?}` (lundis).
 - `GET /dashboard` renvoie `planning` (état du jour) pour les planificateurs.
 
 ## Front (`frontend/src`)
-- Pages : `PlanningPage` (calendrier, état dans l'URL `?view=&d=&chantier=&ouvrier=`),
-  `ChantiersPage` (cartes + formulaire), `MyPlanningPage` (`/mon-planning`, vue ouvrier),
-  `DashboardPage` (état du jour). Accueil `/` → `HomeRedirect` selon le rôle.
+- Pages : `PlanningPage` (colonne équipes + calendrier, état dans l'URL `?view=&d=&chantier=`),
+  `ChantiersPage` (cartes + formulaire), `EquipesPage` (équipes + membres), `MyPlanningPage`
+  (`/mon-planning`, vue ouvrier), `DashboardPage` (état du jour). Accueil `/` → `HomeRedirect` selon le rôle.
 - Calendrier : **FullCalendar 6** (même bibliothèque qu'ela-planning) dans
-  `components/planning/PlanningCalendar.tsx` : vues `dayGridMonth` (Mois), `dayGridWeek` (Semaine,
-  cartes empilées), `timeGridDay` (Jour, horaires), `listWeek` (Liste), `resourceTimelineWeek`
-  (« Par ouvrier », plugin premium : clé `VITE_FC_LICENSE_KEY`, sinon clé d'évaluation non
-  commerciale). Header FullCalendar masqué : la barre est `CalendarToolbar` (pilotage via ref
-  `prev/next/today`). Sélection d'une plage → création, clic → modale, `eventDrop`/`eventResize`
-  → `PUT /planning/{id}` (revert si erreur) ; en vue « Par ouvrier », changer de ligne réaffecte
-  la personne (`worker_ids`). Événements construits dans `PlanningCalendar` (couleur du chantier
-  en `backgroundColor`/`borderColor`, rendu `eventContent`), thème CSS `.pc-calendar` / `.pc-event`
-  dans `index.css`. Autres composants : `AffectationCard` (tableau de bord), `AffectationModal`,
-  `WorkerPicker`. `lib/dates.ts` : semaines lundi→dimanche, clés `YYYY-MM-DD`.
+  `components/planning/PlanningCalendar.tsx`, maquette de référence = Apple Calendrier
+  (`_construction/*.pdf`). Vues `dayGridMonth` (Mois), `timeGridWeek` (Semaine, grille horaire
+  06:00–19:30, équipes côte à côte), `timeGridDay` (Jour), `listWeek` (Liste), `resourceTimelineWeek`
+  (« Par équipe », une ligne par équipe, plugin premium : clé `VITE_FC_LICENSE_KEY`, sinon clé
+  d'évaluation non commerciale). Header FullCalendar masqué : la barre est `CalendarToolbar`
+  (pilotage via ref `prev/next/today`). Sélection d'une plage → création, clic → modale,
+  `eventDrop`/`eventResize` → `PUT /planning/{id}` (revert si erreur) ; en vue « Par équipe »,
+  changer de ligne envoie `equipe_id` (l'API remplace les ouvriers). Cartes : titre = chantier,
+  adresse, horaire (rendu `eventContent`), couleur de l'équipe ; cartes étroites → titre seul
+  (container query). Thème CSS `.pc-calendar` / `.pc-event` dans `index.css`.
+- `TeamSidebar` : liste des équipes avec case colorée (afficher / masquer, double-clic = seule),
+  masquage persisté dans `localStorage` (`planning_hidden_equipes`), filtrage côté client.
+  Doublons = même personne sur deux créneaux qui se chevauchent (`timesOverlap` de `lib/dates.ts`).
+- Autres composants : `AffectationCard` (tableau de bord), `AffectationModal` (sélecteur d'équipe
+  qui pré-coche ses membres), `WorkerPicker`. `lib/dates.ts` : semaines lundi→dimanche, clés `YYYY-MM-DD`.
 - Couleur d'un chantier : variable CSS `--chantier` + classes `.chantier-card` / `.chantier-dot`
   (`index.css`). Avatars : `components/ui/Avatar.tsx` (couleur du compte ou dérivée du nom).
 - Hooks : `useChantiers` / `useOpenChantiers`, `usePlanning` (+ create/update/delete/copyWeek),

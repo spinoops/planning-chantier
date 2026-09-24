@@ -19,6 +19,8 @@ class AffectationResource extends JsonResource
         return [
             'id' => $this->id,
             'chantier_id' => $this->chantier_id,
+            'equipe_id' => $this->equipe_id,
+            'equipe' => $this->whenLoaded('equipe', fn () => $this->equipe ? ['id' => $this->equipe->id, 'name' => $this->equipe->name, 'color' => $this->equipe->color] : null),
             'date' => $this->date->format('Y-m-d'),
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
