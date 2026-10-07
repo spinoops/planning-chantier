@@ -159,8 +159,13 @@ La version installée sous WAMP est **8.4.24** :
     pendant le glisser (`externalDragging` → classe `pc-event--drop-target`, via `elementsFromPoint`)
     et, dans `drop`, si une carte est sous le point de dépôt, appelle `onDropOnEvent` : la page ajoute
     les membres (`worker_ids` fusionnés ; une équipe déposée sur une affectation sans équipe lui est attribuée).
-  - Modale d'affectation : bouton « + » à côté du chantier → `QuickChantierModal` (nom, adresse, ville,
-    couleur ; statut `active`) puis sélection automatique du chantier créé. Palette partagée `lib/colors.ts`.
+  - Modale d'affectation : bouton « + » à côté du chantier → `QuickChantierModal` (client, complément, adresse,
+    ville, couleur ; statut `active`) puis sélection automatique du chantier créé. Palette partagée `lib/colors.ts`.
+  - **Titre d'un chantier = client d'abord** (demande explicite) : `ChantierTitleFields` (client via `ClientSelect`,
+    puis « Complément du titre » facultatif) dans `QuickChantierModal`, `ChantiersPage` et la fiche ;
+    `lib/chantierName.ts` compose `name` = « Client – Complément » (`buildChantierName`) et retrouve le complément
+    d'un titre existant (`complementOf`). Choisir un client reprend son adresse si le chantier n'en a pas.
+    Côté API, `chantiers.name` reste le titre complet (rien ne change dans le schéma).
   Doublons = même personne sur deux créneaux qui se chevauchent (`timesOverlap` de `lib/dates.ts`).
 - Autres composants : `AffectationCard` (tableau de bord), `AffectationModal` (sélecteur d'équipe
   qui pré-coche ses membres, boutons Matin / Après-midi / Journée depuis les réglages, répétition,

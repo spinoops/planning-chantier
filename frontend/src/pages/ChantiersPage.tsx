@@ -25,7 +25,8 @@ import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
 import Textarea from '@/components/ui/Textarea'
 import AddressInput from '@/components/ui/AddressInput'
-import ClientSelect from '@/components/planning/ClientSelect'
+import ChantierTitleFields from '@/components/planning/ChantierTitleFields'
+import { buildChantierName, complementOf } from '@/lib/chantierName'
 
 import { CHANTIER_COLORS } from '@/lib/colors'
 
@@ -37,7 +38,7 @@ const STATUS_TONE: Record<ChantierStatus, BadgeTone> = {
 }
 
 const schema = z.object({
-  name: z.string().min(1, 'Nom requis.').max(255),
+  complement: z.string().max(255),
   client: z.string().max(255),
   client_id: z.string(),
   address: z.string().max(255),
@@ -51,7 +52,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-const EMPTY: FormValues = { name: '', client: '', client_id: '', address: '', city: '', color: CHANTIER_COLORS[0], status: 'active', start_date: '', end_date: '', notes: '' }
+const EMPTY: FormValues = { complement: '', client: '', client_id: '', address: '', city: '', color: CHANTIER_COLORS[0], status: 'active', start_date: '', end_date: '', notes: '' }
 
 export default function ChantiersPage() {
   const { params, setPage, setSearch } = useListParams({ sort: 'name', dir: 'asc', per_page: 12 })
@@ -105,7 +106,7 @@ export default function ChantiersPage() {
     setEditing(c)
     setFormError(null)
     reset({
-      name: c.name,
+      complement: complementOf(c.name, c.client),
       client: c.client ?? '',
       client_id: c.client_id ? String(c.client_id) : '',
       address: c.address ?? '',
@@ -121,8 +122,13 @@ export default function ChantiersPage() {
 
   function onSubmit(values: FormValues) {
     setFormError(null)
+    const name = buildChantierName(values.client, values.complement)
+    if (!name) {
+      setError('complement', { message: 'Choisis un client ou saisis un titre.' })
+      return
+    }
     const payload = {
-      name: values.name.trim(),
+      name,
       client: values.client.trim() || null,
       client_id: Number(values.client_id) || null,
       address: values.address.trim() || null,
@@ -289,18 +295,24 @@ export default function ChantiersPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
 
+          <ChantierTitleFields
+            clientId={watch('client_id')}
+            clientName={watch('client')}
+            complement={watch('complement')}
+            onClient={(id, client) => {
+              setValue('client_id', id, { shouldDirty: true })
+              setValue('client', client?.name ?? '', { shouldDirty: true })
+              if (client && !watch('address') && client.address) {
+                setValue('address', client.address, { shouldDirty: true })
+                if (client.city) setValue('city', client.city, { shouldDirty: true })
+              }
+            }}
+            onComplement={(v) => setValue('complement', v, { shouldDirty: true, shouldValidate: Boolean(errors.complement) })}
+            clientError={errors.client_id?.message}
+            complementError={errors.complement?.message}
+          />
+
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <Input label="Nom du chantier" placeholder="Ex. Villa Les Cèdres" error={errors.name?.message} {...register('name')} />
-            </div>
-            <ClientSelect
-              value={watch('client_id')}
-              onChange={(id, client) => {
-                setValue('client_id', id, { shouldDirty: true })
-                if (client) setValue('client', client.name, { shouldDirty: true })
-              }}
-              error={errors.client_id?.message}
-            />
             <Select label="Statut" error={errors.status?.message} {...register('status')}>
               {CHANTIER_STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>

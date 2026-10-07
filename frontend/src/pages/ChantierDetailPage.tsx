@@ -22,10 +22,12 @@ import Spinner from '@/components/ui/Spinner'
 import StatCard from '@/components/ui/StatCard'
 import Textarea from '@/components/ui/Textarea'
 import AddressInput from '@/components/ui/AddressInput'
-import ClientSelect from '@/components/planning/ClientSelect'
+import ChantierTitleFields from '@/components/planning/ChantierTitleFields'
+import { buildChantierName, complementOf } from '@/lib/chantierName'
 
 const schema = z.object({
-  name: z.string().min(1, 'Nom requis.').max(255),
+  client: z.string().max(255),
+  complement: z.string().max(255),
   client_id: z.string(),
   address: z.string().max(255),
   city: z.string().max(120),
@@ -56,7 +58,8 @@ const STEP_TONE: Record<ChantierStep['state'], string> = {
 
 function toForm(c: Chantier): FormValues {
   return {
-    name: c.name,
+    client: c.client_record?.name ?? c.client ?? '',
+    complement: complementOf(c.name, c.client_record?.name ?? c.client),
     client_id: c.client_id ? String(c.client_id) : '',
     address: c.address ?? '',
     city: c.city ?? '',
@@ -130,7 +133,8 @@ export default function ChantierDetailPage() {
       {
         id: c.id,
         payload: {
-          name: values.name.trim(),
+          name: buildChantierName(values.client, values.complement) || c.name,
+          client: values.client.trim() || null,
           client_id: Number(values.client_id) || null,
           address: values.address.trim() || null,
           city: values.city.trim() || null,
@@ -243,10 +247,18 @@ export default function ChantierDetailPage() {
             <Card title="1 · Création du chantier" description="Fait au bureau : client, lieu, estimation, mesures, remarques.">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <Input label="Nom du chantier" error={errors.name?.message} {...register('name')} />
-                </div>
-                <div className="sm:col-span-2">
-                  <ClientSelect value={watch('client_id')} onChange={(v) => setValue('client_id', v, { shouldDirty: true })} error={errors.client_id?.message} />
+                  <ChantierTitleFields
+                    clientId={watch('client_id')}
+                    clientName={watch('client') ?? ''}
+                    complement={watch('complement') ?? ''}
+                    onClient={(id, client) => {
+                      setValue('client_id', id, { shouldDirty: true })
+                      setValue('client', client?.name ?? '', { shouldDirty: true })
+                    }}
+                    onComplement={(v) => setValue('complement', v, { shouldDirty: true })}
+                    clientError={errors.client_id?.message}
+                    complementError={errors.complement?.message}
+                  />
                 </div>
                 <AddressInput
                   value={address}

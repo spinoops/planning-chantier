@@ -11,10 +11,11 @@ import Button from '@/components/ui/Button'
 import AddressInput from '@/components/ui/AddressInput'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
-import ClientSelect from '@/components/planning/ClientSelect'
+import ChantierTitleFields from '@/components/planning/ChantierTitleFields'
+import { buildChantierName } from '@/lib/chantierName'
 
 const schema = z.object({
-  name: z.string().min(1, 'Nom requis.').max(255),
+  complement: z.string().max(255),
   client: z.string().max(255),
   client_id: z.string(),
   address: z.string().max(255),
@@ -52,7 +53,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', client: '', client_id: '', address: '', city: '', color: CHANTIER_COLORS[0] },
+    defaultValues: { complement: '', client: '', client_id: '', address: '', city: '', color: CHANTIER_COLORS[0] },
   })
   const color = watch('color')
   const address = watch('address')
@@ -60,16 +61,21 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
   useEffect(() => {
     if (!open) return
     setFormError(null)
-    reset({ name: '', client: '', client_id: '', address: '', city: '', color: nextColor(CHANTIER_COLORS, existing.map((c) => c.color)) })
+    reset({ complement: '', client: '', client_id: '', address: '', city: '', color: nextColor(CHANTIER_COLORS, existing.map((c) => c.color)) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, reset])
 
   function onSubmit(values: FormValues) {
     setFormError(null)
+    const name = buildChantierName(values.client, values.complement)
+    if (!name) {
+      setError('complement', { message: 'Choisis un client ou saisis un titre.' })
+      return
+    }
     create.mutate(
       {
-        name: values.name.trim(),
-        client: values.client.trim() || values.name.trim(),
+        name,
+        client: values.client.trim() || null,
         client_id: Number(values.client_id) || null,
         address: values.address.trim() || null,
         city: values.city.trim() || null,
@@ -104,7 +110,23 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
       >
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
 
-        <Input label="Nom du chantier (client)" placeholder="Ex. Joray François" autoFocus error={errors.name?.message} {...register('name')} />
+        <ChantierTitleFields
+          clientId={watch('client_id')}
+          clientName={watch('client')}
+          complement={watch('complement')}
+          onClient={(id, client) => {
+            setValue('client_id', id, { shouldDirty: true })
+            setValue('client', client?.name ?? '', { shouldDirty: true })
+            // Adresse du client reprise si le chantier n'en a pas encore.
+            if (client && !watch('address') && client.address) {
+              setValue('address', client.address, { shouldDirty: true })
+              if (client.city) setValue('city', client.city, { shouldDirty: true })
+            }
+          }}
+          onComplement={(v) => setValue('complement', v, { shouldDirty: true, shouldValidate: Boolean(errors.complement) })}
+          clientError={errors.client_id?.message}
+          complementError={errors.complement?.message}
+        />
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <AddressInput
@@ -120,14 +142,6 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
           </div>
           <Input label="Ville" placeholder="Porrentruy" error={errors.city?.message} {...register('city')} />
         </div>
-        <ClientSelect
-          value={watch('client_id')}
-          onChange={(id, client) => {
-            setValue('client_id', id, { shouldDirty: true })
-            setValue('client', client?.name ?? '', { shouldDirty: true })
-          }}
-          error={errors.client_id?.message}
-        />
         <input type="hidden" {...register('client')} />
 
         <div className="space-y-1.5">
@@ -147,7 +161,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
           {errors.color && <p className="text-sm text-red-600">{errors.color.message}</p>}
         </div>
 
-        <p className="text-xs text-gray-500">Le chantier est créé « en cours ». Dates, notes et statut se complètent dans la page Chantiers.</p>
+        <p className="text-xs text-gray-500">Le chantier est créé « en cours ». Dates, matériel, devis et remarques se complètent dans sa fiche.</p>
 
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="secondary" onClick={onClose} disabled={create.isPending}>
