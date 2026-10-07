@@ -1,7 +1,9 @@
 import type { AppSettings } from '@/types'
 
 export const DEFAULT_APP_NAME = 'Planning Chantier'
-export const DEFAULT_COLOR = '#007aff'
+export const DEFAULT_COLOR = '#e30917'
+/** Logo par défaut (Top Stores, variante pour fonds clairs) ; `app_logo_url` (Configuration) le remplace. */
+export const DEFAULT_LOGO = '/logo.svg'
 
 /**
  * Applique l'identité de l'app (Configuration) à toute l'interface :

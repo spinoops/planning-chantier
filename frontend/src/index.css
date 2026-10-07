@@ -14,7 +14,7 @@
 @theme {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
 
-  --color-primary: #007aff;
+  --color-primary: #e30917;
   --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
   --color-primary-soft: color-mix(in oklab, var(--color-primary) 11%, white);
   --color-primary-ring: color-mix(in oklab, var(--color-primary) 35%, white);
@@ -81,7 +81,7 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: "cv11", "ss01", "ss03", "cv02";
   text-rendering: optimizeLegibility;
-  background: color-mix(in oklab, var(--color-primary) 10%, #eef3fa);
+  background: color-mix(in oklab, var(--color-primary) 8%, #eef0f4);
 }
 
 /*
@@ -96,10 +96,10 @@ body::before {
   pointer-events: none;
   background:
     radial-gradient(55% 45% at 12% 8%, rgb(255 255 255 / 0.95), transparent 62%),
-    radial-gradient(45% 40% at 88% 12%, color-mix(in oklab, var(--color-primary) 55%, white), transparent 62%),
-    radial-gradient(60% 55% at 72% 88%, color-mix(in oklab, var(--color-primary) 70%, #1d3a8a), transparent 66%),
-    radial-gradient(45% 40% at 18% 78%, color-mix(in oklab, var(--color-sys-teal) 45%, white), transparent 60%),
-    linear-gradient(160deg, #f1f6fc 0%, color-mix(in oklab, var(--color-primary) 22%, white) 45%, color-mix(in oklab, var(--color-primary) 55%, white) 100%);
+    radial-gradient(45% 40% at 88% 12%, color-mix(in oklab, var(--color-primary) 32%, white), transparent 62%),
+    radial-gradient(60% 55% at 72% 88%, color-mix(in oklab, var(--color-primary) 45%, #3b3f4a), transparent 66%),
+    radial-gradient(45% 40% at 18% 78%, color-mix(in oklab, var(--color-primary) 18%, #dfe6ee), transparent 60%),
+    linear-gradient(160deg, #f6f6f8 0%, color-mix(in oklab, var(--color-primary) 12%, #e9ecf1) 45%, color-mix(in oklab, var(--color-primary) 30%, #c9ced8) 100%);
 }
 
 h1,

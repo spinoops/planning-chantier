@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useSettings } from '@/hooks/useSettings'
-import { applyBranding, DEFAULT_APP_NAME } from '@/lib/branding'
-import { initials } from '@/lib/format'
+import { applyBranding, DEFAULT_APP_NAME, DEFAULT_LOGO } from '@/lib/branding'
 
 interface AuthShellProps {
   title: string
@@ -27,14 +26,8 @@ export default function AuthShell({ title, children }: AuthShellProps) {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-7 flex flex-col items-center gap-3">
-          {settings?.app_logo_url ? (
-            <img src={settings.app_logo_url} alt="" className="h-16 w-16 rounded-[18px] object-contain shadow-md" />
-          ) : (
-            <span className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-gradient-to-b from-primary to-primary-hover text-xl font-bold text-white shadow-[0_10px_30px_-10px_var(--color-primary),inset_0_1px_0_rgb(255_255_255/0.3)]">
-              {initials(appName)}
-            </span>
-          )}
-          <span className="text-[22px] font-bold tracking-tight text-gray-900">{appName}</span>
+          <img src={settings?.app_logo_url || DEFAULT_LOGO} alt={appName} className="h-16 w-auto max-w-[260px] object-contain" />
+          <span className="text-[15px] font-medium text-gray-600">{appName}</span>
         </div>
         <div className="glass-strong space-y-4 rounded-[28px] p-8">
           <h1 className="text-[17px] font-semibold tracking-tight text-gray-900">{title}</h1>

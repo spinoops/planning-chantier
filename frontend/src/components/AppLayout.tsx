@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { useSettings } from '@/hooks/useSettings'
-import { applyBranding, DEFAULT_APP_NAME } from '@/lib/branding'
+import { applyBranding, DEFAULT_APP_NAME, DEFAULT_LOGO } from '@/lib/branding'
 import { initials } from '@/lib/format'
 import { ADMIN_ITEMS, NAV_ITEMS, visibleItems } from '@/lib/navigation'
 
@@ -73,15 +73,10 @@ export default function AppLayout() {
       <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
         <div className="glass flex items-center gap-3 rounded-full py-1.5 pl-2 pr-2 sm:gap-4 sm:pl-3">
           {/* Logo + nom */}
-          <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
-            {settings?.app_logo_url ? (
-              <img src={settings.app_logo_url} alt="" className="h-7 w-7 rounded-lg object-contain" />
-            ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-gradient-to-b from-primary to-primary-hover text-[11px] font-bold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25)]">
-                {initials(appName)}
-              </span>
-            )}
-            <span className="truncate text-[15px] font-semibold tracking-tight text-gray-900">{appName}</span>
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5" aria-label={appName}>
+            <img src={settings?.app_logo_url || DEFAULT_LOGO} alt="" className="h-8 w-auto max-w-44 object-contain" />
+            <span className="hidden h-5 w-px bg-black/10 lg:block" aria-hidden />
+            <span className="hidden truncate text-[13px] font-medium text-gray-600 lg:inline">{appName}</span>
           </Link>
 
           {/* Navigation principale (écrans larges) */}

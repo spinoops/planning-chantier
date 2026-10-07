@@ -169,11 +169,16 @@ La version installée sous WAMP est **8.4.24** :
   blanc translucide + `backdrop-filter` + reflet `inset 0 1px` + ombre douce, **sans bordure**. Boutons et
   contrôles segmentés en **capsules** (`rounded-full`). FullCalendar sur fond transparent, cartes d'événement
   teintées (`tint(color, 24)`, `borderColor: 'transparent'`), aujourd'hui en rouge.
+- **Identité Top Stores** : logo `frontend/public/logo.svg` (variante pour fonds clairs : « STORES » en gris
+  foncé, dérivée de `D:\wamp64\www	op-stores\_construction\Logotype\logo-blanc.svg`, copié tel quel en
+  `logo-blanc.svg` pour les fonds sombres), favicon = emblème rond. `DEFAULT_LOGO` (`branding.ts`) est
+  affiché dans la barre et à la connexion sauf si `app_logo_url` est renseigné en Configuration. Couleur
+  principale par défaut = **rouge du logo `#e30917`** (le fond d'écran en dérive, en version adoucie).
 - Demande initiale : « design style macOS, iOS, Apple ». Tout part des jetons dans
   `frontend/src/index.css` (`@theme`) : police système Apple avec repli **Inter** (chargée dans
   `index.html` pour Windows), **gris neutres iOS** (`--color-gray-*` remappés : fond `#f5f5f7`, séparateurs
-  `#e5e5ea`, texte `#1c1c1e`), couleur principale **bleu système `#007aff`** par défaut (`branding.ts`,
-  `Setting::defaults()`, seeder, manifest), couleurs système `--color-sys-*` (+ variantes `-soft` / `-deep`
+  `#e5e5ea`, texte `#1c1c1e`), couleur principale par défaut (`branding.ts`,
+  `Setting::defaults()`, seeder, manifest ; voir « Identité Top Stores »), couleurs système `--color-sys-*` (+ variantes `-soft` / `-deep`
   pour les pastilles), rayons plus ronds (`--radius-*`, cartes 18 px, modales 22 px), ombres douces.
 - Kit `components/ui` : boutons pleins ou « teintés gris » sans bordure (`active:scale`), champs teintés qui
   passent au blanc avec halo au focus (`FIELD_CLASS`, `LABEL_CLASS`), cartes à liseré fin, modales avec

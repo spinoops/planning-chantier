@@ -39,7 +39,7 @@ function IdentitySection() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { app_name: '', app_logo_url: '', app_color: '#4f46e5' },
+    defaultValues: { app_name: '', app_logo_url: '', app_color: '#e30917' },
   })
 
   const { field: colorField } = useController({ name: 'app_color', control })
