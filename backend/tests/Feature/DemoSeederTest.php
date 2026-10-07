@@ -4,6 +4,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 afterEach(fn () => Carbon::setTestNow());
 
@@ -29,4 +30,19 @@ it('sème des pointages de démo exploitables par Statistiques → Heures', func
     $this->actingAs(User::where('email', 'robin@baseapp.test')->first());
     $summary = $this->getJson('/api/heures/summary?from=2026-10-05&to=2026-10-11')->assertOk();
     expect(collect($summary->json('by_user'))->firstWhere('user.id', $leo->id)['missing_days'])->toBe(1);
+});
+
+it('donne aux employés le mot de passe de démo et laisse celui du compte Admin', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $admin = User::where('email', 'admin@baseapp.test')->first();
+    expect(Hash::check('password', $admin->password))->toBeTrue()
+        ->and(Hash::check(DatabaseSeeder::STAFF_PASSWORD, $admin->password))->toBeFalse();
+
+    foreach (['robin', 'davison', 'leo', 'etienne', 'david'] as $who) {
+        $user = User::where('email', "{$who}@baseapp.test")->first();
+        expect(Hash::check(DatabaseSeeder::STAFF_PASSWORD, $user->password))->toBeTrue("{$who} n'a pas le mot de passe de démo");
+    }
+
+    $this->postJson('/api/login', ['email' => 'leo@baseapp.test', 'password' => DatabaseSeeder::STAFF_PASSWORD, 'device_name' => 'test'])->assertOk();
 });

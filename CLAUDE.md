@@ -18,12 +18,14 @@ La version installée sous WAMP est **8.4.24** :
 ## Démarrer
 - **`dev.bat`** (racine) lance le backend (**:8002**) + le frontend (**:5175**, hot-reload).
   **WAMP (MySQL) doit tourner.** Base : `app_planningchantier`.
-- Comptes de démo (mot de passe `password`) : `admin@baseapp.test` (admin) ·
+- Comptes de démo : `admin@baseapp.test` (admin, mot de passe `password`) · tous les employés ont le mot de
+  passe `Test1234$` (`DatabaseSeeder::STAFF_PASSWORD`) ·
   `robin@baseapp.test` (Robin Braun, patron : admin + chef) · `davison@baseapp.test` (gestionnaire, bureau) ·
   `leo@`, `etienne@`, `david@baseapp.test` (ouvriers). Ce sont les vrais employés (Robin Braun, Davison Da Silva Setubal, Léo Lançon,
   Étienne Armand, David Batista Setubal), chacun dans une équipe individuelle à la couleur de son
   ancien calendrier Apple (réf. `_construction/*.pdf`). Le seeder ajoute des chantiers (clients)
-  et deux semaines d'affectations en demi-journées.
+  et trois semaines d'affectations en demi-journées. L'écran de connexion n'est **pas** prérempli (demande
+  explicite), même en développement.
 - Réinitialiser les données de démo : `backend\artisan.bat migrate:fresh --seed`.
 
 ## Métier

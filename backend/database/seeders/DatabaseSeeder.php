@@ -18,6 +18,9 @@ use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
+    /** Mot de passe des comptes employés de démo (le compte Admin garde « password »). */
+    public const STAFF_PASSWORD = 'Test1234$';
+
     /**
      * Rôles + comptes + équipes + jeu de données planning (idempotent).
      *
@@ -54,6 +57,7 @@ class DatabaseSeeder extends Seeder
         foreach ($staff as $i => [$email, $first, $last, $role, $job, $color]) {
             $equipe = Equipe::firstOrCreate(['name' => $first], ['color' => $color, 'sort_order' => $i]);
             $this->account($email, "{$first} {$last}", $role, [
+                'password' => self::STAFF_PASSWORD,
                 'job_title' => $job,
                 'color' => $color,
                 'phone' => '+41 79 300 20 '.str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT),
@@ -215,11 +219,14 @@ class DatabaseSeeder extends Seeder
      */
     private function account(string $email, string $name, string|array $roles, array $extra = []): User
     {
+        $password = $extra['password'] ?? 'password';
+        unset($extra['password']);
+
         $user = User::updateOrCreate(
             ['email' => $email],
             [
                 'name' => $name,
-                'password' => Hash::make('password'),
+                'password' => Hash::make($password),
                 'email_verified_at' => now(),
                 ...$extra,
             ]

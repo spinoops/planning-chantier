@@ -16,8 +16,8 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-// En développement, le formulaire est prérempli avec le compte de démo.
-const DEMO = import.meta.env.DEV ? { email: 'admin@baseapp.test', password: 'password' } : { email: '', password: '' }
+// Formulaire vide : aucun compte prérempli, même en développement.
+const EMPTY = { email: '', password: '' }
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -28,7 +28,7 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: DEMO })
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: EMPTY })
 
   // Page demandée avant la redirection vers /login (ProtectedRoute).
   const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
