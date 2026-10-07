@@ -22,7 +22,7 @@ class Setting extends Model
             // son propre nom sans passer par la page Configuration.
             'app_name' => (string) config('app.name', 'Baseapp'),
             'app_logo_url' => '',
-            'app_color' => '#4f46e5',
+            'app_color' => '#007aff',
             // Horaires types proposés dans le planning (boutons Matin / Après-midi / Journée).
             'planning_morning_start' => '07:30',
             'planning_morning_end' => '12:00',

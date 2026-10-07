@@ -1,20 +1,72 @@
 @import "tailwindcss";
 
 /*
- * Thème de l'application.
+ * Thème de l'application — style Apple (macOS / iOS).
  *
- * `--color-primary` est la couleur principale, modifiable à chaud depuis la
- * page Configuration (lib/branding.ts la réécrit sur <html>). Les utilitaires
- * Tailwind `bg-primary`, `text-primary`, `ring-primary`, `bg-primary-hover`,
- * `bg-primary-soft` en découlent automatiquement.
+ * `--color-primary` est la couleur principale (bleu système par défaut), modifiable
+ * à chaud depuis la page Configuration (lib/branding.ts la réécrit sur <html>).
+ * Les utilitaires Tailwind `bg-primary`, `text-primary`, `ring-primary`,
+ * `bg-primary-hover`, `bg-primary-soft` en découlent automatiquement.
+ *
+ * Les gris sont les neutres iOS (systemGray6 → label), les rayons sont plus
+ * généreux et les ombres plus douces que ceux de Tailwind : tout le site en hérite.
  */
 @theme {
-  --color-primary: #ea580c;
-  --color-primary-hover: color-mix(in oklab, var(--color-primary) 85%, black);
-  --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
-  --color-primary-ring: color-mix(in oklab, var(--color-primary) 40%, white);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
 
-  --radius-card: 0.875rem;
+  --color-primary: #007aff;
+  --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
+  --color-primary-soft: color-mix(in oklab, var(--color-primary) 11%, white);
+  --color-primary-ring: color-mix(in oklab, var(--color-primary) 35%, white);
+
+  /* Couleurs système Apple. */
+  --color-sys-blue: #007aff;
+  --color-sys-green: #34c759;
+  --color-sys-orange: #ff9500;
+  --color-sys-red: #ff3b30;
+  --color-sys-yellow: #ffcc00;
+  --color-sys-teal: #30b0c7;
+  --color-sys-indigo: #5856d6;
+  --color-sys-purple: #af52de;
+  --color-sys-pink: #ff2d55;
+  --color-sys-green-soft: color-mix(in oklab, #34c759 14%, white);
+  --color-sys-green-deep: color-mix(in oklab, #34c759 62%, black);
+  --color-sys-orange-soft: color-mix(in oklab, #ff9500 16%, white);
+  --color-sys-orange-deep: color-mix(in oklab, #ff9500 60%, black);
+  --color-sys-red-soft: color-mix(in oklab, #ff3b30 12%, white);
+  --color-sys-red-deep: color-mix(in oklab, #ff3b30 70%, black);
+  --color-sys-blue-soft: color-mix(in oklab, #007aff 12%, white);
+  --color-sys-blue-deep: color-mix(in oklab, #007aff 72%, black);
+
+  /* Neutres iOS. */
+  --color-gray-50: #f5f5f7;
+  --color-gray-100: #f2f2f7;
+  --color-gray-200: #e5e5ea;
+  --color-gray-300: #d1d1d6;
+  --color-gray-400: #aeaeb2;
+  --color-gray-500: #8e8e93;
+  --color-gray-600: #6e6e73;
+  --color-gray-700: #48484a;
+  --color-gray-800: #2c2c2e;
+  --color-gray-900: #1c1c1e;
+  --color-gray-950: #000000;
+
+  /* Rayons plus ronds (boutons 10 px, champs 10 px, cartes 18 px, modales 22 px). */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+  --radius-3xl: 1.5rem;
+  --radius-card: 1.125rem;
+
+  /* Ombres douces. */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 0 0 0.5px rgb(0 0 0 / 0.03);
+  --shadow: 0 2px 6px -1px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.1), 0 1px 3px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.18), 0 0 0 1px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 50px -12px rgb(0 0 0 / 0.25), 0 0 0 1px rgb(0 0 0 / 0.04);
+  --shadow-2xl: 0 32px 80px -16px rgb(0 0 0 / 0.35), 0 0 0 1px rgb(0 0 0 / 0.05);
 }
 
 html,
@@ -26,6 +78,58 @@ body,
 
 body {
   @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01", "ss03", "cv02";
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-primary) 25%, white);
+}
+
+/* Fond en verre dépoli (barres, menus). */
+.glass {
+  background: rgb(255 255 255 / 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Apparition des modales et menus. */
+@keyframes pc-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pc-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.pc-pop {
+  animation: pc-pop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pc-fade {
+  animation: pc-fade 0.18s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-pop,
+  .pc-fade {
+    animation: none;
+  }
 }
 
 /* Masque la barre de défilement (menus horizontaux) sans empêcher le scroll. */
@@ -62,14 +166,14 @@ body {
 /*  FullCalendar : thème aligné sur le kit (bordures douces, couleur primaire) */
 /* ------------------------------------------------------------------------- */
 .pc-calendar .fc {
-  --fc-border-color: var(--color-gray-200);
+  --fc-border-color: rgb(0 0 0 / 0.07);
   --fc-page-bg-color: #fff;
   --fc-neutral-bg-color: var(--color-gray-50);
-  --fc-today-bg-color: color-mix(in oklab, var(--color-primary) 6%, white);
-  --fc-now-indicator-color: var(--color-primary);
+  --fc-today-bg-color: color-mix(in oklab, var(--color-primary) 5%, white);
+  --fc-now-indicator-color: var(--color-sys-red);
   --fc-highlight-color: color-mix(in oklab, var(--color-primary) 14%, white);
   --fc-event-border-color: transparent;
-  --fc-list-event-hover-bg-color: var(--color-gray-50);
+  --fc-list-event-hover-bg-color: var(--color-gray-100);
   --fc-small-font-size: 0.75rem;
   font-size: 0.875rem;
 }
@@ -80,11 +184,11 @@ body {
 .pc-calendar .fc .fc-col-header-cell-cushion,
 .pc-calendar .fc .fc-timeline-slot-cushion,
 .pc-calendar .fc .fc-list-day-cushion {
-  padding: 0.5rem 0.4rem;
-  font-size: 0.7rem;
+  padding: 0.55rem 0.4rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--color-gray-500);
 }
 .pc-calendar .fc .fc-col-header-cell-cushion {
@@ -105,7 +209,7 @@ body {
   margin: 0.2rem;
   padding: 0 0.35rem;
   border-radius: 9999px;
-  background: var(--color-primary);
+  background: var(--color-sys-red);
   color: #fff;
 }
 .pc-calendar .fc .fc-day-other .fc-daygrid-day-number {
@@ -159,7 +263,7 @@ body {
 .pc-calendar .fc .pc-event {
   border-width: 1px;
   border-left-width: 4px;
-  border-radius: 0.5rem;
+  border-radius: 0.45rem;
   box-shadow: 0 1px 1px rgb(0 0 0 / 0.04);
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.15s;
@@ -349,7 +453,8 @@ body {
   box-shadow: 0 0 0 1px #fff;
 }
 .pc-calendar .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
-  color: var(--color-primary);
+  color: var(--color-sys-red);
+  font-weight: 700;
 }
 /* Cases à cocher des équipes (colonne de gauche). */
 .h-4\.5 {

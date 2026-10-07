@@ -155,6 +155,22 @@ La version installée sous WAMP est **8.4.24** :
 - Hooks : `useChantiers` / `useOpenChantiers`, `usePlanning` (+ create/update/delete/copyWeek),
   `useWorkers`. Navigation et rôles planificateurs : `lib/navigation.ts` (`PLANNER_ROLES`).
 
+## Design (style Apple — macOS / iOS)
+- Demande explicite de l'utilisateur : « design style macOS, iOS, Apple ». Tout part des jetons dans
+  `frontend/src/index.css` (`@theme`) : police système Apple avec repli **Inter** (chargée dans
+  `index.html` pour Windows), **gris neutres iOS** (`--color-gray-*` remappés : fond `#f5f5f7`, séparateurs
+  `#e5e5ea`, texte `#1c1c1e`), couleur principale **bleu système `#007aff`** par défaut (`branding.ts`,
+  `Setting::defaults()`, seeder, manifest), couleurs système `--color-sys-*` (+ variantes `-soft` / `-deep`
+  pour les pastilles), rayons plus ronds (`--radius-*`, cartes 18 px, modales 22 px), ombres douces.
+- Kit `components/ui` : boutons pleins ou « teintés gris » sans bordure (`active:scale`), champs teintés qui
+  passent au blanc avec halo au focus (`FIELD_CLASS`, `LABEL_CLASS`), cartes à liseré fin, modales avec
+  animation `pc-pop` (feuille iOS sur mobile), toasts sombres translucides, interrupteur iOS vert,
+  tableaux sans capitales. Barre d'application en verre dépoli (`.glass`), navigation en pilules.
+- Calendrier : hairlines, **aujourd'hui en rouge** (pastille du jour, ligne « maintenant ») comme Apple
+  Calendrier, contrôle segmenté macOS pour les vues (`CalendarToolbar`).
+- **Planning pleine largeur** : `AppLayout` retire la largeur maximale pour les routes de
+  `FULL_WIDTH_PREFIXES` (`/planning`) — demande explicite ; les autres pages restent centrées (`max-w-7xl`).
+
 ## Stack
 - **Backend** : Laravel 13, PHP 8.3+, Sanctum (auth par token), spatie/laravel-permission
   (rôles), spatie/laravel-activitylog (audit), Pest (tests), Pint (format), Telescope (dev).

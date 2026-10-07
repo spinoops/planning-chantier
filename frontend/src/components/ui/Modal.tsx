@@ -23,6 +23,7 @@ const SIZES: Record<NonNullable<ModalProps['size']>, string> = {
  * Fenêtre modale rendue dans un portail (document.body) : une modale ouverte
  * depuis un formulaire n'est jamais imbriquée dans ce <form> (React 19 refuse
  * les formulaires imbriqués). Échap et clic sur le fond ferment si `dismissible`.
+ * Style : feuille iOS sur mobile (bord supérieur arrondi), fenêtre macOS au-delà.
  */
 export default function Modal({ open, onClose, title, size = 'md', dismissible = true, children }: ModalProps) {
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function Modal({ open, onClose, title, size = 'md', dismissible =
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+      className="pc-fade fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-0 backdrop-blur-[3px] sm:items-center sm:p-4"
       onMouseDown={dismissible ? onClose : undefined}
       role="presentation"
     >
@@ -53,10 +54,10 @@ export default function Modal({ open, onClose, title, size = 'md', dismissible =
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`max-h-[92vh] w-full ${SIZES[size]} overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:max-h-[88vh] sm:rounded-2xl sm:p-6`}
+        className={`pc-pop max-h-[92vh] w-full ${SIZES[size]} overflow-y-auto rounded-t-[22px] bg-white p-5 shadow-2xl ring-1 ring-black/5 sm:max-h-[88vh] sm:rounded-[22px] sm:p-6`}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        {title && <h3 className="mb-4 text-lg font-semibold text-gray-900">{title}</h3>}
+        {title && <h3 className="mb-4 text-[17px] font-semibold tracking-tight text-gray-900">{title}</h3>}
         {children}
       </div>
     </div>,

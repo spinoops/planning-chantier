@@ -1,6 +1,6 @@
 import type { SelectHTMLAttributes } from 'react'
 import { forwardRef, useId } from 'react'
-import { FIELD_CLASS, FIELD_ERROR, FIELD_OK } from '@/components/ui/Input'
+import { FIELD_CLASS, FIELD_ERROR, FIELD_OK, LABEL_CLASS } from '@/components/ui/Input'
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
@@ -17,7 +17,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   return (
     <div className="space-y-1">
       {label && (
-        <label htmlFor={selectId} className="block text-sm font-medium text-gray-700">
+        <label htmlFor={selectId} className={LABEL_CLASS}>
           {label}
         </label>
       )}
@@ -30,7 +30,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
       >
         {children}
       </select>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-[13px] text-sys-red">{error}</p>}
     </div>
   )
 })

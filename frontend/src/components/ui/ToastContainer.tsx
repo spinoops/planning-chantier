@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import type { Toast } from '@/lib/toast'
 import { dismiss, subscribe } from '@/lib/toast'
 
-const STYLES: Record<Toast['type'], string> = {
-  success: 'border-green-200 bg-green-50 text-green-800',
-  error: 'border-red-200 bg-red-50 text-red-800',
-  info: 'border-gray-200 bg-white text-gray-800',
+/* Bannières sombres translucides, façon notifications iOS. */
+const ICON_STYLES: Record<Toast['type'], string> = {
+  success: 'bg-sys-green text-white',
+  error: 'bg-sys-red text-white',
+  info: 'bg-sys-blue text-white',
 }
 
 const ICONS: Record<Toast['type'], string> = {
@@ -26,12 +27,12 @@ export default function ToastContainer() {
           key={item.id}
           type="button"
           onClick={() => dismiss(item.id)}
-          className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm shadow-lg ${STYLES[item.type]}`}
+          className="pc-pop pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-gray-900/90 px-4 py-3 text-left text-sm text-white shadow-xl ring-1 ring-white/10 backdrop-blur-xl"
         >
-          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-current/10 text-xs font-bold">
+          <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${ICON_STYLES[item.type]}`}>
             {ICONS[item.type]}
           </span>
-          <span className="flex-1">{item.message}</span>
+          <span className="flex-1 leading-snug">{item.message}</span>
         </button>
       ))}
     </div>

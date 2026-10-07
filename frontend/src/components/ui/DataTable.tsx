@@ -54,7 +54,7 @@ export default function DataTable<T>({
   return (
     <div className={`overflow-x-auto transition-opacity ${busy ? 'opacity-60' : ''}`}>
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-gray-200 bg-gray-50/60 text-xs uppercase tracking-wide text-gray-500">
+        <thead className="border-b border-black/[0.06] bg-gray-50/70 text-[12px] font-medium text-gray-500">
           <tr>
             {columns.map((col) => {
               const active = sort?.key === col.key
@@ -65,7 +65,7 @@ export default function DataTable<T>({
                     <button
                       type="button"
                       onClick={() => onSort(col.key)}
-                      className={`inline-flex items-center gap-1 uppercase transition hover:text-gray-900 ${active ? 'text-gray-900' : ''}`}
+                      className={`inline-flex items-center gap-1 transition hover:text-gray-900 ${active ? 'text-gray-900' : ''}`}
                     >
                       {col.header}
                       <span className="text-[10px]" aria-hidden>
@@ -86,10 +86,10 @@ export default function DataTable<T>({
             <tr
               key={rowKey(row)}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
-              className={`border-b border-gray-100 last:border-0 ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+              className={`border-b border-black/[0.05] last:border-0 ${onRowClick ? 'cursor-pointer hover:bg-gray-900/[0.025]' : ''}`}
             >
               {columns.map((col) => (
-                <td key={col.key} className={`px-4 py-3 text-gray-700 ${col.className ?? ''}`}>
+                <td key={col.key} className={`px-4 py-3 text-gray-800 ${col.className ?? ''}`}>
                   {col.render(row)}
                 </td>
               ))}

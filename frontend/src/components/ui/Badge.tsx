@@ -2,13 +2,14 @@ import type { ReactNode } from 'react'
 
 export type BadgeTone = 'neutral' | 'primary' | 'success' | 'warn' | 'danger' | 'info'
 
+/* Pastilles teintées avec les couleurs système Apple. */
 const TONES: Record<BadgeTone, string> = {
-  neutral: 'bg-gray-100 text-gray-700',
+  neutral: 'bg-gray-900/[0.06] text-gray-700',
   primary: 'bg-primary-soft text-primary',
-  success: 'bg-green-50 text-green-700',
-  warn: 'bg-amber-50 text-amber-700',
-  danger: 'bg-red-50 text-red-700',
-  info: 'bg-blue-50 text-blue-700',
+  success: 'bg-sys-green-soft text-sys-green-deep',
+  warn: 'bg-sys-orange-soft text-sys-orange-deep',
+  danger: 'bg-sys-red-soft text-sys-red-deep',
+  info: 'bg-sys-blue-soft text-sys-blue-deep',
 }
 
 /** Pastille de statut / rôle. */

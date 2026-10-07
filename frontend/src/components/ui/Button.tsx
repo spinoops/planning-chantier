@@ -9,15 +9,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
 }
 
+/*
+ * Style Apple : bouton principal plein (couleur de l'app), secondaire « teinté »
+ * gris sans bordure (comme iOS), léger rétrécissement au clic.
+ */
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-primary text-white hover:bg-primary-hover shadow-sm',
-  secondary: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
-  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
-  ghost: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+  primary: 'bg-primary text-white hover:bg-primary-hover shadow-[0_1px_2px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.12)]',
+  secondary: 'bg-gray-900/[0.05] text-gray-900 hover:bg-gray-900/[0.09]',
+  danger: 'bg-sys-red text-white hover:bg-sys-red-deep shadow-[0_1px_2px_rgb(0_0_0/0.12)]',
+  ghost: 'text-gray-600 hover:bg-gray-900/[0.05] hover:text-gray-900',
 }
 
 const SIZES: Record<Size, string> = {
-  sm: 'px-2.5 py-1.5 text-xs',
+  sm: 'px-3 py-1.5 text-[13px]',
   md: 'px-4 py-2 text-sm',
   lg: 'px-5 py-2.5 text-base',
 }
@@ -40,7 +44,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-ring disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-[10px] font-medium transition-all duration-150 focus:outline-none focus-visible:ring-[3px] focus-visible:ring-primary-ring active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     >
       {loading && (

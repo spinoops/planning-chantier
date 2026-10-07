@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
         }
 
         if (Setting::query()->where('key', 'app_color')->doesntExist()) {
-            Setting::setMany(['app_color' => '#ea580c']);
+            Setting::setMany(['app_color' => '#007aff']);
         }
 
         $this->account('admin@baseapp.test', 'Admin', 'admin', ['job_title' => 'Direction', 'color' => '#111827']);

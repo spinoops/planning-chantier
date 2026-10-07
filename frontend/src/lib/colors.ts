@@ -1,5 +1,5 @@
 /** Palette proposée pour la couleur d'un chantier (lisible en fond clair). */
-export const CHANTIER_COLORS = ['#2563eb', '#ea580c', '#16a34a', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#db2777', '#4f46e5', '#0d9488', '#65a30d', '#78716c']
+export const CHANTIER_COLORS = ['#007aff', '#ff9500', '#34c759', '#af52de', '#ff3b30', '#30b0c7', '#ffcc00', '#ff2d55', '#5856d6', '#00c7be', '#a2845e', '#8e8e93']
 
 /** Prochaine couleur de la palette la moins utilisée parmi des couleurs déjà prises. */
 export function nextColor(palette: string[], used: string[]): string {

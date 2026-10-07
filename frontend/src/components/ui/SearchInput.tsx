@@ -37,7 +37,7 @@ export default function SearchInput({ value, onChange, placeholder = 'Rechercher
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.2"
       >
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" strokeLinecap="round" />
@@ -47,7 +47,7 @@ export default function SearchInput({ value, onChange, placeholder = 'Rechercher
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary-ring"
+        className="w-full rounded-[10px] border border-black/[0.08] bg-gray-100/70 py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-primary focus:bg-white focus:ring-[3px] focus:ring-primary-ring"
       />
     </div>
   )

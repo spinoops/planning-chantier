@@ -21,12 +21,12 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
           ref={ref}
           id={fieldId}
           type="checkbox"
-          className="h-4 w-4 rounded border-gray-300 accent-primary focus:ring-primary-ring"
+          className="h-[18px] w-[18px] rounded-[5px] border-gray-300 accent-primary focus:ring-primary-ring"
           {...props}
         />
         {label}
       </label>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-[13px] text-sys-red">{error}</p>}
     </div>
   )
 })

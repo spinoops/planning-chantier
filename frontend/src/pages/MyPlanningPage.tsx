@@ -86,40 +86,40 @@ export default function MyPlanningPage() {
   return (
     <div className="mx-auto max-w-3xl">
       {/* Bandeau du jour */}
-      <section className="mb-6 overflow-hidden rounded-card bg-gray-900 text-white shadow-md">
+      <section className="mb-6 overflow-hidden rounded-card bg-gradient-to-br from-primary to-primary-hover text-white shadow-lg">
         <div className="p-5 sm:p-6">
-          <p className="text-sm text-gray-300">Bonjour {firstName},</p>
+          <p className="text-sm text-white/75">Bonjour {firstName},</p>
           {inWeek || cursorKey === today ? (
             todays.length === 0 ? (
               <>
-                <h2 className="mt-1 text-2xl font-semibold">Rien de prévu aujourd'hui</h2>
-                <p className="mt-1 text-sm text-gray-400">Consulte les prochains jours ci-dessous.</p>
+                <h2 className="mt-1 text-2xl font-bold tracking-tight">Rien de prévu aujourd'hui</h2>
+                <p className="mt-1 text-sm text-white/70">Consulte les prochains jours ci-dessous.</p>
               </>
             ) : (
               <>
-                <h2 className="mt-1 text-2xl font-semibold">Aujourd'hui : {todays.map((a) => a.chantier.name).join(' · ')}</h2>
+                <h2 className="mt-1 text-2xl font-bold tracking-tight">Aujourd'hui : {todays.map((a) => a.chantier.name).join(' · ')}</h2>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {todays.map((a) => (
-                    <li key={a.id} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm">
+                    <li key={a.id} className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm backdrop-blur">
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: a.equipe?.color ?? a.chantier.color }} />
                       {formatTimeRange(a.start_time, a.end_time)}
-                      {a.chantier.city && <span className="text-gray-300">· {a.chantier.city}</span>}
+                      {a.chantier.city && <span className="text-white/70">· {a.chantier.city}</span>}
                     </li>
                   ))}
                 </ul>
               </>
             )
           ) : (
-            <h2 className="mt-1 text-2xl font-semibold">Semaine {isoWeek(cursor)}</h2>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight">Semaine {isoWeek(cursor)}</h2>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => setTimeTarget(todays[0] ? { affectation: todays[0] } : { date: today })}>
+            <Button size="sm" variant="secondary" className="bg-white/20 text-white backdrop-blur hover:bg-white/30" onClick={() => setTimeTarget(todays[0] ? { affectation: todays[0] } : { date: today })}>
               Pointer aujourd'hui
             </Button>
-            <Button size="sm" variant="secondary" className="border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={() => setSignalFor({ affectation: todays[0], date: today })}>
+            <Button size="sm" variant="secondary" className="bg-white/20 text-white backdrop-blur hover:bg-white/30" onClick={() => setSignalFor({ affectation: todays[0], date: today })}>
               Signaler un imprévu
             </Button>
-            {queued > 0 && <span className="self-center text-xs text-amber-300">{queued} saisie(s) en attente de réseau</span>}
+            {queued > 0 && <span className="self-center text-xs text-white/80">{queued} saisie(s) en attente de réseau</span>}
           </div>
         </div>
       </section>

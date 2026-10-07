@@ -9,7 +9,10 @@ interface AuthShellProps {
   children: ReactNode
 }
 
-/** Cadre des pages publiques (connexion, mot de passe, inscription) : logo + nom de l'app, carte centrée. */
+/**
+ * Cadre des pages publiques (connexion, mot de passe, inscription) : fond doux
+ * avec halos colorés, carte en verre dépoli centrée, logo + nom de l'app.
+ */
 export default function AuthShell({ title, children }: AuthShellProps) {
   const { data: settings } = useSettings()
   const appName = settings?.app_name || DEFAULT_APP_NAME
@@ -17,20 +20,24 @@ export default function AuthShell({ title, children }: AuthShellProps) {
   useEffect(() => applyBranding(settings), [settings])
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center justify-center gap-2">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 px-4 py-10">
+      <div className="pointer-events-none absolute -left-40 -top-40 h-[28rem] w-[28rem] rounded-full bg-primary/15 blur-3xl" aria-hidden />
+      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[26rem] w-[26rem] rounded-full bg-sys-purple/10 blur-3xl" aria-hidden />
+      <div className="pointer-events-none absolute right-1/4 top-1/3 h-72 w-72 rounded-full bg-sys-teal/10 blur-3xl" aria-hidden />
+
+      <div className="relative w-full max-w-sm">
+        <div className="mb-7 flex flex-col items-center gap-3">
           {settings?.app_logo_url ? (
-            <img src={settings.app_logo_url} alt="" className="h-9 w-9 rounded object-contain" />
+            <img src={settings.app_logo_url} alt="" className="h-16 w-16 rounded-[18px] object-contain shadow-md" />
           ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
+            <span className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-gradient-to-b from-primary to-primary-hover text-xl font-bold text-white shadow-[0_10px_30px_-10px_var(--color-primary),inset_0_1px_0_rgb(255_255_255/0.3)]">
               {initials(appName)}
             </span>
           )}
-          <span className="text-lg font-semibold text-gray-900">{appName}</span>
+          <span className="text-[22px] font-bold tracking-tight text-gray-900">{appName}</span>
         </div>
-        <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+        <div className="space-y-4 rounded-[26px] border border-white/60 bg-white/75 p-8 shadow-xl backdrop-blur-2xl">
+          <h1 className="text-[17px] font-semibold tracking-tight text-gray-900">{title}</h1>
           {children}
         </div>
       </div>

@@ -1,7 +1,7 @@
 import type { AppSettings } from '@/types'
 
 export const DEFAULT_APP_NAME = 'Planning Chantier'
-export const DEFAULT_COLOR = '#ea580c'
+export const DEFAULT_COLOR = '#007aff'
 
 /**
  * Applique l'identité de l'app (Configuration) à toute l'interface :

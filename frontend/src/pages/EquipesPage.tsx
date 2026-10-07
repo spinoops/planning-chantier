@@ -21,7 +21,7 @@ import Spinner from '@/components/ui/Spinner'
 import WorkerPicker from '@/components/planning/WorkerPicker'
 
 /** Palette des équipes (couleurs de calendrier, lisibles en fond clair). */
-const TEAM_COLORS = ['#ef4444', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#06b6d4', '#ec4899', '#14b8a6', '#6366f1', '#84cc16', '#78716c']
+const TEAM_COLORS = ['#ff3b30', '#ffcc00', '#34c759', '#007aff', '#af52de', '#ff9500', '#30b0c7', '#ff2d55', '#00c7be', '#5856d6', '#a2845e', '#8e8e93']
 
 const schema = z.object({
   name: z.string().min(1, 'Nom requis.').max(100),

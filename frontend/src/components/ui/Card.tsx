@@ -11,15 +11,15 @@ interface CardProps {
   flush?: boolean
 }
 
-/** Bloc blanc arrondi, conteneur standard des pages. */
+/** Bloc blanc arrondi (style macOS : liseré fin, ombre douce), conteneur standard des pages. */
 export default function Card({ children, className = '', title, description, action, flush = false }: CardProps) {
   return (
-    <section className={`overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm ${className}`}>
+    <section className={`overflow-hidden rounded-card border border-black/[0.06] bg-white shadow-sm ${className}`}>
       {(title || action) && (
-        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-black/[0.06] px-5 py-4">
           <div>
-            {title && <h3 className="text-base font-semibold text-gray-900">{title}</h3>}
-            {description && <p className="mt-0.5 text-sm text-gray-500">{description}</p>}
+            {title && <h3 className="text-[15px] font-semibold tracking-tight text-gray-900">{title}</h3>}
+            {description && <p className="mt-0.5 text-[13px] text-gray-500">{description}</p>}
           </div>
           {action}
         </header>

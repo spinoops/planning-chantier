@@ -1,7 +1,7 @@
 import { initials } from '@/lib/format'
 
 /** Palette d'avatars quand aucune couleur n'est définie sur le compte. */
-const PALETTE = ['#2563eb', '#7c3aed', '#db2777', '#ca8a04', '#16a34a', '#dc2626', '#0891b2', '#ea580c', '#4f46e5', '#0d9488']
+const PALETTE = ['#007aff', '#af52de', '#ff2d55', '#ff9500', '#34c759', '#ff3b30', '#30b0c7', '#5856d6', '#ffcc00', '#a2845e']
 
 /** Couleur stable dérivée du nom (même personne → même couleur). */
 // eslint-disable-next-line react-refresh/only-export-components

@@ -1,6 +1,6 @@
 import type { TextareaHTMLAttributes } from 'react'
 import { forwardRef, useId } from 'react'
-import { FIELD_CLASS, FIELD_ERROR, FIELD_OK } from '@/components/ui/Input'
+import { FIELD_CLASS, FIELD_ERROR, FIELD_OK, LABEL_CLASS } from '@/components/ui/Input'
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
@@ -17,7 +17,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
   return (
     <div className="space-y-1">
       {label && (
-        <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
+        <label htmlFor={fieldId} className={LABEL_CLASS}>
           {label}
         </label>
       )}
@@ -29,7 +29,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
         className={`${FIELD_CLASS} ${error ? FIELD_ERROR : FIELD_OK} ${className}`}
         {...props}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-[13px] text-sys-red">{error}</p>}
     </div>
   )
 })
