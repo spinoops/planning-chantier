@@ -106,7 +106,10 @@ La version installée sous WAMP est **8.4.24** :
   (double-clic = seul ; persisté `planning_hidden_chantiers`). `?chantier=ID` dans l'URL = ce chantier
   seul tant qu'on n'a pas touché aux cases (dérivé, pas d'effet setState). Vue « Par chantier »
   (`site`, timeline une ligne par chantier, prénoms dans les cartes ; changer de ligne envoie
-  `chantier_id`). La vue Semaine reste `timeGridWeek` : l'utilisateur a refusé les colonnes par équipe
+  `chantier_id`). **Pas de carte en double** : à la création, si le même chantier a déjà une affectation
+  sur ce jour et ce créneau exact, `AffectationModal` ajoute les personnes à cette carte (`PUT` avec
+  `worker_ids` fusionnés) au lieu d'en créer une seconde ; le seeder crée lui aussi une seule affectation
+  par chantier et créneau (plusieurs équipes → `equipe_id` vide, membres réunis). La vue Semaine reste `timeGridWeek` : l'utilisateur a refusé les colonnes par équipe
   (`resourceTimeGridWeek`, commit annulé) — ne pas y revenir.
 - `TeamSidebar` : équipes avec case colorée (afficher / masquer, double-clic = seule ; persisté dans
   `localStorage` `planning_hidden_equipes`, filtrage côté client) **et glisser-déposer** :

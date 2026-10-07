@@ -122,15 +122,15 @@ class DatabaseSeeder extends Seeder
             $this->affect($chantiers['Migy Eloi'], $equipes['Léo'], $d(3), '13:00', '17:00', $robin);
             $this->affect($chantiers['Varin Bernard'], $equipes['Léo'], $d(4), '08:00', '12:00', $robin);
 
-            // Étienne et David : ensemble chez Rausis, puis Varin.
-            foreach (['Étienne', 'David'] as $name) {
-                $this->affect($chantiers['Rausis Gérard'], $equipes[$name], $d(0), '07:30', '12:00', $robin);
-                $this->affect($chantiers['Rausis Gérard'], $equipes[$name], $d(0), '13:00', '16:45', $robin);
-                $this->affect($chantiers['Rausis Gérard'], $equipes[$name], $d(1), '07:30', '12:00', $robin);
-                $this->affect($chantiers['Varin Bernard'], $equipes[$name], $d(2), '07:30', '16:45', $robin, 'Prendre la remorque.');
-                $this->affect($chantiers['Chételat Nicolas'], $equipes[$name], $d(3), '07:30', '16:45', $robin);
-                $this->affect($chantiers['Migy Eloi'], $equipes[$name], $d(4), '07:30', '12:00', $robin);
-            }
+            // Étienne et David : ensemble chez Rausis, puis Varin — une seule carte par chantier
+            // et par créneau, avec les deux personnes dedans (pas une carte par équipe).
+            $duo = [$equipes['Étienne'], $equipes['David']];
+            $this->affect($chantiers['Rausis Gérard'], $duo, $d(0), '07:30', '12:00', $robin);
+            $this->affect($chantiers['Rausis Gérard'], $duo, $d(0), '13:00', '16:45', $robin);
+            $this->affect($chantiers['Rausis Gérard'], $duo, $d(1), '07:30', '12:00', $robin);
+            $this->affect($chantiers['Varin Bernard'], $duo, $d(2), '07:30', '16:45', $robin, 'Prendre la remorque.');
+            $this->affect($chantiers['Chételat Nicolas'], $duo, $d(3), '07:30', '16:45', $robin);
+            $this->affect($chantiers['Migy Eloi'], $duo, $d(4), '07:30', '12:00', $robin);
 
             // Davison : bureau / atelier.
             for ($day = 0; $day < 5; $day++) {
@@ -172,17 +172,25 @@ class DatabaseSeeder extends Seeder
         return $user;
     }
 
-    private function affect(Chantier $chantier, Equipe $equipe, string $date, string $start, string $end, User $author, ?string $note = null): void
+    /**
+     * Une affectation = un chantier sur un créneau. Avec plusieurs équipes, les membres sont
+     * réunis dans la même carte (equipe_id vide : personnes choisies une à une).
+     *
+     * @param  Equipe|Equipe[]  $equipes
+     */
+    private function affect(Chantier $chantier, Equipe|array $equipes, string $date, string $start, string $end, User $author, ?string $note = null): void
     {
+        $equipes = is_array($equipes) ? array_values($equipes) : [$equipes];
         $affectation = Affectation::create([
             'chantier_id' => $chantier->id,
-            'equipe_id' => $equipe->id,
+            'equipe_id' => count($equipes) === 1 ? $equipes[0]->id : null,
             'date' => $date,
             'start_time' => $start,
             'end_time' => $end,
             'note' => $note,
             'created_by' => $author->id,
         ]);
-        $affectation->workers()->sync($equipe->members()->pluck('users.id'));
+        $members = collect($equipes)->flatMap(fn (Equipe $e) => $e->members()->pluck('users.id'))->unique()->values();
+        $affectation->workers()->sync($members);
     }
 }

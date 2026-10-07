@@ -255,8 +255,47 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
     const onError = (err: unknown) => {
       if (!applyValidationErrors(err, setError)) setFormError(getErrorMessage(err))
     }
-    if (editing) update.mutate({ id: editing.id, payload }, { onSuccess, onError })
-    else create.mutate(payload, { onSuccess, onError })
+    if (editing) {
+      update.mutate({ id: editing.id, payload }, { onSuccess, onError })
+      return
+    }
+
+    // Un calendrier par chantier : si ce chantier a déjà une carte sur ce jour et ce créneau,
+    // on y ajoute les personnes au lieu de créer une deuxième carte identique.
+    const twin = values.repeat
+      ? undefined
+      : existing.find(
+          (a) =>
+            a.chantier.id === payload.chantier_id &&
+            a.date === payload.date &&
+            (a.start_time ?? null) === payload.start_time &&
+            (a.end_time ?? null) === payload.end_time,
+        )
+    if (twin) {
+      const mergedWorkers = [...new Set([...twin.workers.map((w) => w.id), ...workerIds])]
+      const mergedVisitors = [...new Set([...(twin.visitors ?? []).map((v) => v.id), ...visitorIds])].filter((id) => !mergedWorkers.includes(id))
+      update.mutate(
+        {
+          id: twin.id,
+          payload: {
+            worker_ids: mergedWorkers,
+            visitor_ids: mergedVisitors,
+            ...(twin.equipe ? {} : { equipe_id: payload.equipe_id }),
+            ...(twin.note || !payload.note ? {} : { note: payload.note }),
+            ...(twin.phase || !payload.phase ? {} : { phase: payload.phase }),
+          },
+        },
+        {
+          onSuccess: () => {
+            toast(`Ajouté à l'affectation existante de ${twin.chantier.name}.`, 'success')
+            onClose()
+          },
+          onError,
+        },
+      )
+      return
+    }
+    create.mutate(payload, { onSuccess, onError })
   }
 
   async function onDelete() {
