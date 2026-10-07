@@ -1,0 +1,15 @@
+{
+  "name": "Planning Chantier",
+  "short_name": "Planning",
+  "description": "Planning des équipes sur les chantiers, pointage des heures.",
+  "start_url": "/mon-planning",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f9fafb",
+  "theme_color": "#ea580c",
+  "lang": "fr",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

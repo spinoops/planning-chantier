@@ -85,3 +85,13 @@ export function initials(name: string | null | undefined): string {
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
 }
+
+/** Minutes → « 7h30 » (ou « 45 min » sous l'heure, « 0h » si rien). */
+export function formatMinutes(minutes: number | null | undefined): string {
+  const m = Math.max(0, Math.round(minutes ?? 0))
+  if (m === 0) return '0h'
+  if (m < 60) return `${m} min`
+  const h = Math.floor(m / 60)
+  const r = m % 60
+  return r === 0 ? `${h}h` : `${h}h${String(r).padStart(2, '0')}`
+}

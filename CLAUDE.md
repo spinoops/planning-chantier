@@ -43,6 +43,25 @@ La version installée sous WAMP est **8.4.24** :
   Une journée peut contenir plusieurs affectations du même chantier (matin / après-midi).
 - **Doublons** : un ouvrier affecté deux fois le même jour n'est pas bloqué par l'API ;
   le front le signale (badge « ! », mention « déjà sur … » dans le sélecteur).
+- **Passage** : `affectation_user.role` = `worker` (équipe) ou `visit` (patron / chef qui passe) ;
+  `Affectation::people()` (tout, pivot role), `workers()`, `visitors()`, `syncPeople($workers, $visitors)`.
+  Un visiteur voit l'affectation dans « Mon planning » mais ne compte pas dans les doublons.
+- **Heures pointées** (`time_entries`) : par employé, liées à une affectation (ou chantier libre),
+  `start/end/break_minutes/comment`, statut `draft → submitted → validated` (verrouillé pour
+  l'employé, un planificateur rouvre). `minutes()` = fin − début − pause. `GET /heures/summary` :
+  planifié vs pointé par personne, pointé par chantier.
+- **Absences** (`absences`) : `vacances|maladie|ecole|autre`, période ; `Absence::absentUserIds($date)`.
+  Le front grise les absents (sélecteur) et les affiche en fond du calendrier.
+- **Imprévus** (`signalements`) : message court d'un employé au bureau (`absence|fin_anticipee|materiel|autre`),
+  `read_at` quand traité ; compteur dans le tableau de bord.
+- **Photos** (`affectation_photos`) : disque `public`, dossier `affectations/{id}` (lien `storage:link`).
+- **Récurrence** : `POST /planning` avec `repeat_until` + `repeat_days` (ISO, défaut lun–ven, 90 jours max)
+  crée une affectation par jour ; réponse `{ data: première, created: n }`.
+- **Équipes temporaires** : `equipes.expires_at` ; `GET /equipes` ne renvoie que les actives (`?all=1` pour tout).
+- **Réglages planning** (`Setting::defaults()`) : `planning_morning_*`, `planning_afternoon_*` (boutons
+  Matin / Après-midi / Journée) et `planning_notify_after` : après cette heure, créer / modifier /
+  supprimer une affectation d'aujourd'hui ou de demain envoie `PlanningChangedNotification` (mail) aux
+  autres planificateurs (`AffectationObserver`, anti-rafale 10 min par jour et par auteur).
 
 ## API planning (`routes/api.php`, sous `auth:sanctum`)
 - `GET /chantiers` (tous), `GET /planning?from&to[&chantier_id&worker_id&mine]` (max 100 jours ;
@@ -87,7 +106,20 @@ La version installée sous WAMP est **8.4.24** :
     couleur ; statut `active`) puis sélection automatique du chantier créé. Palette partagée `lib/colors.ts`.
   Doublons = même personne sur deux créneaux qui se chevauchent (`timesOverlap` de `lib/dates.ts`).
 - Autres composants : `AffectationCard` (tableau de bord), `AffectationModal` (sélecteur d'équipe
-  qui pré-coche ses membres), `WorkerPicker`. `lib/dates.ts` : semaines lundi→dimanche, clés `YYYY-MM-DD`.
+  qui pré-coche ses membres, boutons Matin / Après-midi / Journée depuis les réglages, répétition,
+  passage, étape, photos, dernier chantier mémorisé, Ctrl+Entrée), `WorkerPicker` (`busy`, `absent`),
+  `TimeEntryModal` (pointage), `SignalementModal` (imprévu), `PhotoGallery`, `ui/AddressInput`
+  (propositions d'adresses geo.admin.ch, saisie libre hors ligne). `lib/dates.ts` : semaines
+  lundi→dimanche, clés `YYYY-MM-DD`, `timesOverlap`. `lib/format.ts` : `formatMinutes`.
+- Pages ajoutées : `MyPlanningPage` (pointer, photos, imprévu, récap et envoi des heures de la semaine),
+  `HeuresPage` (`/heures` : synthèse, validation / réouverture en lot, correction), `AbsencesPage`,
+  `PrintWeekPage` (`/planning/print?d=&equipe=` : une page A4 par équipe, styles `@media print`).
+  Vue par défaut du planning : « Par équipe ».
+- **Hors ligne léger** : `public/sw.js` (coquille + lectures d'API « réseau d'abord, cache sinon »,
+  enregistré en production dans `main.tsx`), `public/manifest.webmanifest` (installable, démarre sur
+  `/mon-planning`), `lib/offlineQueue.ts` (pointages / imprévus saisis sans réseau mis en file dans
+  `localStorage`, envoyés à l'événement `online`). Hooks : `useTimeEntries`, `useAbsences`,
+  `useSignalements`, `usePhotos`.
 - Couleur d'un chantier : variable CSS `--chantier` + classes `.chantier-card` / `.chantier-dot`
   (`index.css`). Avatars : `components/ui/Avatar.tsx` (couleur du compte ou dérivée du nom).
 - Hooks : `useChantiers` / `useOpenChantiers`, `usePlanning` (+ create/update/delete/copyWeek),

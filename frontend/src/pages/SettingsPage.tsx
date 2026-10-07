@@ -101,6 +101,76 @@ function IdentitySection() {
   )
 }
 
+const planningSchema = z.object({
+  planning_morning_start: z.string().regex(/^\d{2}:\d{2}$/, 'Heure HH:MM'),
+  planning_morning_end: z.string().regex(/^\d{2}:\d{2}$/, 'Heure HH:MM'),
+  planning_afternoon_start: z.string().regex(/^\d{2}:\d{2}$/, 'Heure HH:MM'),
+  planning_afternoon_end: z.string().regex(/^\d{2}:\d{2}$/, 'Heure HH:MM'),
+  planning_notify_after: z.string().regex(/^\d{2}:\d{2}$/, 'Heure HH:MM'),
+})
+
+type PlanningValues = z.infer<typeof planningSchema>
+
+/** Horaires types proposÃ©s dans le planning et heure de veille des changements tardifs. */
+function PlanningSection() {
+  const { data, isLoading } = useSettings()
+  const updateSettings = useUpdateSettings()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<PlanningValues>({
+    resolver: zodResolver(planningSchema),
+    defaultValues: { planning_morning_start: '07:30', planning_morning_end: '12:00', planning_afternoon_start: '13:00', planning_afternoon_end: '16:45', planning_notify_after: '16:00' },
+  })
+
+  useEffect(() => {
+    if (data) {
+      reset({
+        planning_morning_start: data.planning_morning_start,
+        planning_morning_end: data.planning_morning_end,
+        planning_afternoon_start: data.planning_afternoon_start,
+        planning_afternoon_end: data.planning_afternoon_end,
+        planning_notify_after: data.planning_notify_after,
+      })
+    }
+  }, [data, reset])
+
+  function onSubmit(values: PlanningValues) {
+    if (!data) return
+    updateSettings.mutate(
+      { app_name: data.app_name, app_logo_url: data.app_logo_url, app_color: data.app_color, ...values },
+      {
+        onSuccess: () => toast('Horaires enregistrÃ©s.', 'success'),
+        onError: (err) => {
+          if (!applyValidationErrors(err, setError)) toast(getErrorMessage(err), 'error')
+        },
+      },
+    )
+  }
+
+  if (isLoading) return <Spinner block />
+
+  return (
+    <Card title="Planning" description="Horaires proposÃ©s par les boutons Matin / AprÃ¨s-midi / JournÃ©e, et heure aprÃ¨s laquelle un changement du planning du lendemain prÃ©vient les planificateurs par email.">
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Matin : dÃ©but" type="time" error={errors.planning_morning_start?.message} {...register('planning_morning_start')} />
+          <Input label="Matin : fin" type="time" error={errors.planning_morning_end?.message} {...register('planning_morning_end')} />
+          <Input label="AprÃ¨s-midi : dÃ©but" type="time" error={errors.planning_afternoon_start?.message} {...register('planning_afternoon_start')} />
+          <Input label="AprÃ¨s-midi : fin" type="time" error={errors.planning_afternoon_end?.message} {...register('planning_afternoon_end')} />
+        </div>
+        <Input label="PrÃ©venir des changements tardifs aprÃ¨s" type="time" hint="Un email part aux planificateurs si le planning d'aujourd'hui ou de demain change aprÃ¨s cette heure." error={errors.planning_notify_after?.message} {...register('planning_notify_after')} />
+        <Button type="submit" loading={updateSettings.isPending}>
+          Enregistrer
+        </Button>
+      </form>
+    </Card>
+  )
+}
+
 function ModulesSection() {
   const { data: modules, isLoading } = useModules()
   const updateModules = useUpdateModules()
@@ -212,6 +282,7 @@ export default function SettingsPage() {
       <PageHeader title="Configuration" subtitle="Identité de l'application, modules et sauvegardes." />
       <div className="space-y-6">
         <IdentitySection />
+        <PlanningSection />
         <ModulesSection />
         <BackupsSection />
       </div>

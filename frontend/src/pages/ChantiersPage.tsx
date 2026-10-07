@@ -24,6 +24,7 @@ import SearchInput from '@/components/ui/SearchInput'
 import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
 import Textarea from '@/components/ui/Textarea'
+import AddressInput from '@/components/ui/AddressInput'
 
 import { CHANTIER_COLORS } from '@/lib/colors'
 
@@ -75,6 +76,7 @@ export default function ChantiersPage() {
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: EMPTY })
   const color = watch('color')
+  const address = watch('address')
 
   function setStatusFilter(value: string) {
     setSearchParams(
@@ -259,7 +261,15 @@ export default function ChantiersPage() {
                 </option>
               ))}
             </Select>
-            <Input label="Adresse" error={errors.address?.message} {...register('address')} />
+            <AddressInput
+              value={address}
+              onChange={(v) => setValue('address', v, { shouldDirty: true })}
+              onPick={(s) => {
+                setValue('address', s.street, { shouldDirty: true })
+                if (s.city) setValue('city', s.city, { shouldDirty: true })
+              }}
+              error={errors.address?.message}
+            />
             <Input label="Ville" error={errors.city?.message} {...register('city')} />
             <Input label="Début" type="date" error={errors.start_date?.message} {...register('start_date')} />
             <Input label="Fin prévue" type="date" error={errors.end_date?.message} {...register('end_date')} />

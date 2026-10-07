@@ -10,11 +10,13 @@ interface WorkerPickerProps {
   busy?: Map<number, string>
   /** Préfixe de la mention (« déjà sur Villa… », « déjà dans Équipe… »). */
   busyLabel?: string
+  /** id → libellé d'absence (« Vacances ») : la personne est grisée (cochable quand même). */
+  absent?: Map<number, string>
   disabled?: boolean
 }
 
 /** Sélecteur multiple d'ouvriers : recherche + cases cochables avec avatars. */
-export default function WorkerPicker({ workers, value, onChange, busy, busyLabel = 'déjà sur', disabled = false }: WorkerPickerProps) {
+export default function WorkerPicker({ workers, value, onChange, busy, busyLabel = 'déjà sur', absent, disabled = false }: WorkerPickerProps) {
   const [search, setSearch] = useState('')
   const selected = useMemo(() => new Set(value), [value])
 
@@ -55,12 +57,14 @@ export default function WorkerPicker({ workers, value, onChange, busy, busyLabel
         {filtered.map((w) => {
           const checked = selected.has(w.id)
           const elsewhere = busy?.get(w.id)
+          const away = absent?.get(w.id)
           return (
             <li key={w.id}>
               <label
                 className={`flex cursor-pointer items-center gap-3 px-3 py-2 transition ${checked ? 'bg-primary-soft' : 'hover:bg-gray-50'} ${
                   disabled ? 'cursor-not-allowed opacity-60' : ''
-                }`}
+                } ${away && !checked ? 'opacity-50 grayscale' : ''}`}
+                title={away ? `Absent(e) : ${away}` : undefined}
               >
                 <input
                   type="checkbox"
@@ -74,6 +78,7 @@ export default function WorkerPicker({ workers, value, onChange, busy, busyLabel
                   <span className="block truncate text-sm font-medium text-gray-900">{w.name}</span>
                   <span className="block truncate text-xs text-gray-500">
                     {w.job_title ?? '—'}
+                    {away && <span className="ml-1 font-medium text-red-600">· absent(e) : {away}</span>}
                     {elsewhere && (
                       <span className="ml-1 font-medium text-amber-600">
                         · {busyLabel} {elsewhere}

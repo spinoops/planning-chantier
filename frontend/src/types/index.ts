@@ -48,10 +48,17 @@ export interface AppSettings {
   features: {
     invitations_for_everyone: boolean
   }
+  /** Horaires types du planning (boutons Matin / Après-midi) et heure de veille des changements tardifs. */
+  planning_morning_start: string
+  planning_morning_end: string
+  planning_afternoon_start: string
+  planning_afternoon_end: string
+  planning_notify_after: string
 }
 
 /** Champs modifiables de la configuration (PUT /api/settings). */
-export type SettingsPayload = Pick<AppSettings, 'app_name' | 'app_logo_url' | 'app_color'>
+export type SettingsPayload = Pick<AppSettings, 'app_name' | 'app_logo_url' | 'app_color'> &
+  Partial<Pick<AppSettings, 'planning_morning_start' | 'planning_morning_end' | 'planning_afternoon_start' | 'planning_afternoon_end' | 'planning_notify_after'>>
 
 /** Module optionnel (GET /api/modules, admin). */
 export interface AppModule {
@@ -114,10 +121,30 @@ export interface DashboardData {
     today_affectations: Affectation[]
     workers_total: number
     workers_assigned_today: number
+    workers_absent_today: number
     workers_free_today: Pick<Worker, 'id' | 'name' | 'job_title' | 'color'>[]
     chantiers_active: number
     chantiers_planned: number
     week_affectations: number
+  }
+  /** Pilotage de la semaine courante (planificateurs). */
+  week?: {
+    from: string
+    to: string
+    days: {
+      date: string
+      affectations: number
+      unstaffed: number
+      free: { id: number; name: string; color: string | null }[]
+      absent: { id: number; name: string; color: string | null }[]
+    }[]
+    hours_by_chantier: { chantier: { id: number; name: string; color: string }; worked_minutes: number; planned_minutes: number }[]
+    worked_minutes: number
+    planned_minutes: number
+    entries_to_validate: number
+    unread_signalements: number
+    latest_signalements: Signalement[]
+    absences: { id: number; user: { id: number; name: string; color: string | null }; start_date: string; end_date: string; type: string; type_label: string }[]
   }
   users?: { total: number; admins: number; new_this_month: number; trashed: number }
   invitations?: { pending: number } | null
@@ -193,6 +220,8 @@ export interface EquipeRef {
 /** Équipe planifiable : un ou plusieurs employés, une couleur (GET /api/equipes). */
 export interface Equipe extends EquipeRef {
   sort_order: number
+  /** Équipe temporaire : masquée du planning après cette date (YYYY-MM-DD). */
+  expires_at: string | null
   members: Worker[]
   affectations_count?: number
   created_at: string
@@ -203,6 +232,7 @@ export interface EquipePayload {
   name: string
   color: string
   sort_order?: number
+  expires_at?: string | null
   /** Membres exacts : un employé quitte automatiquement son ancienne équipe. */
   member_ids: number[]
 }
@@ -219,9 +249,16 @@ export interface Affectation {
   /** HH:MM ou null (journée). */
   start_time: string | null
   end_time: string | null
+  /** Durée planifiée en minutes (0 si journée sans horaire). */
+  planned_minutes: number
   note: string | null
+  /** Étape du chantier (gros œuvre, finitions…). */
+  phase: string | null
   chantier: Chantier
   workers: Worker[]
+  /** Passages (patron / chef qui vient contrôler) : liés sans faire partie de l'équipe. */
+  visitors: Worker[]
+  photos_count?: number
   created_at: string
   updated_at: string
 }
@@ -233,5 +270,137 @@ export interface AffectationPayload {
   start_time: string | null
   end_time: string | null
   note: string | null
+  phase?: string | null
   worker_ids: number[]
+  visitor_ids?: number[]
+  /** Récurrence à la création : répéter jusqu'à cette date, les jours ISO donnés (1 = lundi). */
+  repeat_until?: string | null
+  repeat_days?: number[]
+}
+
+/* ------------------------------------------------------------------------- */
+/*  Heures, absences, imprévus, photos                                        */
+/* ------------------------------------------------------------------------- */
+
+export type TimeEntryStatus = 'draft' | 'submitted' | 'validated'
+
+/** Heures pointées par un employé (GET /api/heures). */
+export interface TimeEntry {
+  id: number
+  user_id: number
+  user?: Worker
+  affectation_id: number | null
+  chantier_id: number | null
+  chantier?: Chantier | null
+  date: string
+  start_time: string
+  end_time: string
+  break_minutes: number
+  /** Minutes travaillées (fin − début − pause). */
+  minutes: number
+  comment: string | null
+  status: TimeEntryStatus
+  status_label: string
+  validated_at: string | null
+  validator?: { id: number; name: string } | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TimeEntryPayload {
+  user_id?: number
+  affectation_id?: number | null
+  chantier_id?: number | null
+  date: string
+  start_time: string
+  end_time: string
+  break_minutes: number
+  comment?: string | null
+}
+
+/** Synthèse des heures d'une période (GET /api/heures/summary, planificateurs). */
+export interface HoursSummary {
+  from: string
+  to: string
+  by_user: {
+    user: { id: number; name: string; color: string | null; job_title: string | null }
+    planned_minutes: number
+    worked_minutes: number
+    entries: number
+    draft: number
+    submitted: number
+    validated: number
+  }[]
+  by_chantier: { chantier: { id: number; name: string; color: string }; worked_minutes: number; entries: number }[]
+  totals: { worked_minutes: number; submitted: number; draft: number }
+}
+
+export type AbsenceType = 'vacances' | 'maladie' | 'ecole' | 'autre'
+
+export const ABSENCE_TYPES: { value: AbsenceType; label: string }[] = [
+  { value: 'vacances', label: 'Vacances' },
+  { value: 'maladie', label: 'Maladie' },
+  { value: 'ecole', label: 'École / formation' },
+  { value: 'autre', label: 'Autre' },
+]
+
+/** Absence d'un employé (GET /api/absences). */
+export interface Absence {
+  id: number
+  user_id: number
+  user?: Worker
+  start_date: string
+  end_date: string
+  type: AbsenceType
+  type_label: string
+  note: string | null
+  created_at: string
+}
+
+export interface AbsencePayload {
+  user_id: number
+  start_date: string
+  end_date: string
+  type: AbsenceType
+  note?: string | null
+}
+
+export type SignalementType = 'absence' | 'fin_anticipee' | 'materiel' | 'autre'
+
+export const SIGNALEMENT_TYPES: { value: SignalementType; label: string }[] = [
+  { value: 'absence', label: 'Absence / retard' },
+  { value: 'fin_anticipee', label: 'Chantier terminé plus tôt' },
+  { value: 'materiel', label: 'Matériel manquant' },
+  { value: 'autre', label: 'Autre' },
+]
+
+/** Imprévu signalé depuis le chantier (GET /api/signalements). */
+export interface Signalement {
+  id: number
+  user?: Worker
+  affectation_id: number | null
+  affectation?: { id: number; date: string; chantier: string | null } | null
+  date: string | null
+  type: SignalementType
+  type_label: string
+  message: string
+  read_at: string | null
+  created_at: string
+}
+
+export interface SignalementPayload {
+  affectation_id?: number | null
+  date?: string | null
+  type: SignalementType
+  message: string
+}
+
+/** Photo attachée à une affectation (GET /api/planning/{id}/photos). */
+export interface AffectationPhoto {
+  id: number
+  affectation_id: number
+  url: string
+  caption: string | null
+  user?: { id: number; name: string } | null
+  created_at: string
 }

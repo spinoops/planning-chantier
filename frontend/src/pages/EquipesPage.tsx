@@ -6,6 +6,8 @@ import { useCreateEquipe, useDeleteEquipe, useEquipes, useUpdateEquipe } from '@
 import { useWorkers } from '@/hooks/useWorkers'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { applyValidationErrors, getErrorMessage } from '@/lib/errors'
+import { todayKey } from '@/lib/dates'
+import { formatDate } from '@/lib/format'
 import { toast } from '@/lib/toast'
 import type { Equipe } from '@/types'
 import Avatar from '@/components/ui/Avatar'
@@ -24,6 +26,8 @@ const TEAM_COLORS = ['#ef4444', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#f9
 const schema = z.object({
   name: z.string().min(1, 'Nom requis.').max(100),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Couleur invalide.'),
+  /** Vide = équipe permanente ; sinon date après laquelle l'équipe disparaît du planning. */
+  expires_at: z.string(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -33,7 +37,7 @@ type FormValues = z.infer<typeof schema>
  * seul). Le planning se fait par équipe : sa couleur teinte ses affectations.
  */
 export default function EquipesPage() {
-  const { data: equipes = [], isLoading } = useEquipes()
+  const { data: equipes = [], isLoading } = useEquipes(true)
   const { data: workers = [] } = useWorkers()
   const createEquipe = useCreateEquipe()
   const updateEquipe = useUpdateEquipe()
@@ -53,7 +57,7 @@ export default function EquipesPage() {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', color: TEAM_COLORS[0] } })
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', color: TEAM_COLORS[0], expires_at: '' } })
   const color = watch('color')
 
   // Employés déjà dans une autre équipe (affiché dans le sélecteur).
@@ -75,7 +79,7 @@ export default function EquipesPage() {
   function openCreate(prefill?: { name: string; memberIds: number[] }) {
     setEditing(null)
     setFormError(null)
-    reset({ name: prefill?.name ?? '', color: TEAM_COLORS[equipes.length % TEAM_COLORS.length] })
+    reset({ name: prefill?.name ?? '', color: TEAM_COLORS[equipes.length % TEAM_COLORS.length], expires_at: '' })
     setMemberIds(prefill?.memberIds ?? [])
     setModalOpen(true)
   }
@@ -83,14 +87,14 @@ export default function EquipesPage() {
   function openEdit(e: Equipe) {
     setEditing(e)
     setFormError(null)
-    reset({ name: e.name, color: e.color })
+    reset({ name: e.name, color: e.color, expires_at: e.expires_at ?? '' })
     setMemberIds(e.members.map((m) => m.id))
     setModalOpen(true)
   }
 
   function onSubmit(values: FormValues) {
     setFormError(null)
-    const payload = { name: values.name.trim(), color: values.color, member_ids: memberIds }
+    const payload = { name: values.name.trim(), color: values.color, expires_at: values.expires_at || null, member_ids: memberIds }
     const onSuccess = () => {
       setModalOpen(false)
       toast(editing ? 'Équipe mise à jour.' : 'Équipe créée.', 'success')
@@ -143,6 +147,11 @@ export default function EquipesPage() {
                 <div className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full" style={{ backgroundColor: e.color }} />
                   <h3 className="truncate text-base font-semibold text-gray-900">{e.name}</h3>
+                  {e.expires_at && (
+                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${e.expires_at < todayKey() ? 'bg-gray-100 text-gray-500' : 'bg-amber-50 text-amber-700'}`}>
+                      {e.expires_at < todayKey() ? 'expirée' : `jusqu'au ${formatDate(e.expires_at)}`}
+                    </span>
+                  )}
                   <span className="ml-auto text-xs text-gray-400">{e.affectations_count ?? 0} affectation{(e.affectations_count ?? 0) > 1 ? 's' : ''}</span>
                 </div>
                 {e.members.length === 0 ? (
@@ -221,6 +230,14 @@ export default function EquipesPage() {
             </div>
             {errors.color && <p className="text-sm text-red-600">{errors.color.message}</p>}
           </div>
+
+          <Input
+            label="Équipe temporaire jusqu'au (optionnel)"
+            type="date"
+            hint="Pour un binôme d'une semaine : l'équipe disparaît du planning après cette date, ses affectations restent."
+            error={errors.expires_at?.message}
+            {...register('expires_at')}
+          />
 
           <WorkerPicker workers={workers} value={memberIds} onChange={setMemberIds} busy={busy} busyLabel="déjà dans" />
           <p className="text-xs text-gray-500">Un employé n'appartient qu'à une équipe : le cocher ici le retire de son équipe actuelle.</p>

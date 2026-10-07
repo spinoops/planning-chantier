@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
+import { useAbsences } from '@/hooks/useAbsences'
 import { useOpenChantiers } from '@/hooks/useChantiers'
 import { useEquipes } from '@/hooks/useEquipes'
 import { useCopyWeek, usePlanning, useUpdateAffectation } from '@/hooks/usePlanning'
@@ -33,7 +34,8 @@ function defaultView(): CalendarView {
   } catch {
     // stockage indisponible
   }
-  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'week'
+  // Par défaut : la timeline « Par équipe » (une ligne par équipe), la plus rapide pour poser la semaine.
+  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'team'
 }
 
 function loadHidden(): Set<TeamKey> {
@@ -114,6 +116,7 @@ export default function PlanningPage() {
   const { data: loaded = [], isLoading, isFetching } = usePlanning({ ...query, chantier_id: chantierFilter || undefined }, range !== null)
   const { data: chantiers = [] } = useOpenChantiers()
   const { data: equipes = [] } = useEquipes()
+  const { data: absences = [] } = useAbsences(query, range !== null)
   const { data: workers = [] } = useWorkers(canEdit)
   const updateAffectation = useUpdateAffectation()
   const copyWeek = useCopyWeek()
@@ -293,6 +296,13 @@ export default function PlanningPage() {
                     Copier sem. précédente
                   </Button>
                 )}
+                <Link
+                  to={`/planning/print?d=${toKey(range?.current ?? new Date())}`}
+                  className="hidden h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 sm:inline-flex"
+                  title="Imprimer la semaine (une page par équipe)"
+                >
+                  Imprimer
+                </Link>
                 <Button size="sm" onClick={() => setTarget({ date: newDate() })}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -318,6 +328,7 @@ export default function PlanningPage() {
           onMove={onMove}
           externalDragging={externalDragging}
           onDropOnEvent={onDropOnEvent}
+          absences={absences}
         />
 
         {canEdit && (
@@ -327,7 +338,7 @@ export default function PlanningPage() {
           </p>
         )}
 
-        <AffectationModal target={target} onClose={() => setTarget(null)} chantiers={chantiers} equipes={equipes} workers={workers} existing={loaded} />
+        <AffectationModal target={target} onClose={() => setTarget(null)} chantiers={chantiers} equipes={equipes} workers={workers} existing={loaded} absences={absences} />
       </div>
     </div>
   )

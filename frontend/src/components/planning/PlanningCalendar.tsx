@@ -11,7 +11,7 @@ import type { ResourceLabelContentArg } from '@fullcalendar/resource'
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { toKey } from '@/lib/dates'
-import type { Affectation, AffectationPayload, Equipe } from '@/types'
+import type { Absence, Affectation, AffectationPayload, Equipe } from '@/types'
 import Avatar, { AvatarGroup } from '@/components/ui/Avatar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
 
@@ -90,6 +90,8 @@ interface PlanningCalendarProps {
   externalDragging?: boolean
   /** Dépôt d'une équipe / personne sur une carte existante (ajout à l'affectation). */
   onDropOnEvent?: (req: DropOnEventRequest) => void
+  /** Absences de la période : affichées en fond (vue Semaine / Jour) et sur la ligne de l'équipe (vue Par équipe). */
+  absences?: Absence[]
 }
 
 function hhmm(d: Date): string {
@@ -143,7 +145,7 @@ const ClockIcon = () => (
  * changeant de ligne.
  */
 const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProps>(function PlanningCalendar(
-  { view, initialDate, affectations, equipes, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove, externalDragging = false, onDropOnEvent },
+  { view, initialDate, affectations, equipes, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove, externalDragging = false, onDropOnEvent, absences = [] },
   ref,
 ) {
   const calRef = useRef<FullCalendar>(null)
@@ -175,9 +177,31 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
     ]
   }, [isTeam, equipes])
 
-  const events = useMemo<EventInput[]>(
-    () =>
-      affectations.map((a) => {
+  const events = useMemo<EventInput[]>(() => {
+    // Absences en fond : colonne du jour grisée avec le prénom (Semaine / Jour) ou sur la ligne de l'équipe (Par équipe).
+    const absenceEvents: EventInput[] = absences.flatMap((ab) => {
+      const equipe = equipes.find((e) => e.members.some((m) => m.id === ab.user_id))
+      if (isTeam && !equipe) return []
+      const end = new Date(ab.end_date)
+      end.setDate(end.getDate() + 1) // `end` exclusif
+      return [
+        {
+          id: `absence:${ab.id}`,
+          start: ab.start_date,
+          end: toKey(end),
+          allDay: true,
+          display: 'background',
+          resourceId: isTeam && equipe ? String(equipe.id) : undefined,
+          backgroundColor: 'rgba(107, 114, 128, 0.14)',
+          classNames: ['pc-absence'],
+          title: `${ab.user?.name.split(' ')[0] ?? ''} absent(e) · ${ab.type_label}`,
+          extendedProps: { absence: true, label: `${ab.user?.name.split(' ')[0] ?? ''} · ${ab.type_label}` },
+          editable: false,
+        },
+      ]
+    })
+
+    const list: EventInput[] = affectations.map((a) => {
         const color = eventColor(a)
         const timed = Boolean(a.start_time)
         const hasConflict = a.workers.some((w) => conflicts.has(`${a.date}:${w.id}`))
@@ -194,9 +218,10 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
           classNames: ['pc-event', hasConflict ? 'pc-event--conflict' : ''],
           extendedProps: { affectationId: a.id, color, hasConflict },
         }
-      }),
-    [affectations, conflicts, isTeam],
-  )
+      })
+
+    return [...absenceEvents, ...list]
+  }, [affectations, conflicts, isTeam, absences, equipes])
 
   /* ------------------------------------------------------------ interactions */
 
@@ -331,6 +356,9 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
 
   const renderEvent = useCallback(
     (arg: EventContentArg) => {
+      if (arg.event.extendedProps.absence) {
+        return <div className="pc-absence__label">{String(arg.event.extendedProps.label)}</div>
+      }
       const a = byId.get(Number(arg.event.extendedProps.affectationId))
       const conflict = Boolean(arg.event.extendedProps.hasConflict)
       const type = arg.view.type
@@ -390,11 +418,23 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
           )}
           <div className="pc-event__meta">
             <ClockIcon />
-            <span>{time}</span>
+            <span>
+              {time}
+              {a?.phase ? ` · ${a.phase}` : ''}
+            </span>
           </div>
           {a && (a.equipe ? a.workers.length > 1 : a.workers.length > 0) && (
             <div className="pc-event__people">
               <AvatarGroup people={a.workers} max={4} size="xs" />
+            </div>
+          )}
+          {a && a.visitors.length > 0 && (
+            <div className="pc-event__meta" title={`Passage : ${a.visitors.map((v) => v.name).join(', ')}`}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span>Passage {a.visitors.map((v) => v.name.split(' ')[0]).join(', ')}</span>
             </div>
           )}
           {a?.note && <div className="pc-event__note">{a.note}</div>}

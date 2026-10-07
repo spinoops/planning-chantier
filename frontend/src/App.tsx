@@ -7,6 +7,9 @@ import DashboardPage from '@/pages/DashboardPage'
 import PlanningPage from '@/pages/PlanningPage'
 import ChantiersPage from '@/pages/ChantiersPage'
 import EquipesPage from '@/pages/EquipesPage'
+import HeuresPage from '@/pages/HeuresPage'
+import AbsencesPage from '@/pages/AbsencesPage'
+import PrintWeekPage from '@/pages/PrintWeekPage'
 import MyPlanningPage from '@/pages/MyPlanningPage'
 import ProfilePage from '@/pages/ProfilePage'
 import InvitationsPage from '@/pages/InvitationsPage'
@@ -49,6 +52,9 @@ export default function App() {
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/chantiers" element={<ChantiersPage />} />
             <Route path="/equipes" element={<EquipesPage />} />
+            <Route path="/heures" element={<HeuresPage />} />
+            <Route path="/absences" element={<AbsencesPage />} />
+            <Route path="/planning/print" element={<PrintWeekPage />} />
           </Route>
 
           {/* Module « invitations » (admins, ou tous selon config/invitations.php) */}

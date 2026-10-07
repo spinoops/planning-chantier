@@ -4,11 +4,14 @@ import type { Equipe, EquipePayload } from '@/types'
 
 const KEY = 'equipes'
 
-/** Toutes les équipes avec leurs membres (colonne de gauche du planning, sélecteurs). */
-export function useEquipes() {
+/**
+ * Équipes avec leurs membres (colonne de gauche du planning, sélecteurs).
+ * `all=true` inclut les équipes temporaires expirées (page Équipes).
+ */
+export function useEquipes(all = false) {
   return useQuery({
-    queryKey: [KEY],
-    queryFn: async () => (await api.get<{ data: Equipe[] }>(`/${KEY}`)).data.data,
+    queryKey: [KEY, { all }],
+    queryFn: async () => (await api.get<{ data: Equipe[] }>(`/${KEY}`, { params: all ? { all: 1 } : undefined })).data.data,
     staleTime: 5 * 60_000,
   })
 }

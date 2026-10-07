@@ -8,6 +8,7 @@ import { CHANTIER_COLORS, nextColor } from '@/lib/colors'
 import { toast } from '@/lib/toast'
 import type { Chantier } from '@/types'
 import Button from '@/components/ui/Button'
+import AddressInput from '@/components/ui/AddressInput'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 
@@ -52,6 +53,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
     defaultValues: { name: '', client: '', address: '', city: '', color: CHANTIER_COLORS[0] },
   })
   const color = watch('color')
+  const address = watch('address')
 
   useEffect(() => {
     if (!open) return
@@ -102,7 +104,16 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
         <Input label="Nom du chantier (client)" placeholder="Ex. Joray François" autoFocus error={errors.name?.message} {...register('name')} />
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
-            <Input label="Adresse" placeholder="Rue des Pèlerins 35" error={errors.address?.message} {...register('address')} />
+            <AddressInput
+              value={address}
+              onChange={(v) => setValue('address', v, { shouldDirty: true })}
+              onPick={(s) => {
+                setValue('address', s.street, { shouldDirty: true })
+                if (s.city) setValue('city', s.city, { shouldDirty: true })
+              }}
+              placeholder="Rue des Pèlerins 35"
+              error={errors.address?.message}
+            />
           </div>
           <Input label="Ville" placeholder="Porrentruy" error={errors.city?.message} {...register('city')} />
         </div>

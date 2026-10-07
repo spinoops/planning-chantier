@@ -407,6 +407,11 @@ function TeamCard({ equipe, visible, count, canManage, editing, onToggle, onOnly
               </svg>
             )}
             <span className="truncate">{equipe.name}</span>
+            {equipe.expires_at && (
+              <span className="shrink-0 rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-700" title={`Équipe temporaire jusqu'au ${equipe.expires_at}`}>
+                temp.
+              </span>
+            )}
           </span>
         )}
 
