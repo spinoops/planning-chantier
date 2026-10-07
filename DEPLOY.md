@@ -296,6 +296,32 @@ php backend/artisan planning:staff
 5. Tâche planifiée (§4), puis sur un téléphone : ouvrir le site, « Ajouter à l'écran
    d'accueil », Mon profil → Alertes → activer et « Envoyer une alerte de test ».
 
+### F bis. Reprendre les données du PC (une fois, au démarrage)
+
+Clients, chantiers, sous-traitants, planning, absences, comptes (avec leurs mots de passe) et
+réglages de la base locale peuvent être repris en production. Les heures pointées ne le sont
+pas, sauf avec `--with-heures`. Ne sont jamais repris : connexions, abonnements push, journal,
+caches.
+
+1. **En local** :
+
+```powershell
+backendrtisan.bat planning:export-data
+```
+
+   → `backend\storagepp	ransfer\donnees-<date>.sql`.
+2. **FTP** : déposer ce fichier dans `apps/planning-chantier-top-stores/backend/storage/app/transfer/`
+   (créer le dossier `transfer` s'il n'existe pas).
+3. **SSH** : sauvegarde automatique, puis **remplacement** des données de la production :
+
+```bash
+cd ~/apps/planning-chantier-top-stores
+php backend/artisan planning:import-data donnees-<date>.sql
+rm backend/storage/app/transfer/donnees-*.sql     # il contient les comptes
+```
+
+4. Chacun se reconnecte (les anciennes connexions sont effacées) et réactive ses alertes.
+
 ### G. Ensuite
 
 Le §1 à chaque mise à jour (`git push`). Le PC reste l'environnement de développement :

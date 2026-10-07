@@ -289,6 +289,10 @@ Même méthode que ProTime-Cuttat (`D:\wamp64\www\ProTime-Cuttat\protime-baseapp
   comptes en ligne **sans e-mail** (demande explicite) : `php artisan planning:admin <email> [--name=]` et
   `php artisan planning:staff` (les 5 employés en `@top-stores.ch`, rôles, équipes) avec le mot de passe standard
   `MakeStaff::DEFAULT_PASSWORD` ; `--password=` pour un autre, `planning:admin --mail` pour un lien.
+- **Reprise des données locales** : `planning:export-data [--with-heures]` (local → `storage/app/transfer/*.sql`,
+  instructions séparées par `DataTransfer::SEPARATOR`, `DELETE` + `INSERT` des tables de `DataTransfer::tables()`)
+  puis `planning:import-data <fichier>` en production (sauvegarde, contraintes désactivées, vide aussi jetons,
+  sessions, abonnements push, heures et rappels ; `permission:cache-reset`). Jamais : journal, caches, migrations.
 - **Tâche planifiée par URL** (pas de crontab sur le mutualisé) : `GET /api/cron/run/{CRON_TOKEN}`
   (`CronController`, 404 sans le bon jeton) → `planning:cron` : `planning:remind --grace=CRON_REMIND_GRACE`
   (défaut 20 min), sauvegarde si la dernière a plus de 20 h, `sanctum:prune-expired`. Config `config/planning.php`.
