@@ -16,8 +16,11 @@ Artisan::command('inspire', function () {
 |
 | Nécessite un cron `php artisan schedule:run` chaque minute (voir DEPLOY.md).
 | Sauvegarde quotidienne de la base si le module « Sauvegardes » est actif.
+| Rappels push « Dans 1 h : chantier X » chaque minute (planning:remind).
 |
 */
+
+Schedule::command('planning:remind')->everyMinute()->withoutOverlapping();
 
 Schedule::command('backup:run')
     ->dailyAt('03:00')

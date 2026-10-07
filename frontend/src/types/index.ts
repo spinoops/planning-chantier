@@ -10,6 +10,10 @@ export interface User {
   /** Équipe de rattachement (planification par équipe). */
   equipe_id: number | null
   equipe?: EquipeRef | null
+  /** Rappel push avant un chantier, en minutes (0 = jamais). */
+  notify_before_minutes: number
+  /** Alerte push quand le planning d'aujourd'hui / demain change. */
+  notify_changes: boolean
   roles: string[]
   /** Permissions effectives (directes + héritées des rôles). */
   permissions: string[]

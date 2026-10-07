@@ -15,6 +15,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import CalendarToolbar from '@/components/planning/CalendarToolbar'
+import PushPrompt from '@/components/PushPrompt'
 import ChantierSheetModal from '@/components/planning/ChantierSheetModal'
 import PhotoGallery from '@/components/planning/PhotoGallery'
 import SignalementModal from '@/components/planning/SignalementModal'
@@ -123,6 +124,8 @@ export default function MyPlanningPage() {
           </div>
         </div>
       </section>
+
+      <PushPrompt />
 
       <CalendarToolbar
         title={formatWeekRange(cursor)}

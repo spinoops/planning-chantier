@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import PageHeader from '@/components/ui/PageHeader'
+import NotificationSettings from '@/components/NotificationSettings'
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Nom requis.').max(255),
@@ -75,7 +76,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="Mon profil" subtitle="Tes informations de compte et ton mot de passe." />
+      <PageHeader title="Mon profil" subtitle="Tes informations, ton mot de passe et tes alertes." />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Informations" description="Nom affiché et adresse de connexion.">
@@ -135,6 +136,8 @@ export default function ProfilePage() {
             </Button>
           </form>
         </Card>
+
+        <NotificationSettings />
       </div>
     </div>
   )

@@ -7,6 +7,8 @@ export interface ProfilePayload {
   name: string
   email: string
   phone?: string | null
+  notify_before_minutes?: number
+  notify_changes?: boolean
 }
 
 export interface PasswordPayload {

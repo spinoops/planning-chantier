@@ -5,13 +5,15 @@
  *    sur un chantier sans réseau, la dernière version consultée reste lisible ;
  *  - les écritures passent toujours par le réseau (file d'attente côté app : lib/offlineQueue).
  */
-const VERSION = 'pc-v1'
+const VERSION = 'pc-v2'
+// En développement (Vite), pas de cache : seules les notifications push sont actives.
+const DEV = ['localhost', '127.0.0.1'].includes(self.location.hostname)
 const SHELL = `${VERSION}-shell`
 const API = `${VERSION}-api`
 const API_PATHS = ['/api/planning', '/api/heures', '/api/chantiers', '/api/equipes', '/api/absences', '/api/settings', '/api/user', '/api/workers', '/api/signalements']
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'])))
+  if (!DEV) event.waitUntil(caches.open(SHELL).then((cache) => cache.addAll(['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'])))
   self.skipWaiting()
 })
 
@@ -22,6 +24,7 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
+  if (DEV) return
   const { request } = event
   if (request.method !== 'GET') return
   const url = new URL(request.url)
@@ -58,4 +61,44 @@ self.addEventListener('fetch', (event) => {
       )
     }
   }
+})
+
+/* ------------------------------------------------------------------------- */
+/*  Notifications push (rappels avant un chantier, changements de planning).  */
+/* ------------------------------------------------------------------------- */
+self.addEventListener('push', (event) => {
+  let payload = {}
+  try {
+    payload = event.data ? event.data.json() : {}
+  } catch {
+    payload = { title: 'Planning', body: event.data ? event.data.text() : '' }
+  }
+  const title = payload.title || 'Planning'
+  const options = {
+    body: payload.body || '',
+    icon: payload.icon || '/favicon.svg',
+    badge: payload.badge || '/favicon.svg',
+    tag: payload.tag || undefined,
+    renotify: Boolean(payload.tag),
+    data: payload.data || {},
+    actions: payload.actions || [],
+  }
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+// Clic sur la notification : ouvre (ou ramène) l'app sur le bon jour de « Mon planning ».
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = (event.notification.data && event.notification.data.url) || '/mon-planning'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) {
+          if ('navigate' in client) client.navigate(url)
+          return client.focus()
+        }
+      }
+      return self.clients.openWindow(url)
+    }),
+  )
 })

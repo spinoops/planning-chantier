@@ -87,6 +87,22 @@ php artisan config:cache && php artisan route:cache
 > `migrate --force` **ajoute / modifie** les tables sans toucher aux données
 > existantes. Ne jamais copier la base locale par-dessus la prod.
 
+## 2b. Notifications push (clés VAPID)
+
+Les alertes sur téléphone (rappel avant un chantier, changements de planning) passent par Web Push.
+Le serveur doit s'identifier avec une paire de clés VAPID, générée **une seule fois** :
+
+```bash
+php artisan webpush:vapid
+```
+
+La commande écrit `VAPID_PUBLIC_KEY` et `VAPID_PRIVATE_KEY` dans `.env`. Ajoute aussi
+`VAPID_SUBJECT="mailto:contact@votre-domaine.ch"`. Ne régénère jamais ces clés : tous les appareils
+devraient se réabonner. HTTPS est obligatoire (fourni par Infomaniak). Sur iPhone, les alertes ne
+fonctionnent que si l'app est ajoutée à l'écran d'accueil (iOS 16.4+).
+
+Les rappels partent par la tâche `planning:remind`, exécutée chaque minute par le cron ci-dessous.
+
 ## 3. Tâches planifiées (cron)
 
 Le socle planifie une **sauvegarde quotidienne** de la base (module « Sauvegardes »,

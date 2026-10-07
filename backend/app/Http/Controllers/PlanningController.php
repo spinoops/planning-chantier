@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAffectationRequest;
 use App\Http\Resources\AffectationResource;
 use App\Models\Affectation;
 use App\Models\Equipe;
+use App\Support\PlanningPush;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -102,6 +103,10 @@ class PlanningController extends Controller
             return $list;
         });
 
+        foreach ($created as $affectation) {
+            PlanningPush::changed($affectation, 'created');
+        }
+
         return AffectationResource::make($created[0]->load(self::RELATIONS)->loadCount('photos'))
             ->additional(['created' => count($created)])
             ->response()
@@ -116,6 +121,8 @@ class PlanningController extends Controller
     public function update(UpdateAffectationRequest $request, Affectation $affectation): AffectationResource
     {
         $data = $request->validated();
+        $previousDate = $affectation->date->toDateString();
+        $previousPeople = $affectation->people()->pluck('users.id')->all();
 
         DB::transaction(function () use ($data, $affectation) {
             $previousEquipe = $affectation->equipe_id;
@@ -137,11 +144,16 @@ class PlanningController extends Controller
             }
         });
 
-        return AffectationResource::make($affectation->fresh(self::RELATIONS)->loadCount('photos'));
+        $fresh = $affectation->fresh(self::RELATIONS);
+        PlanningPush::changed($fresh, 'updated', $previousPeople, $previousDate);
+
+        return AffectationResource::make($fresh->loadCount('photos'));
     }
 
     public function destroy(Affectation $affectation): JsonResponse
     {
+        $affectation->load(['chantier', 'people']);
+        PlanningPush::changed($affectation, 'deleted');
         $affectation->delete();
 
         return response()->json(['message' => 'Affectation supprimée.']);

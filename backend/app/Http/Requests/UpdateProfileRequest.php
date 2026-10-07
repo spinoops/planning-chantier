@@ -26,6 +26,9 @@ class UpdateProfileRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($this->user()->id),
             ],
             'phone' => ['nullable', 'string', 'max:40'],
+            // Notifications push : délai de rappel avant un chantier (0 = jamais) et alertes de changement.
+            'notify_before_minutes' => ['sometimes', 'integer', Rule::in([0, 15, 30, 60, 120, 180])],
+            'notify_changes' => ['sometimes', 'boolean'],
         ];
     }
 }

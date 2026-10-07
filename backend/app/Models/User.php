@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
@@ -19,7 +20,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, LogsActivity, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, HasRoles, LogsActivity, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +35,8 @@ class User extends Authenticatable
         'job_title',
         'color',
         'equipe_id',
+        'notify_before_minutes',
+        'notify_changes',
     ];
 
     /**
@@ -56,6 +59,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'notify_before_minutes' => 'integer',
+            'notify_changes' => 'boolean',
         ];
     }
 

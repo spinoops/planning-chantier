@@ -23,6 +23,8 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
+            'notify_before_minutes' => (int) ($this->notify_before_minutes ?? 0),
+            'notify_changes' => (bool) ($this->notify_changes ?? true),
             'job_title' => $this->job_title,
             'color' => $this->color,
             'equipe_id' => $this->equipe_id,

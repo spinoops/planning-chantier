@@ -73,6 +73,21 @@ La version installée sous WAMP est **8.4.24** :
   renvoyées par `ChantierResource` quand `sousTraitants` est chargé (`GET /chantiers/{id}`).
   `GET /chantiers/{id}/recap[?from&to]` = récapitulatif pour la facturation (heures pointées par personne et
   statut, planifié, estimation, devis, affectations, pointages) ; `/recap.csv` = export CSV (`;`, BOM).
+- **Notifications push (Web Push)** : paquet `laravel-notification-channels/webpush`, `User` utilise
+  `HasPushSubscriptions` (table `push_subscriptions`, un abonnement par appareil). Clés VAPID dans `.env`
+  (`VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`, générées une fois par `webpush:vapid`, ne jamais
+  les changer sinon tous les appareils doivent se réabonner). Préférences : `users.notify_before_minutes`
+  (0, 15, 30, 60, 120, 180 ; défaut 60) et `users.notify_changes` (`PUT /profile`). Routes `GET /push/public-key`,
+  `POST|DELETE /push/subscriptions`, `POST /push/test`. Rappels : commande `planning:remind` (schedule chaque
+  minute, tolérance `--grace=5`) → `AffectationReminderNotification` ; table `affectation_reminders` = un seul
+  rappel par affectation et par personne ; une affectation sans heure est rappelée par rapport à
+  `planning_morning_start`. Changements : `App\Support\PlanningPush::changed()` appelé par `PlanningController`
+  (store / update / destroy, après `syncPeople`) → `PlanningChangedPushNotification` aux personnes concernées
+  (y compris celles retirées), sauf l'auteur, pour aujourd'hui / demain seulement.
+  Front : `lib/push.ts` (abonnement, désabonnement, test), `hooks/usePush`, carte `NotificationSettings` dans
+  le profil, bandeau `PushPrompt` dans « Mon planning » ; réception dans `public/sw.js` (`push`,
+  `notificationclick` → ouvre `/mon-planning?d=`). Le service worker est enregistré **aussi en dev** (cache
+  désactivé quand `hostname` = localhost). iPhone : uniquement app ajoutée à l'écran d'accueil (iOS 16.4+).
 - **Réglages planning** (`Setting::defaults()`) : `planning_morning_*`, `planning_afternoon_*` (boutons
   Matin / Après-midi / Journée) et `planning_notify_after` : après cette heure, créer / modifier /
   supprimer une affectation d'aujourd'hui ou de demain envoie `PlanningChangedNotification` (mail) aux

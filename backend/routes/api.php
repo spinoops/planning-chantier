@@ -14,6 +14,7 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
@@ -80,6 +81,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profil de l'utilisateur connecté.
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+
+    // Notifications push (un abonnement par appareil).
+    Route::get('/push/public-key', [PushSubscriptionController::class, 'publicKey']);
+    Route::post('/push/subscriptions', [PushSubscriptionController::class, 'store']);
+    Route::delete('/push/subscriptions', [PushSubscriptionController::class, 'destroy']);
+    Route::post('/push/test', [PushSubscriptionController::class, 'test']);
 
     // Tableau de bord (contenu selon le rôle).
     Route::get('/dashboard', [DashboardController::class, 'index']);

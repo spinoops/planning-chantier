@@ -11,9 +11,10 @@ import { ConfirmProvider } from '@/components/ui/ConfirmDialog'
 import ToastContainer from '@/components/ui/ToastContainer'
 import { installOfflineSync } from '@/lib/offlineQueue'
 
-// Hors ligne léger : service worker (cache de l'app et des lectures du planning)
+// Hors ligne léger : service worker (cache de l'app et des lectures du planning, notifications push)
 // + file d'attente des saisies faites sans réseau (pointages, imprévus).
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Enregistré aussi en développement pour les notifications (le cache y est désactivé, voir sw.js).
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // pas bloquant : l'app fonctionne sans cache hors ligne
