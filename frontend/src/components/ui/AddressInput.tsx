@@ -25,13 +25,15 @@ interface AddressInputProps {
 export default function AddressInput({ label = 'Adresse', value, onChange, onPick, error, placeholder }: AddressInputProps) {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Suggestion[]>([])
-  const debounced = useDebounce(value, 300)
+  const debounced = useDebounce(value ?? '', 300)
   const boxRef = useRef<HTMLDivElement>(null)
   const pickedRef = useRef<string | null>(null)
+  /** Vrai dès que l'utilisateur a tapé : une valeur posée par le formulaire (reset) ne déclenche pas de recherche. */
+  const typedRef = useRef(false)
 
   useEffect(() => {
     const q = debounced.trim()
-    if (q.length < 4 || q === pickedRef.current || typeof navigator !== 'undefined' && navigator.onLine === false) {
+    if (!typedRef.current || q.length < 4 || q === pickedRef.current || typeof navigator !== 'undefined' && navigator.onLine === false) {
       setItems([])
       return
     }
@@ -63,6 +65,7 @@ export default function AddressInput({ label = 'Adresse', value, onChange, onPic
         value={value}
         onChange={(e) => {
           pickedRef.current = null
+          typedRef.current = true
           onChange(e.target.value)
         }}
         onFocus={() => items.length > 0 && setOpen(true)}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -324,6 +325,9 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: selectedChantier.color }} />
                 {[selectedChantier.client !== selectedChantier.name ? selectedChantier.client : null, selectedChantier.address, selectedChantier.city].filter(Boolean).join(' · ') || 'Sans adresse'}
+                <Link to={`/chantiers/${selectedChantier.id}`} className="ml-auto font-medium text-primary hover:underline" onClick={onClose}>
+                  Fiche
+                </Link>
               </p>
             )}
           </div>

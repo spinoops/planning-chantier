@@ -15,6 +15,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import CalendarToolbar from '@/components/planning/CalendarToolbar'
+import ChantierSheetModal from '@/components/planning/ChantierSheetModal'
 import PhotoGallery from '@/components/planning/PhotoGallery'
 import SignalementModal from '@/components/planning/SignalementModal'
 import TimeEntryModal from '@/components/planning/TimeEntryModal'
@@ -43,6 +44,7 @@ export default function MyPlanningPage() {
   const [timeTarget, setTimeTarget] = useState<TimeEntryTarget | null>(null)
   const [signalFor, setSignalFor] = useState<{ affectation?: Affectation; date?: string } | null>(null)
   const [photosFor, setPhotosFor] = useState<number | null>(null)
+  const [sheetFor, setSheetFor] = useState<number | null>(null)
   const [queued, setQueued] = useState(0)
   useEffect(() => onQueueChange(setQueued), [])
 
@@ -183,9 +185,14 @@ export default function MyPlanningPage() {
                           <div className="min-w-0 flex-1 space-y-2">
                             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                               <h3 className="text-base font-semibold text-gray-900">
-                                {a.chantier.name}
+                                <button type="button" onClick={() => setSheetFor(a.chantier_id)} className="text-left hover:text-primary hover:underline" title="Ouvrir la fiche du chantier">
+                                  {a.chantier.name}
+                                </button>
                                 {isVisit && <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">passage</span>}
                                 {a.phase && <span className="ml-2 text-xs font-normal text-gray-500">· {a.phase}</span>}
+                                <button type="button" onClick={() => setSheetFor(a.chantier_id)} className="ml-2 align-middle text-[11px] font-medium text-primary hover:underline">
+                                  Fiche
+                                </button>
                               </h3>
                               <span className="rounded-md bg-gray-100 px-2 py-0.5 text-sm font-medium tabular-nums text-gray-800">{formatTimeRange(a.start_time, a.end_time)}</span>
                             </div>
@@ -321,6 +328,7 @@ export default function MyPlanningPage() {
 
       <TimeEntryModal target={timeTarget} onClose={() => setTimeTarget(null)} chantiers={chantiers} />
       <SignalementModal open={signalFor !== null} onClose={() => setSignalFor(null)} affectation={signalFor?.affectation ?? null} date={signalFor?.date} />
+      <ChantierSheetModal chantierId={sheetFor} onClose={() => setSheetFor(null)} />
     </div>
   )
 }

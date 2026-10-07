@@ -24,6 +24,7 @@ export const PLANNER_ROLES = ['admin', 'chef']
 export const NAV_ITEMS: NavItem[] = [
   { to: '/planning', label: 'Planning', roles: PLANNER_ROLES },
   { to: '/chantiers', label: 'Chantiers', roles: PLANNER_ROLES },
+  { to: '/clients', label: 'Clients', roles: PLANNER_ROLES },
   { to: '/equipes', label: 'Équipes', roles: PLANNER_ROLES },
   { to: '/heures', label: 'Heures', roles: PLANNER_ROLES },
   { to: '/absences', label: 'Absences', roles: PLANNER_ROLES },

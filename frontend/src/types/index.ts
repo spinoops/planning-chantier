@@ -178,11 +178,74 @@ export const CHANTIER_STATUSES: { value: ChantierStatus; label: string }[] = [
   { value: 'done', label: 'Terminé' },
 ]
 
+/** Client (donneur d'ordre), sélectionné à la création d'un chantier (GET /api/clients). */
+export interface Client {
+  id: number
+  name: string
+  contact_name: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  city: string | null
+  notes: string | null
+  chantiers_count?: number
+  created_at: string
+  updated_at: string
+}
+
+export type ClientPayload = Pick<Client, 'name' | 'contact_name' | 'phone' | 'email' | 'address' | 'city' | 'notes'>
+
+/** Sous-traitant prévu sur un chantier (GET /api/sous-traitants). */
+export interface SousTraitant {
+  id: number
+  name: string
+  trade: string | null
+  contact_name: string | null
+  phone: string | null
+  email: string | null
+  notes: string | null
+  /** Présents quand chargé via un chantier (pivot). */
+  note?: string | null
+  planned_date?: string | null
+  chantiers_count?: number
+  created_at: string
+}
+
+export type SousTraitantPayload = Pick<SousTraitant, 'name' | 'trade' | 'contact_name' | 'phone' | 'email' | 'notes'>
+
+/** Ligne de la liste de matériel d'un chantier. */
+export interface MaterielItem {
+  label: string
+  qty: string | null
+  done: boolean
+}
+
+export type QuoteStatus = 'none' | 'to_prepare' | 'sent' | 'accepted' | 'refused'
+
+export const QUOTE_STATUSES: { value: QuoteStatus; label: string }[] = [
+  { value: 'none', label: 'Pas de devis' },
+  { value: 'to_prepare', label: 'À établir' },
+  { value: 'sent', label: 'Envoyé' },
+  { value: 'accepted', label: 'Accepté' },
+  { value: 'refused', label: 'Refusé' },
+]
+
+/** Étape du déroulé d'un chantier (dérivée des données par l'API). */
+export interface ChantierStep {
+  key: 'creation' | 'devis' | 'mesures' | 'estimation' | 'planning' | 'heures' | 'facturation'
+  label: string
+  state: 'done' | 'todo' | 'pending' | 'skipped' | 'refused'
+  hint: string | null
+}
+
 /** Chantier (GET /api/chantiers). */
 export interface Chantier {
   id: number
   name: string
+  /** Libellé libre du client (compatibilité) ; préférer `client_record`. */
   client: string | null
+  client_id: number | null
+  client_record?: Client | null
   address: string | null
   city: string | null
   /** Couleur d'affichage dans le calendrier (#rrggbb). */
@@ -192,12 +255,90 @@ export interface Chantier {
   start_date: string | null
   end_date: string | null
   notes: string | null
+  /** Étape 1 : préparation au bureau. */
+  estimated_hours: number | null
+  mesures: string | null
+  materiel: MaterielItem[]
+  sous_traitants?: SousTraitant[]
+  /** Étape 2 : suivi du devis. */
+  quote_status: QuoteStatus
+  quote_status_label: string
+  quote_amount: number | null
+  quote_sent_at: string | null
+  quote_accepted_at: string | null
+  /** Étape 3 : reprise des mesures sur place. */
+  remeasure_needed: boolean
+  remeasured_at: string | null
+  /** Étape 4 : estimation pour le planning. */
+  planning_hours: number | null
   affectations_count?: number
+  time_entries_count?: number
+  steps?: ChantierStep[]
   created_at: string
   updated_at: string
 }
 
-export type ChantierPayload = Pick<Chantier, 'name' | 'client' | 'address' | 'city' | 'color' | 'status' | 'start_date' | 'end_date' | 'notes'>
+export interface ChantierPayload {
+  name: string
+  client?: string | null
+  client_id?: number | null
+  address: string | null
+  city: string | null
+  color: string
+  status: ChantierStatus
+  start_date: string | null
+  end_date: string | null
+  notes: string | null
+  estimated_hours?: number | null
+  mesures?: string | null
+  materiel?: MaterielItem[]
+  sous_traitants?: { id: number; note?: string | null; planned_date?: string | null }[]
+  quote_status?: QuoteStatus
+  quote_amount?: number | null
+  quote_sent_at?: string | null
+  quote_accepted_at?: string | null
+  remeasure_needed?: boolean
+  remeasured_at?: string | null
+  planning_hours?: number | null
+}
+
+/** Récapitulatif d'un chantier pour la facturation (GET /api/chantiers/{id}/recap). */
+export interface ChantierRecap {
+  chantier: Chantier
+  from: string | null
+  to: string | null
+  by_user: {
+    user: { id: number; name: string; color: string | null; job_title: string | null }
+    validated_minutes: number
+    submitted_minutes: number
+    draft_minutes: number
+    worked_minutes: number
+    entries: number
+  }[]
+  totals: {
+    worked_minutes: number
+    validated_minutes: number
+    planned_minutes: number
+    estimated_minutes: number
+    planning_estimate_minutes: number
+    entries: number
+    days: number
+    photos: number
+  }
+  affectations: Affectation[]
+  entries: {
+    id: number
+    date: string
+    user: string | null
+    start_time: string
+    end_time: string
+    break_minutes: number
+    minutes: number
+    status: TimeEntryStatus
+    status_label: string
+    comment: string | null
+  }[]
+}
 
 /** Membre de l'équipe affectable (GET /api/workers, et `workers` d'une affectation). */
 export interface Worker {

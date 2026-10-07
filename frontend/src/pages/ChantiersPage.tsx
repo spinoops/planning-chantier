@@ -25,6 +25,7 @@ import Select from '@/components/ui/Select'
 import Spinner from '@/components/ui/Spinner'
 import Textarea from '@/components/ui/Textarea'
 import AddressInput from '@/components/ui/AddressInput'
+import ClientSelect from '@/components/planning/ClientSelect'
 
 import { CHANTIER_COLORS } from '@/lib/colors'
 
@@ -38,6 +39,7 @@ const STATUS_TONE: Record<ChantierStatus, BadgeTone> = {
 const schema = z.object({
   name: z.string().min(1, 'Nom requis.').max(255),
   client: z.string().max(255),
+  client_id: z.string(),
   address: z.string().max(255),
   city: z.string().max(120),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Couleur invalide.'),
@@ -49,7 +51,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-const EMPTY: FormValues = { name: '', client: '', address: '', city: '', color: CHANTIER_COLORS[0], status: 'active', start_date: '', end_date: '', notes: '' }
+const EMPTY: FormValues = { name: '', client: '', client_id: '', address: '', city: '', color: CHANTIER_COLORS[0], status: 'active', start_date: '', end_date: '', notes: '' }
 
 export default function ChantiersPage() {
   const { params, setPage, setSearch } = useListParams({ sort: 'name', dir: 'asc', per_page: 12 })
@@ -104,6 +106,7 @@ export default function ChantiersPage() {
     reset({
       name: c.name,
       client: c.client ?? '',
+      client_id: c.client_id ? String(c.client_id) : '',
       address: c.address ?? '',
       city: c.city ?? '',
       color: c.color,
@@ -120,6 +123,7 @@ export default function ChantiersPage() {
     const payload = {
       name: values.name.trim(),
       client: values.client.trim() || null,
+      client_id: Number(values.client_id) || null,
       address: values.address.trim() || null,
       city: values.city.trim() || null,
       color: values.color,
@@ -197,7 +201,9 @@ export default function ChantiersPage() {
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="truncate text-base font-semibold text-gray-900">{c.name}</h3>
+                    <Link to={`/chantiers/${c.id}`} className="block truncate text-base font-semibold text-gray-900 hover:text-primary hover:underline">
+                      {c.name}
+                    </Link>
                     <p className="truncate text-sm text-gray-500">{c.client || 'Client non renseigné'}</p>
                   </div>
                   <Badge tone={STATUS_TONE[c.status]}>{c.status_label}</Badge>
@@ -227,6 +233,9 @@ export default function ChantiersPage() {
                     {c.affectations_count ?? 0} jour{(c.affectations_count ?? 0) > 1 ? 's' : ''} planifié{(c.affectations_count ?? 0) > 1 ? 's' : ''}
                   </Link>
                   <div className="flex gap-1">
+                    <Link to={`/chantiers/${c.id}`} className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition hover:bg-primary-soft">
+                      Fiche
+                    </Link>
                     <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
                       Modifier
                     </Button>
@@ -253,7 +262,14 @@ export default function ChantiersPage() {
             <div className="sm:col-span-2">
               <Input label="Nom du chantier" placeholder="Ex. Villa Les Cèdres" error={errors.name?.message} {...register('name')} />
             </div>
-            <Input label="Client" error={errors.client?.message} {...register('client')} />
+            <ClientSelect
+              value={watch('client_id')}
+              onChange={(id, client) => {
+                setValue('client_id', id, { shouldDirty: true })
+                if (client) setValue('client', client.name, { shouldDirty: true })
+              }}
+              error={errors.client_id?.message}
+            />
             <Select label="Statut" error={errors.status?.message} {...register('status')}>
               {CHANTIER_STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>

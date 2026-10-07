@@ -6,6 +6,8 @@ import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
 import PlanningPage from '@/pages/PlanningPage'
 import ChantiersPage from '@/pages/ChantiersPage'
+import ChantierDetailPage from '@/pages/ChantierDetailPage'
+import ClientsPage from '@/pages/ClientsPage'
 import EquipesPage from '@/pages/EquipesPage'
 import HeuresPage from '@/pages/HeuresPage'
 import AbsencesPage from '@/pages/AbsencesPage'
@@ -51,6 +53,8 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/chantiers" element={<ChantiersPage />} />
+            <Route path="/chantiers/:id" element={<ChantierDetailPage />} />
+            <Route path="/clients" element={<ClientsPage />} />
             <Route path="/equipes" element={<EquipesPage />} />
             <Route path="/heures" element={<HeuresPage />} />
             <Route path="/absences" element={<AbsencesPage />} />

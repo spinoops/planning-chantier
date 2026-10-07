@@ -11,10 +11,12 @@ import Button from '@/components/ui/Button'
 import AddressInput from '@/components/ui/AddressInput'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
+import ClientSelect from '@/components/planning/ClientSelect'
 
 const schema = z.object({
   name: z.string().min(1, 'Nom requis.').max(255),
   client: z.string().max(255),
+  client_id: z.string(),
   address: z.string().max(255),
   city: z.string().max(120),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Couleur invalide.'),
@@ -50,7 +52,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', client: '', address: '', city: '', color: CHANTIER_COLORS[0] },
+    defaultValues: { name: '', client: '', client_id: '', address: '', city: '', color: CHANTIER_COLORS[0] },
   })
   const color = watch('color')
   const address = watch('address')
@@ -58,7 +60,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
   useEffect(() => {
     if (!open) return
     setFormError(null)
-    reset({ name: '', client: '', address: '', city: '', color: nextColor(CHANTIER_COLORS, existing.map((c) => c.color)) })
+    reset({ name: '', client: '', client_id: '', address: '', city: '', color: nextColor(CHANTIER_COLORS, existing.map((c) => c.color)) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, reset])
 
@@ -68,6 +70,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
       {
         name: values.name.trim(),
         client: values.client.trim() || values.name.trim(),
+        client_id: Number(values.client_id) || null,
         address: values.address.trim() || null,
         city: values.city.trim() || null,
         color: values.color,
@@ -117,7 +120,15 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
           </div>
           <Input label="Ville" placeholder="Porrentruy" error={errors.city?.message} {...register('city')} />
         </div>
-        <Input label="Client (si différent du nom)" placeholder="Optionnel" error={errors.client?.message} {...register('client')} />
+        <ClientSelect
+          value={watch('client_id')}
+          onChange={(id, client) => {
+            setValue('client_id', id, { shouldDirty: true })
+            setValue('client', client?.name ?? '', { shouldDirty: true })
+          }}
+          error={errors.client_id?.message}
+        />
+        <input type="hidden" {...register('client')} />
 
         <div className="space-y-1.5">
           <p className="block text-sm font-medium text-gray-700">Couleur</p>

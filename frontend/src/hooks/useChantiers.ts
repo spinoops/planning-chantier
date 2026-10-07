@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { api, downloadFile } from '@/lib/api'
 import type { ListParams } from '@/hooks/useListParams'
-import type { Chantier, ChantierPayload, ChantierStatus, Paginated } from '@/types'
+import type { Chantier, ChantierPayload, ChantierRecap, ChantierStatus, Paginated } from '@/types'
 
 export interface ChantierFilters extends Partial<ListParams> {
   status?: ChantierStatus | ''
@@ -65,4 +65,32 @@ export function useDeleteChantier() {
       queryClient.invalidateQueries({ queryKey: ['planning'] })
     },
   })
+}
+
+/** Fiche complète d'un chantier (client, sous-traitants, étapes du déroulé). */
+export function useChantier(id: number | null | undefined) {
+  return useQuery({
+    queryKey: [KEY, 'detail', id],
+    queryFn: async () => (await api.get<{ data: Chantier }>(`/${KEY}/${id}`)).data.data,
+    enabled: Boolean(id),
+  })
+}
+
+/** Récapitulatif pour la facturation (planificateurs). `from` / `to` optionnels. */
+export function useChantierRecap(id: number | null | undefined, range: { from?: string; to?: string } = {}, enabled = true) {
+  return useQuery({
+    queryKey: [KEY, 'recap', id, range],
+    queryFn: async () => (await api.get<ChantierRecap>(`/${KEY}/${id}/recap`, { params: range })).data,
+    enabled: Boolean(id) && enabled,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Télécharge le récapitulatif CSV d'un chantier. */
+export function downloadRecapCsv(chantier: Pick<Chantier, 'id' | 'name'>, range: { from?: string; to?: string } = {}): Promise<void> {
+  const params = new URLSearchParams()
+  if (range.from) params.set('from', range.from)
+  if (range.to) params.set('to', range.to)
+  const qs = params.toString()
+  return downloadFile(`/${KEY}/${chantier.id}/recap.csv${qs ? `?${qs}` : ''}`, `recap-${chantier.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.csv`)
 }

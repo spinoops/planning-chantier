@@ -58,6 +58,16 @@ La version installée sous WAMP est **8.4.24** :
 - **Récurrence** : `POST /planning` avec `repeat_until` + `repeat_days` (ISO, défaut lun–ven, 90 jours max)
   crée une affectation par jour ; réponse `{ data: première, created: n }`.
 - **Équipes temporaires** : `equipes.expires_at` ; `GET /equipes` ne renvoie que les actives (`?all=1` pour tout).
+- **Préparation du chantier (workflow en 7 étapes)** : `clients` (nom, contact, téléphone, e-mail, adresse ;
+  `chantiers.client_id`, le champ texte `client` reste le nom affiché), `sous_traitants` + pivot
+  `chantier_sous_traitant` (note, `planned_date`), et sur `chantiers` : `estimated_hours`, `mesures`,
+  `materiel` (json `[{label, qty, unit, done}]`), devis (`quote_status` none|to_prepare|sent|accepted|refused,
+  `quote_amount`, `quote_sent_at`, `quote_accepted_at`), reprise des mesures (`remeasure_needed`, `remeasured_at`),
+  `planning_hours` (estimation pour le planning). `Chantier::steps()` dérive les 7 étapes
+  (creation, devis, mesures, estimation, planning, heures, facturation ; état done|todo|pending|skipped|refused)
+  renvoyées par `ChantierResource` quand `sousTraitants` est chargé (`GET /chantiers/{id}`).
+  `GET /chantiers/{id}/recap[?from&to]` = récapitulatif pour la facturation (heures pointées par personne et
+  statut, planifié, estimation, devis, affectations, pointages) ; `/recap.csv` = export CSV (`;`, BOM).
 - **Réglages planning** (`Setting::defaults()`) : `planning_morning_*`, `planning_afternoon_*` (boutons
   Matin / Après-midi / Journée) et `planning_notify_after` : après cette heure, créer / modifier /
   supprimer une affectation d'aujourd'hui ou de demain envoie `PlanningChangedNotification` (mail) aux
@@ -71,6 +81,8 @@ La version installée sous WAMP est **8.4.24** :
   `POST /planning`, `PUT /planning/{id}` (champs optionnels : `{date}` seul = déplacement),
   `DELETE /planning/{id}`, `POST /planning/copy-week {from, to, replace?}` (lundis).
 - `GET /dashboard` renvoie `planning` (état du jour) pour les planificateurs.
+- `GET /clients`, `GET /clients/{id}`, `GET /sous-traitants` (tous) ; planificateurs : `apiResource` clients et
+  sous-traitants, `GET /chantiers?client_id=`, `GET /chantiers/{id}/recap` et `/recap.csv`.
 
 ## Front (`frontend/src`)
 - Pages : `PlanningPage` (colonne équipes + calendrier, état dans l'URL `?view=&d=&chantier=`),
@@ -124,6 +136,15 @@ La version installée sous WAMP est **8.4.24** :
   `HeuresPage` (`/heures` : synthèse, validation / réouverture en lot, correction), `AbsencesPage`,
   `PrintWeekPage` (`/planning/print?d=&equipe=` : une page A4 par équipe, styles `@media print`).
   Vue par défaut du planning : « Semaine ».
+- Workflow chantier : `ChantierDetailPage` (`/chantiers/:id`) = frise des 7 étapes (`c.steps`) + onglets
+  « Fiche de préparation » (client via `ClientSelect`, adresse, estimation, mesures, remarques, checklist matériel,
+  sous-traitants, devis, reprise des mesures, estimation planning) et « Récapitulatif facturation » (période,
+  cartes de synthèse, heures par personne, détail des pointages, bouton « Exporter CSV » via `downloadRecapCsv`).
+  `ClientsPage` (`/clients`, CRUD). `ClientSelect` (liste + « + » création rapide) utilisé dans `ChantiersPage`,
+  `QuickChantierModal` et la fiche. `ChantierSheetModal` = fiche en lecture seule pour les employés (bouton
+  « Fiche » dans `MyPlanningPage` et lien dans `AffectationModal`). Hooks : `useClients`, `useSousTraitants`,
+  `useChantier(id)`, `useChantierRecap`. `AddressInput` ne lance la recherche qu'après une frappe de l'utilisateur
+  (pas lors d'un `reset` du formulaire).
 - **Hors ligne léger** : `public/sw.js` (coquille + lectures d'API « réseau d'abord, cache sinon »,
   enregistré en production dans `main.tsx`), `public/manifest.webmanifest` (installable, démarre sur
   `/mon-planning`), `lib/offlineQueue.ts` (pointages / imprévus saisis sans réseau mis en file dans
