@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import LoginPage from '@/pages/LoginPage'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/ResetPasswordPage'
@@ -56,7 +56,9 @@ export default function App() {
             <Route path="/chantiers/:id" element={<ChantierDetailPage />} />
             <Route path="/clients" element={<ClientsPage />} />
             <Route path="/equipes" element={<EquipesPage />} />
-            <Route path="/heures" element={<HeuresPage />} />
+            <Route path="/statistiques/heures" element={<HeuresPage />} />
+            <Route path="/statistiques" element={<Navigate to="/statistiques/heures" replace />} />
+            <Route path="/heures" element={<LegacyHeuresRedirect />} />
             <Route path="/absences" element={<AbsencesPage />} />
             <Route path="/planning/print" element={<PrintWeekPage />} />
           </Route>
@@ -81,4 +83,10 @@ export default function App() {
       </Route>
     </Routes>
   )
+}
+
+/** Ancienne adresse /heures → Statistiques → Heures (en gardant les filtres de l'URL). */
+function LegacyHeuresRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={`/statistiques/heures${search}`} replace />
 }

@@ -133,6 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('sous-traitants', SousTraitantController::class)->only(['store', 'update', 'destroy'])->parameters(['sous-traitants' => 'sousTraitant']);
         Route::apiResource('equipes', EquipeController::class)->only(['store', 'update', 'destroy']);
         Route::get('/heures/summary', [TimeEntryController::class, 'summary']);
+        Route::get('/heures/export.csv', [TimeEntryController::class, 'export']);
         Route::post('/heures/validate', [TimeEntryController::class, 'validateEntries']);
         Route::post('/heures/reopen', [TimeEntryController::class, 'reopen']);
         Route::apiResource('absences', AbsenceController::class)->only(['store', 'update', 'destroy']);

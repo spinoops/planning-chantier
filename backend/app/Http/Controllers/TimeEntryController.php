@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Heures pointées. Un ouvrier gère ses propres heures (brouillon → soumis) ;
@@ -139,8 +140,12 @@ class TimeEntryController extends Controller
     }
 
     /**
-     * Synthèse d'une période (planificateurs) : par personne (planifié vs pointé,
-     * statuts) et par chantier (minutes pointées).
+     * Synthèse d'une période (planificateurs) pour la rubrique Statistiques → Heures :
+     *   - by_user : planifié vs pointé, minutes et nombre d'entrées par statut, jours pointés,
+     *     jours planifiés passés sans pointage (oublis) ;
+     *   - grid : une cellule par personne et par jour non vide (planifié, pointé, statuts) ;
+     *   - by_chantier : minutes pointées par chantier ;
+     *   - totals.
      */
     public function summary(Request $request): JsonResponse
     {
@@ -149,32 +154,67 @@ class TimeEntryController extends Controller
             'to' => ['nullable', 'date_format:Y-m-d'],
         ]);
         [$from, $to] = $this->range($filters);
+        $today = CarbonImmutable::today()->toDateString();
 
         $entries = TimeEntry::with('chantier:id,name,color')->between($from, $to)->get();
-        $planned = Affectation::with('people:id')->between($from, $to)->get();
+        $planned = Affectation::with('people:id')->whereHas('chantier')->between($from, $to)->get();
 
-        $plannedByUser = [];
+        // Cellules personne × jour.
+        $cells = [];
+        $cell = function (int $userId, string $date) use (&$cells): string {
+            $key = $userId.'|'.$date;
+            $cells[$key] ??= [
+                'user_id' => $userId,
+                'date' => $date,
+                'planned_minutes' => 0,
+                'planned' => 0,
+                'worked_minutes' => 0,
+                'entries' => 0,
+                'draft' => 0,
+                'submitted' => 0,
+                'validated' => 0,
+            ];
+
+            return $key;
+        };
         foreach ($planned as $a) {
             foreach ($a->people as $p) {
                 if ($p->pivot->role !== 'worker') {
                     continue;
                 }
-                $plannedByUser[$p->id] = ($plannedByUser[$p->id] ?? 0) + $a->plannedMinutes();
+                $k = $cell($p->id, $a->date->toDateString());
+                $cells[$k]['planned_minutes'] += $a->plannedMinutes();
+                $cells[$k]['planned']++;
             }
         }
+        foreach ($entries as $e) {
+            $k = $cell($e->user_id, $e->date->toDateString());
+            $cells[$k]['worked_minutes'] += $e->minutes();
+            $cells[$k]['entries']++;
+            $cells[$k][$e->status]++;
+        }
+        $grid = collect($cells)->sortBy([['date', 'asc'], ['user_id', 'asc']])->values();
 
         $people = User::assignable()->orderBy('name')->get(['id', 'name', 'color', 'job_title']);
-        $byUser = $people->map(function (User $u) use ($entries, $plannedByUser) {
+        $byUser = $people->map(function (User $u) use ($entries, $grid, $today) {
             $mine = $entries->where('user_id', $u->id);
+            $myCells = $grid->where('user_id', $u->id);
+            $minutes = fn (string $status) => $mine->where('status', $status)->sum(fn (TimeEntry $e) => $e->minutes());
 
             return [
                 'user' => ['id' => $u->id, 'name' => $u->name, 'color' => $u->color, 'job_title' => $u->job_title],
-                'planned_minutes' => $plannedByUser[$u->id] ?? 0,
+                'planned_minutes' => $myCells->sum('planned_minutes'),
                 'worked_minutes' => $mine->sum(fn (TimeEntry $e) => $e->minutes()),
+                'draft_minutes' => $minutes('draft'),
+                'submitted_minutes' => $minutes('submitted'),
+                'validated_minutes' => $minutes('validated'),
                 'entries' => $mine->count(),
                 'draft' => $mine->where('status', 'draft')->count(),
                 'submitted' => $mine->where('status', 'submitted')->count(),
                 'validated' => $mine->where('status', 'validated')->count(),
+                'days_worked' => $myCells->where('entries', '>', 0)->count(),
+                'days_planned' => $myCells->where('planned', '>', 0)->count(),
+                'missing_days' => $myCells->filter(fn ($c) => $c['planned'] > 0 && $c['entries'] === 0 && $c['date'] < $today)->count(),
             ];
         })->values();
 
@@ -192,13 +232,78 @@ class TimeEntryController extends Controller
             'from' => $from,
             'to' => $to,
             'by_user' => $byUser,
+            'grid' => $grid,
             'by_chantier' => $byChantier,
             'totals' => [
                 'worked_minutes' => $entries->sum(fn (TimeEntry $e) => $e->minutes()),
+                'planned_minutes' => $grid->sum('planned_minutes'),
+                'validated_minutes' => $byUser->sum('validated_minutes'),
+                'entries' => $entries->count(),
                 'submitted' => $entries->where('status', 'submitted')->count(),
                 'draft' => $entries->where('status', 'draft')->count(),
+                'validated' => $entries->where('status', 'validated')->count(),
+                'missing_days' => $byUser->sum('missing_days'),
             ],
         ]);
+    }
+
+    /**
+     * Export CSV d'une période (planificateurs) : totaux par personne puis détail des
+     * pointages, pour les salaires. ?from&to[&user_id].
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d'],
+            'user_id' => ['nullable', 'integer'],
+        ]);
+        [$from, $to] = $this->range($filters);
+
+        $entries = TimeEntry::with(['user:id,name', 'chantier:id,name'])
+            ->between($from, $to)
+            ->when($filters['user_id'] ?? null, fn ($q, $id) => $q->where('user_id', $id))
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get();
+        $hours = fn (int $m) => number_format($m / 60, 2, '.', '');
+
+        return response()->streamDownload(function () use ($entries, $from, $to, $hours) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 pour Excel
+            fputcsv($out, ['Heures pointées', $from, $to], ';');
+            fputcsv($out, [], ';');
+            fputcsv($out, ['Personne', 'Heures validées', 'Heures soumises', 'Heures brouillon', 'Total heures', 'Jours', 'Pointages'], ';');
+            foreach ($entries->groupBy('user_id') as $group) {
+                $by = fn (string $s) => $group->where('status', $s)->sum(fn (TimeEntry $e) => $e->minutes());
+                fputcsv($out, [
+                    $group->first()->user?->name ?? '—',
+                    $hours($by('validated')),
+                    $hours($by('submitted')),
+                    $hours($by('draft')),
+                    $hours($group->sum(fn (TimeEntry $e) => $e->minutes())),
+                    $group->map(fn (TimeEntry $e) => $e->date->toDateString())->unique()->count(),
+                    $group->count(),
+                ], ';');
+            }
+            fputcsv($out, ['Total', '', '', '', $hours($entries->sum(fn (TimeEntry $e) => $e->minutes())), '', $entries->count()], ';');
+            fputcsv($out, [], ';');
+            fputcsv($out, ['Date', 'Personne', 'Chantier', 'Début', 'Fin', 'Pause (min)', 'Heures', 'Statut', 'Commentaire'], ';');
+            foreach ($entries as $e) {
+                fputcsv($out, [
+                    $e->date->toDateString(),
+                    $e->user?->name ?? '—',
+                    $e->chantier?->name ?? 'Sans chantier',
+                    $e->start_time,
+                    $e->end_time,
+                    $e->break_minutes,
+                    $hours($e->minutes()),
+                    TimeEntry::STATUSES[$e->status] ?? $e->status,
+                    $e->comment ?? '',
+                ], ';');
+            }
+            fclose($out);
+        }, "heures-{$from}-{$to}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**

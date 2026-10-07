@@ -39,6 +39,8 @@ interface TimeEntryModalProps {
   chantiers: Chantier[]
   /** Planificateur : pointage pour une autre personne. */
   userId?: number
+  /** Nom de cette personne (titre de la fenêtre). */
+  personName?: string
 }
 
 function minutesBetween(start: string, end: string, pause: number): number {
@@ -52,7 +54,7 @@ function minutesBetween(start: string, end: string, pause: number): number {
  * Pointage des heures d'une journée : les heures planifiées servent de
  * proposition, l'employé corrige, ajoute la pause et un commentaire.
  */
-export default function TimeEntryModal({ target, onClose, chantiers, userId }: TimeEntryModalProps) {
+export default function TimeEntryModal({ target, onClose, chantiers, userId, personName }: TimeEntryModalProps) {
   const open = target !== null
   const editing = target?.entry ?? null
   const create = useCreateTimeEntry()
@@ -141,7 +143,8 @@ export default function TimeEntryModal({ target, onClose, chantiers, userId }: T
   }
 
   const pending = create.isPending || update.isPending
-  const title = editing ? 'Modifier mes heures' : affectation ? `Pointer · ${affectation.chantier.name}` : 'Pointer des heures'
+  const who = personName ? ` · ${personName}` : ''
+  const title = editing ? (personName ? `Heures de ${personName}` : 'Modifier mes heures') : affectation ? `Pointer · ${affectation.chantier.name}${who}` : `Pointer des heures${who}`
   const dateLabel = target && !target.entry ? formatLongDay(fromKey(target.affectation?.date ?? target.date ?? '')) : null
 
   return (

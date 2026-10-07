@@ -466,6 +466,20 @@ export interface TimeEntryPayload {
 }
 
 /** Synthèse des heures d'une période (GET /api/heures/summary, planificateurs). */
+/** Une personne × un jour dans la feuille d'heures (GET /heures/summary → grid). */
+export interface HoursCell {
+  user_id: number
+  date: string
+  planned_minutes: number
+  /** Nombre d'affectations (rôle « worker ») ce jour-là. */
+  planned: number
+  worked_minutes: number
+  entries: number
+  draft: number
+  submitted: number
+  validated: number
+}
+
 export interface HoursSummary {
   from: string
   to: string
@@ -473,13 +487,30 @@ export interface HoursSummary {
     user: { id: number; name: string; color: string | null; job_title: string | null }
     planned_minutes: number
     worked_minutes: number
+    draft_minutes: number
+    submitted_minutes: number
+    validated_minutes: number
     entries: number
     draft: number
     submitted: number
     validated: number
+    days_worked: number
+    days_planned: number
+    /** Jours planifiés passés sans aucun pointage. */
+    missing_days: number
   }[]
+  grid: HoursCell[]
   by_chantier: { chantier: { id: number; name: string; color: string }; worked_minutes: number; entries: number }[]
-  totals: { worked_minutes: number; submitted: number; draft: number }
+  totals: {
+    worked_minutes: number
+    planned_minutes: number
+    validated_minutes: number
+    entries: number
+    submitted: number
+    draft: number
+    validated: number
+    missing_days: number
+  }
 }
 
 export type AbsenceType = 'vacances' | 'maladie' | 'ecole' | 'autre'

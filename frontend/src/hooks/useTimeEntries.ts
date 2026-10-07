@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { api, downloadFile } from '@/lib/api'
 import { enqueueOffline, isOffline } from '@/lib/offlineQueue'
 import type { HoursSummary, TimeEntry, TimeEntryPayload, TimeEntryStatus } from '@/types'
 
@@ -101,4 +101,11 @@ export function useHoursSummary(range: { from: string; to: string }, enabled = t
 function invalidate(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: [KEY] })
   queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+}
+
+/** Export CSV des heures d'une période (totaux par personne + détail), pour les salaires. */
+export function downloadHoursCsv(range: { from: string; to: string }, userId?: number): Promise<void> {
+  const params = new URLSearchParams({ from: range.from, to: range.to })
+  if (userId) params.set('user_id', String(userId))
+  return downloadFile(`/${KEY}/export.csv?${params.toString()}`, `heures-${range.from}-${range.to}.csv`)
 }

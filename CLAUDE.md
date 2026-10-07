@@ -54,7 +54,10 @@ La version installée sous WAMP est **8.4.24** :
 - **Heures pointées** (`time_entries`) : par employé, liées à une affectation (ou chantier libre),
   `start/end/break_minutes/comment`, statut `draft → submitted → validated` (verrouillé pour
   l'employé, un planificateur rouvre). `minutes()` = fin − début − pause. `GET /heures/summary` :
-  planifié vs pointé par personne, pointé par chantier.
+  par personne (planifié, pointé, minutes et nombre par statut, jours pointés / planifiés, `missing_days` =
+  jours planifiés passés sans pointage), `grid` (une cellule personne × jour : planifié, pointé, statuts),
+  par chantier, totaux. `GET /heures/export.csv?from&to[&user_id]` = export pour les salaires (totaux par
+  personne + détail, `;`, BOM). Planificateurs seulement.
 - **Absences** (`absences`) : `vacances|maladie|ecole|autre`, période ; `Absence::absentUserIds($date)`.
   Le front grise les absents (sélecteur) et les affiche en fond du calendrier.
 - **Imprévus** (`signalements`) : message court d'un employé au bureau (`absence|fin_anticipee|materiel|autre`),
@@ -112,8 +115,8 @@ La version installée sous WAMP est **8.4.24** :
   `MyPlanningPage` (`/mon-planning`, vue ouvrier), `DashboardPage`. Accueil `/` → `HomeRedirect` selon le
   rôle (planificateurs → `/dashboard`).
 - **Menu** (`lib/navigation.ts`) : court, une pilule par domaine avec sous-menus (`children`) :
-  Tableau de bord · Planning · Chantiers (Tous les chantiers, Clients) · Équipe (Équipes, Heures,
-  Absences) · Mon planning · Administration. `NavDropdown` dans `AppLayout` (`<details>`, fermeture au
+  Tableau de bord · Planning · Chantiers (Tous les chantiers, Clients) · Équipe (Équipes, Absences) ·
+  Statistiques (Heures) · Mon planning · Administration. `NavDropdown` dans `AppLayout` (`<details>`, fermeture au
   clic / Échap / clic dehors) ; le tiroir mobile aplatit les groupes avec un en-tête.
 - **Tableau de bord** (planificateurs) : tuiles d'action rapide (`Tile` : Nouveau chantier →
   `QuickChantierModal` puis redirection vers la fiche ; Sur le terrain ; Heures à valider ; Imprévus ;
@@ -174,7 +177,16 @@ La version installée sous WAMP est **8.4.24** :
   (propositions d'adresses geo.admin.ch, saisie libre hors ligne). `lib/dates.ts` : semaines
   lundi→dimanche, clés `YYYY-MM-DD`, `timesOverlap`. `lib/format.ts` : `formatMinutes`.
 - Pages ajoutées : `MyPlanningPage` (pointer, photos, imprévu, récap et envoi des heures de la semaine),
-  `HeuresPage` (`/heures` : synthèse, validation / réouverture en lot, correction), `AbsencesPage`,
+  **Statistiques → Heures** : `HeuresPage` (`/statistiques/heures`, `/heures` redirige ; état dans l'URL
+  `?p=week|month&d=&u=&s=`) : indicateurs (pointé vs planifié **à ce jour** — jours passés + aujourd'hui si
+  déjà pointé —, écart, à valider, validées, oublis), feuille d'heures personne × jour (vert validé, bleu à
+  valider, gris brouillon, rouge « Oubli », clair « prévu », absences), clic sur une case → détail de la
+  journée (prévu via `usePlanning({worker_id})`, pointé, correction `TimeEntryModal` avec `personName`,
+  « Pointer selon le planning », « Valider la journée », « Rouvrir »), anomalies « À contrôler » (oubli,
+  journée > 10 h, écart > 1h30 avec le planning, chevauchement, sans chantier), heures par chantier, liste
+  des pointages (filtre statut, validation / réouverture en lot), export CSV. Le seeder sème des pointages
+  de démo (semaine passée validée, semaine en cours soumise, hier en brouillon, un oubli, une longue
+  journée). `AbsencesPage`,
   `PrintWeekPage` (`/planning/print?d=&equipe=` : une page A4 par équipe, styles `@media print`).
   Vue par défaut du planning : « Semaine ».
 - Workflow chantier : `ChantierDetailPage` (`/chantiers/:id`) = frise des 7 étapes (`c.steps`) + onglets

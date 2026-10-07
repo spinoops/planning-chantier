@@ -41,9 +41,14 @@ export const NAV_ITEMS: NavItem[] = [
     roles: PLANNER_ROLES,
     children: [
       { to: '/equipes', label: 'Équipes' },
-      { to: '/heures', label: 'Heures' },
       { to: '/absences', label: 'Absences' },
     ],
+  },
+  {
+    to: '/statistiques',
+    label: 'Statistiques',
+    roles: PLANNER_ROLES,
+    children: [{ to: '/statistiques/heures', label: 'Heures' }],
   },
   { to: '/mon-planning', label: 'Mon planning' },
   // make:crud

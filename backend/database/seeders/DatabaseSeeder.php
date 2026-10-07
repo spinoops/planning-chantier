@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\Equipe;
 use App\Models\Setting;
 use App\Models\SousTraitant;
+use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -110,8 +111,8 @@ class DatabaseSeeder extends Seeder
 
         $robin = User::where('email', 'robin@baseapp.test')->first();
 
-        // Semaine courante et suivante : demi-journées par équipe, comme dans les calendriers.
-        foreach ([0, 1] as $week) {
+        // Semaine précédente, courante et suivante : demi-journées par équipe, comme dans les calendriers.
+        foreach ([-1, 0, 1] as $week) {
             $d = fn (int $day) => $monday->addWeeks($week)->addDays($day)->toDateString();
 
             // Léo : Joray lundi (journée), Chételat mardi matin, Vantaggiato… simplifié.
@@ -145,11 +146,63 @@ class DatabaseSeeder extends Seeder
             $this->affect($chantiers['Bureau'], $equipes['Robin'], $d(3), '07:45', '09:30', $robin, 'Devis et téléphones.');
         }
 
+        $this->seedTimeEntries($monday, $robin);
+
         // Une absence de démo : Léo en vacances la semaine +2 (grisé dans le planning).
         Absence::firstOrCreate(
             ['user_id' => User::where('email', 'leo@baseapp.test')->value('id'), 'start_date' => $monday->addWeeks(2)->toDateString()],
             ['end_date' => $monday->addWeeks(2)->addDays(4)->toDateString(), 'type' => 'vacances', 'note' => 'Vacances', 'created_by' => $robin->id],
         );
+    }
+
+    /**
+     * Pointages de démo pour la rubrique Statistiques → Heures : chaque affectation passée
+     * est pointée selon le planning (à ±15 min près, pause de 45 min si elle couvre midi).
+     * Semaine précédente validée, semaine courante soumise, hier encore en brouillon,
+     * plus un oubli (Léo, mardi) et une longue journée (David, mercredi dernier) à contrôler.
+     */
+    private function seedTimeEntries(CarbonImmutable $monday, User $robin): void
+    {
+        $today = CarbonImmutable::today();
+        $yesterday = $today->subDay()->toDateString();
+        $forgotten = [User::where('email', 'leo@baseapp.test')->value('id'), $monday->addDay()->toDateString()];
+        $longDay = [User::where('email', 'david@baseapp.test')->value('id'), $monday->subWeek()->addDays(2)->toDateString()];
+
+        $past = Affectation::with('people')
+            ->whereDate('date', '<', $today->toDateString())
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->orderBy('date')
+            ->get();
+
+        foreach ($past as $a) {
+            $date = $a->date->toDateString();
+            foreach ($a->people as $person) {
+                if ($person->pivot->role !== 'worker' || [$person->id, $date] === $forgotten) {
+                    continue;
+                }
+                $start = substr($a->start_time, 0, 5);
+                $end = CarbonImmutable::parse($date.' '.substr($a->end_time, 0, 5))->addMinutes([0, 15, -15][($a->id + $person->id) % 3]);
+                if ([$person->id, $date] === $longDay) {
+                    $end = CarbonImmutable::parse($date.' 19:00');
+                }
+                $spansLunch = $start < '12:00' && $end->format('H:i') > '13:00';
+                $status = $date < $monday->toDateString() ? 'validated' : ($date === $yesterday ? 'draft' : 'submitted');
+
+                TimeEntry::create([
+                    'user_id' => $person->id,
+                    'affectation_id' => $a->id,
+                    'chantier_id' => $a->chantier_id,
+                    'date' => $date,
+                    'start_time' => $start,
+                    'end_time' => $end->format('H:i'),
+                    'break_minutes' => $spansLunch ? 45 : 0,
+                    'status' => $status,
+                    'validated_by' => $status === 'validated' ? $robin->id : null,
+                    'validated_at' => $status === 'validated' ? $monday->subDay()->setTime(17, 0) : null,
+                ]);
+            }
+        }
     }
 
     /**

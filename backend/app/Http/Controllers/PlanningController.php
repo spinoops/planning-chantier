@@ -55,7 +55,8 @@ class PlanningController extends Controller
             ->whereHas('chantier')
             ->between($from->toDateString(), $to->toDateString())
             ->when($onlyMine, fn ($q) => $q->forWorker($user->id))
-            ->when(! $onlyMine && ($filters['worker_id'] ?? null), fn ($q, $id) => $q->forWorker((int) $id))
+            // Passer l'id lui-même à `when` (et non un booléen) : sinon le filtre visait l'utilisateur n° 1.
+            ->when($onlyMine ? null : ($filters['worker_id'] ?? null), fn ($q, $id) => $q->forWorker((int) $id))
             ->when($filters['chantier_id'] ?? null, fn ($q, $id) => $q->where('chantier_id', $id))
             ->when($filters['equipe_id'] ?? null, fn ($q, $id) => $q->where('equipe_id', $id))
             ->orderBy('date')

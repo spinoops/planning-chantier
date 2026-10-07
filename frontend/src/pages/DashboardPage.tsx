@@ -183,7 +183,7 @@ export default function DashboardPage() {
               value={week.entries_to_validate}
               hint={`${formatMinutes(week.worked_minutes)} pointées cette semaine`}
               color="#34c759"
-              to="/heures"
+              to="/statistiques/heures"
             />
             <Tile icon="bell" label="Imprévus" value={week.unread_signalements} hint={week.unread_signalements ? 'à traiter' : 'rien à signaler'} color="#ff9500" to="#imprevus" />
             <Tile icon="calendar" label="Absences" value={week.absences.length} hint="cette semaine" color="#af52de" to="/absences" />
@@ -353,7 +353,7 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card title="Heures par chantier" description="Pointé cette semaine, comparé au planifié." flush action={<Link to="/heures" className="text-sm font-medium text-primary hover:underline">Heures</Link>}>
+            <Card title="Heures par chantier" description="Pointé cette semaine, comparé au planifié." flush action={<Link to="/statistiques/heures" className="text-sm font-medium text-primary hover:underline">Heures</Link>}>
               {week.hours_by_chantier.length === 0 ? (
                 <p className="px-5 py-4 text-sm text-gray-500">Aucune heure pointée cette semaine.</p>
               ) : (
