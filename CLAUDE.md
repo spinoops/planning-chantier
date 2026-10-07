@@ -181,7 +181,9 @@ La version installée sous WAMP est **8.4.24** :
   « Fiche de préparation » (client via `ClientSelect`, adresse, estimation, mesures, remarques, checklist matériel,
   sous-traitants, devis, reprise des mesures, estimation planning) et « Récapitulatif facturation » (période,
   cartes de synthèse, heures par personne, détail des pointages, bouton « Exporter CSV » via `downloadRecapCsv`).
-  `ClientsPage` (`/clients`, CRUD). `ClientSelect` (liste + « + » création rapide) utilisé dans `ChantiersPage`,
+  `ClientsPage` (`/clients`, CRUD). `ClientSelect` = **champ de recherche** (combobox : les premières lettres
+  filtrent nom / ville / contact sans accents, flèches + Entrée, croix pour retirer, « Créer le client « … » » si
+  aucun ne correspond, bouton « + ») utilisé dans `ChantiersPage`,
   `QuickChantierModal` et la fiche. `ChantierSheetModal` = fiche en lecture seule pour les employés (bouton
   « Fiche » dans `MyPlanningPage` et lien dans `AffectationModal`). Hooks : `useClients`, `useSousTraitants`,
   `useChantier(id)`, `useChantierRecap`. `AddressInput` ne lance la recherche qu'après une frappe de l'utilisateur
