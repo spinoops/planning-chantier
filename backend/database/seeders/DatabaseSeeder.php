@@ -5,8 +5,10 @@ namespace Database\Seeders;
 use App\Models\Absence;
 use App\Models\Affectation;
 use App\Models\Chantier;
+use App\Models\Client;
 use App\Models\Equipe;
 use App\Models\Setting;
+use App\Models\SousTraitant;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -74,16 +76,36 @@ class DatabaseSeeder extends Seeder
             ['Rausis Gérard', 'Chemin de la Fiole 13', 'Fontenais', '#ea580c', 'active'],
             ['Regalo Celeste', 'Impasse en Cortio 3', 'Bressaucourt', '#db2777', 'planned'],
             ['Bureau', 'Atelier', 'Porrentruy', '#78716c', 'active'],
-        ])->mapWithKeys(fn (array $c) => [$c[0] => Chantier::create([
-            'name' => $c[0],
-            'client' => $c[0] === 'Bureau' ? null : $c[0],
-            'address' => $c[1],
-            'city' => $c[2],
-            'color' => $c[3],
-            'status' => $c[4],
-            'start_date' => $monday->subWeeks(2)->toDateString(),
-            'end_date' => $monday->addWeeks(8)->toDateString(),
-        ])]);
+        ])->mapWithKeys(function (array $c) use ($monday) {
+            // Un client par chantier (sauf le Bureau), avec les infos de la fiche de préparation.
+            $client = $c[0] === 'Bureau' ? null : Client::firstOrCreate(['name' => $c[0]], ['address' => $c[1], 'city' => $c[2], 'phone' => '+41 32 466 00 00']);
+            $isPlanned = $c[4] === 'planned';
+
+            return [$c[0] => Chantier::create([
+                'name' => $c[0],
+                'client' => $client?->name,
+                'client_id' => $client?->id,
+                'address' => $c[1],
+                'city' => $c[2],
+                'color' => $c[3],
+                'status' => $c[4],
+                'start_date' => $monday->subWeeks(2)->toDateString(),
+                'end_date' => $monday->addWeeks(8)->toDateString(),
+                'estimated_hours' => $client ? 120 : null,
+                'planning_hours' => $client && ! $isPlanned ? 110 : null,
+                'quote_status' => $client ? ($isPlanned ? 'sent' : 'accepted') : 'none',
+                'quote_amount' => $client ? 18500 : null,
+                'quote_sent_at' => $client ? $monday->subWeeks(4)->toDateString() : null,
+                'quote_accepted_at' => $client && ! $isPlanned ? $monday->subWeeks(3)->toDateString() : null,
+                'remeasure_needed' => $isPlanned,
+                'materiel' => $client ? [['label' => 'Béton C25/30', 'qty' => '6 m³', 'done' => ! $isPlanned], ['label' => 'Treillis', 'qty' => '12 panneaux', 'done' => false]] : null,
+                'mesures' => $client ? 'Dalle 8.40 × 6.20 m, ép. 20 cm.' : null,
+            ])];
+        });
+
+        // Un sous-traitant prévu sur le chantier à venir.
+        $electricien = SousTraitant::firstOrCreate(['name' => 'Électro Jura Sàrl'], ['trade' => 'Électricien', 'phone' => '+41 32 466 11 22']);
+        $chantiers['Regalo Celeste']->sousTraitants()->syncWithoutDetaching([$electricien->id => ['note' => 'Après la dalle', 'planned_date' => $monday->addWeeks(3)->toDateString()]]);
 
         $robin = User::where('email', 'robin@baseapp.test')->first();
 

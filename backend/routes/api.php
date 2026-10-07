@@ -6,6 +6,7 @@ use App\Http\Controllers\AffectationPhotoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ChantierController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\InvitationController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SignalementController;
+use App\Http\Controllers\SousTraitantController;
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
@@ -93,6 +95,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // écriture réservée aux planificateurs (config roles.planners : admin, chef).
     Route::get('/chantiers', [ChantierController::class, 'index']);
     Route::get('/chantiers/{chantier}', [ChantierController::class, 'show']);
+    // Clients et sous-traitants : lisibles par tous (fiche chantier côté employé), écrits par les planificateurs.
+    Route::get('/clients', [ClientController::class, 'index']);
+    Route::get('/clients/{client}', [ClientController::class, 'show']);
+    Route::get('/sous-traitants', [SousTraitantController::class, 'index']);
     Route::get('/planning', [PlanningController::class, 'index']);
     Route::get('/planning/{affectation}', [PlanningController::class, 'show']);
     Route::get('/equipes', [EquipeController::class, 'index']);
@@ -113,6 +119,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:'.implode('|', (array) config('roles.planners', ['admin'])))->group(function () {
         Route::apiResource('chantiers', ChantierController::class)->only(['store', 'update', 'destroy']);
+        // Récapitulatif pour la facturation (JSON + CSV).
+        Route::get('/chantiers/{chantier}/recap', [ChantierController::class, 'recap']);
+        Route::get('/chantiers/{chantier}/recap.csv', [ChantierController::class, 'recapCsv']);
+        Route::apiResource('clients', ClientController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('sous-traitants', SousTraitantController::class)->only(['store', 'update', 'destroy'])->parameters(['sous-traitants' => 'sousTraitant']);
         Route::apiResource('equipes', EquipeController::class)->only(['store', 'update', 'destroy']);
         Route::get('/heures/summary', [TimeEntryController::class, 'summary']);
         Route::post('/heures/validate', [TimeEntryController::class, 'validateEntries']);
