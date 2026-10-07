@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================================
-REM  artisan.bat  —  Lance "php artisan" avec le bon PHP (>= 8.3) de WAMP.
+REM  artisan.bat  -  Lance "php artisan" avec le bon PHP (8.3 ou plus) de WAMP.
 REM
 REM  Le "php" du PATH Windows est souvent une vieille version (8.1) incompatible
 REM  avec Laravel 13. Ce wrapper selectionne automatiquement le PHP le plus
