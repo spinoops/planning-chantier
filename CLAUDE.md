@@ -258,6 +258,10 @@ La version installée sous WAMP est **8.4.24** :
 - Générateur d'entité : `backend\artisan.bat make:crud Nom --fields="…" --front` (repères
   `// make:crud` dans `routes/api.php`, `App.tsx`, `lib/navigation.ts` — ne pas les supprimer).
 
+## Commits
+- **Jamais de ligne `Co-Authored-By: Claude …`** (ni autre attribution à Claude) dans les messages de commit ou de
+  PR : demande explicite de l'utilisateur. L'historique a été réécrit pour les retirer.
+
 ## Qualité
 - Tests : `backend\artisan.bat test` (Pest, SQLite en mémoire). Helpers : `actingAsAdmin()`,
   `actingAsRole('chef')`, `actingAsUser()` (= rôle par défaut `ouvrier`), `ensureRoles()`.
