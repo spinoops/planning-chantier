@@ -35,6 +35,8 @@ interface TeamSidebarProps {
   /** Nombre d'affectations par équipe sur la période visible. */
   counts: Map<TeamKey, number>
   canManage: boolean
+  /** Prévient le calendrier qu'un glisser (équipe / personne) est en cours. */
+  onDraggingChange?: (dragging: boolean) => void
 }
 
 /**
@@ -46,7 +48,7 @@ interface TeamSidebarProps {
  *  - glisser une équipe ou une personne sur le calendrier ouvre la création
  *    d'une affectation sur ce créneau (pont FullCalendar `ThirdPartyDraggable`).
  */
-export default function TeamSidebar({ equipes, workers, hidden, onToggle, onShowAll, onOnly, counts, canManage }: TeamSidebarProps) {
+export default function TeamSidebar({ equipes, workers, hidden, onToggle, onShowAll, onOnly, counts, canManage, onDraggingChange }: TeamSidebarProps) {
   const containerRef = useRef<HTMLElement>(null)
   const createEquipe = useCreateEquipe()
   const updateEquipe = useUpdateEquipe()
@@ -88,10 +90,12 @@ export default function TeamSidebar({ equipes, workers, hidden, onToggle, onShow
 
   function onDragStart(e: DragStartEvent) {
     setActive((e.active.data.current as DragData | undefined) ?? null)
+    onDraggingChange?.(true)
   }
 
   function onDragEnd(e: DragEndEvent) {
     setActive(null)
+    onDraggingChange?.(false)
     const data = e.active.data.current as DragData | undefined
     const overId = e.over?.id
     if (!data || overId === undefined) return
@@ -153,7 +157,15 @@ export default function TeamSidebar({ equipes, workers, hidden, onToggle, onShow
   const noTeamCount = counts.get(NO_TEAM) ?? 0
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActive(null)}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => {
+        setActive(null)
+        onDraggingChange?.(false)
+      }}
+    >
       <aside ref={containerRef} className="team-sidebar rounded-card border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Équipes</h3>

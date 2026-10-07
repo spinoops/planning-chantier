@@ -13,6 +13,7 @@ import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
 import Textarea from '@/components/ui/Textarea'
+import QuickChantierModal from '@/components/planning/QuickChantierModal'
 import WorkerPicker from '@/components/planning/WorkerPicker'
 
 const schema = z.object({
@@ -66,6 +67,10 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
 
   const [workerIds, setWorkerIds] = useState<number[]>([])
   const [formError, setFormError] = useState<string | null>(null)
+  // Création rapide d'un chantier (« + ») : les chantiers créés restent sélectionnables
+  // même avant que la liste des chantiers ouverts ne soit rechargée.
+  const [quickOpen, setQuickOpen] = useState(false)
+  const [created, setCreated] = useState<Chantier[]>([])
 
   const {
     register,
@@ -73,6 +78,7 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
     reset,
     watch,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -129,9 +135,10 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
 
   // Le chantier de l'affectation en cours peut être terminé (absent des chantiers ouverts) : on l'ajoute au choix.
   const options = useMemo(() => {
-    if (editing && !chantiers.some((c) => c.id === editing.chantier_id)) return [editing.chantier, ...chantiers]
-    return chantiers
-  }, [chantiers, editing])
+    const list = [...chantiers, ...created.filter((c) => !chantiers.some((o) => o.id === c.id))]
+    if (editing && !list.some((c) => c.id === editing.chantier_id)) return [editing.chantier, ...list]
+    return list
+  }, [chantiers, created, editing])
 
   // Personnes déjà affectées ailleurs sur un créneau qui chevauche celui-ci.
   const busy = useMemo(() => {
@@ -193,21 +200,38 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
   const pending = create.isPending || update.isPending
 
   return (
-    <Modal open={open} onClose={onClose} title={editing ? "Modifier l'affectation" : 'Nouvelle affectation'} size="lg" dismissible={!pending}>
+    <Modal open={open} onClose={onClose} title={editing ? "Modifier l'affectation" : 'Nouvelle affectation'} size="lg" dismissible={!pending && !quickOpen}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Select label="Chantier" error={errors.chantier_id?.message} {...register('chantier_id')}>
-              {options.length === 0 && <option value="">Aucun chantier ouvert</option>}
-              {options.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.city ? ` — ${c.city}` : ''}
-                </option>
-              ))}
-            </Select>
+            <div className="flex items-end gap-2">
+              <div className="min-w-0 flex-1">
+                <Select label="Chantier" error={errors.chantier_id?.message} {...register('chantier_id')}>
+                  {options.length === 0 && <option value="">Aucun chantier ouvert</option>}
+                  {options.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.city ? ` — ${c.city}` : ''}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickOpen(true)}
+                aria-label="Nouveau chantier"
+                title="Créer un nouveau chantier"
+                className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition hover:border-primary hover:bg-primary-soft hover:text-primary ${
+                  errors.chantier_id ? 'mb-6' : ''
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
             {selectedChantier && (
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: selectedChantier.color }} />
@@ -273,6 +297,16 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
           </div>
         </div>
       </form>
+
+      <QuickChantierModal
+        open={quickOpen}
+        onClose={() => setQuickOpen(false)}
+        existing={options}
+        onCreated={(chantier) => {
+          setCreated((prev) => [...prev, chantier])
+          setValue('chantier_id', String(chantier.id), { shouldDirty: true, shouldValidate: true })
+        }}
+      />
     </Modal>
   )
 }

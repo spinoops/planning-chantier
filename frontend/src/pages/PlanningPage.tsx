@@ -10,7 +10,7 @@ import { getErrorMessage } from '@/lib/errors'
 import { addDays, fromKey, isoWeek, startOfWeek, timesOverlap, toKey, todayKey } from '@/lib/dates'
 import { isPlanner } from '@/lib/navigation'
 import { toast } from '@/lib/toast'
-import type { Affectation } from '@/types'
+import type { Affectation, AffectationPayload } from '@/types'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import AffectationModal from '@/components/planning/AffectationModal'
@@ -18,7 +18,7 @@ import type { AffectationTarget } from '@/components/planning/AffectationModal'
 import CalendarToolbar from '@/components/planning/CalendarToolbar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
 import PlanningCalendar from '@/components/planning/PlanningCalendar'
-import type { CalendarRange, CreateRequest, MoveRequest, PlanningCalendarHandle } from '@/components/planning/PlanningCalendar'
+import type { CalendarRange, CreateRequest, DropOnEventRequest, MoveRequest, PlanningCalendarHandle } from '@/components/planning/PlanningCalendar'
 import TeamSidebar, { NO_TEAM } from '@/components/planning/TeamSidebar'
 import type { TeamKey } from '@/components/planning/TeamSidebar'
 
@@ -171,6 +171,36 @@ export default function PlanningPage() {
     [loaded, updateAffectation, equipes],
   )
 
+  // Glisser depuis la colonne de gauche : les cartes survolées se mettent en évidence,
+  // et un dépôt sur une carte ajoute l'équipe / la personne à cette affectation.
+  const [externalDragging, setExternalDragging] = useState(false)
+  const onDropOnEvent = useCallback(
+    (req: DropOnEventRequest) => {
+      const a = loaded.find((x) => x.id === req.affectationId)
+      if (!a) return
+      const team = req.kind === 'team' ? equipes.find((e) => e.id === req.id) : undefined
+      const adding = req.kind === 'team' ? (team?.members.map((m) => m.id) ?? []) : [req.id]
+      const current = a.workers.map((w) => w.id)
+      const worker_ids = [...new Set([...current, ...adding])]
+      if (worker_ids.length === current.length) {
+        toast('Déjà sur cette affectation.', 'info')
+        return
+      }
+      const payload: Partial<AffectationPayload> = { worker_ids }
+      // Une équipe déposée sur une affectation sans équipe la lui attribue (couleur, ligne « Par équipe »).
+      if (team && !a.equipe_id) payload.equipe_id = team.id
+      const label = team ? `Équipe ${team.name}` : (workers.find((w) => w.id === req.id)?.name.split(' ')[0] ?? 'Personne')
+      updateAffectation.mutate(
+        { id: a.id, payload },
+        {
+          onSuccess: () => toast(`${label} ajouté(e) à ${a.chantier.name}.`, 'success'),
+          onError: (err) => toast(getErrorMessage(err, 'Ajout impossible.'), 'error'),
+        },
+      )
+    },
+    [loaded, equipes, workers, updateAffectation],
+  )
+
   async function onCopyPreviousWeek() {
     const monday = startOfWeek(range?.current ?? new Date())
     const from = toKey(addDays(monday, -7))
@@ -218,6 +248,7 @@ export default function PlanningPage() {
           }
           onOnly={(key) => setHidden(new Set<TeamKey>([...equipes.map((e) => e.id as TeamKey), NO_TEAM].filter((k) => k !== key)))}
           onShowAll={() => setHidden(new Set())}
+          onDraggingChange={setExternalDragging}
         />
       </div>
 
@@ -285,6 +316,8 @@ export default function PlanningPage() {
           onCreate={onCreate}
           onEdit={onEdit}
           onMove={onMove}
+          externalDragging={externalDragging}
+          onDropOnEvent={onDropOnEvent}
         />
 
         {canEdit && (

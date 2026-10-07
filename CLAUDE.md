@@ -78,6 +78,13 @@ La version installée sous WAMP est **8.4.24** :
     calendrier appelle `drop` de `PlanningCalendar` → modale de création pré-remplie (équipe ou
     personne, jour, créneau de 4 h depuis l'heure de dépôt). Ne pas remplacer par du HTML5 natif :
     FullCalendar 6 ne le reçoit pas.
+  - **Dépôt sur une carte existante** : FullCalendar ne le gère pas, donc `PlanningCalendar` pose
+    `data-affectation-id` sur chaque carte (`eventDidMount`), met en évidence la carte sous le pointeur
+    pendant le glisser (`externalDragging` → classe `pc-event--drop-target`, via `elementsFromPoint`)
+    et, dans `drop`, si une carte est sous le point de dépôt, appelle `onDropOnEvent` : la page ajoute
+    les membres (`worker_ids` fusionnés ; une équipe déposée sur une affectation sans équipe lui est attribuée).
+  - Modale d'affectation : bouton « + » à côté du chantier → `QuickChantierModal` (nom, adresse, ville,
+    couleur ; statut `active`) puis sélection automatique du chantier créé. Palette partagée `lib/colors.ts`.
   Doublons = même personne sur deux créneaux qui se chevauchent (`timesOverlap` de `lib/dates.ts`).
 - Autres composants : `AffectationCard` (tableau de bord), `AffectationModal` (sélecteur d'équipe
   qui pré-coche ses membres), `WorkerPicker`. `lib/dates.ts` : semaines lundi→dimanche, clés `YYYY-MM-DD`.

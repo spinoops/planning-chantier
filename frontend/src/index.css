@@ -400,3 +400,12 @@ body {
 .pc-calendar .fc .fc-highlight {
   border-radius: 0.45rem;
 }
+
+/* Carte survolée pendant un glisser depuis la colonne de gauche : on peut y déposer. */
+.pc-calendar .fc .pc-event.pc-event--drop-target {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 1px;
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--color-primary) 35%, transparent);
+  transform: scale(1.03);
+  z-index: 5;
+}

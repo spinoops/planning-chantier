@@ -59,6 +59,13 @@ export interface MoveRequest {
   equipeChange?: { from: number | null; to: number | null }
 }
 
+/** Dépôt d'une équipe / personne de la colonne de gauche sur une carte existante. */
+export interface DropOnEventRequest {
+  affectationId: number
+  kind: 'team' | 'person'
+  id: number
+}
+
 export interface PlanningCalendarHandle {
   prev: () => void
   next: () => void
@@ -79,6 +86,10 @@ interface PlanningCalendarProps {
   onEdit: (a: Affectation) => void
   /** Doit rejeter (throw) en cas d'échec : l'événement est alors remis en place. */
   onMove: (req: MoveRequest) => Promise<unknown>
+  /** Vrai pendant un glisser depuis la colonne de gauche : les cartes survolées se mettent en évidence. */
+  externalDragging?: boolean
+  /** Dépôt d'une équipe / personne sur une carte existante (ajout à l'affectation). */
+  onDropOnEvent?: (req: DropOnEventRequest) => void
 }
 
 function hhmm(d: Date): string {
@@ -87,6 +98,23 @@ function hhmm(d: Date): string {
 
 function tint(color: string, pct: number): string {
   return `color-mix(in oklab, ${color} ${pct}%, white)`
+}
+
+/** Carte d'affectation FullCalendar sous un point de l'écran (le miroir du glisser est en pointer-events:none). */
+function eventElementAt(x: number, y: number): HTMLElement | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    const card = (el as HTMLElement).closest?.('.pc-calendar .fc-event[data-affectation-id]') as HTMLElement | null
+    if (card) return card
+  }
+  return null
+}
+
+/** Coordonnées écran d'un événement souris ou tactile. */
+function pointOf(e: UIEvent | undefined): { x: number; y: number } | null {
+  if (!e) return null
+  if ('clientX' in e) return { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY }
+  const t = (e as TouchEvent).changedTouches?.[0]
+  return t ? { x: t.clientX, y: t.clientY } : null
 }
 
 /** Couleur d'une affectation : celle de son équipe, sinon celle du chantier. */
@@ -115,7 +143,7 @@ const ClockIcon = () => (
  * changeant de ligne.
  */
 const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProps>(function PlanningCalendar(
-  { view, initialDate, affectations, equipes, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove },
+  { view, initialDate, affectations, equipes, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove, externalDragging = false, onDropOnEvent },
   ref,
 ) {
   const calRef = useRef<FullCalendar>(null)
@@ -195,12 +223,46 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
     [onCreate],
   )
 
+  // Chaque carte porte l'id de son affectation : permet de savoir sur quelle carte on dépose.
+  const handleEventDidMount = useCallback((arg: { el: HTMLElement; event: { extendedProps: Record<string, unknown> } }) => {
+    arg.el.dataset.affectationId = String(arg.event.extendedProps.affectationId)
+  }, [])
+
+  // Pendant un glisser depuis la colonne de gauche : la carte sous le pointeur
+  // se met en évidence (FullCalendar ne gère pas le dépôt sur un événement).
+  useEffect(() => {
+    if (!externalDragging || !canEdit) return
+    let current: HTMLElement | null = null
+    const onMove = (e: PointerEvent) => {
+      const next = eventElementAt(e.clientX, e.clientY)
+      if (next === current) return
+      current?.classList.remove('pc-event--drop-target')
+      next?.classList.add('pc-event--drop-target')
+      current = next
+    }
+    document.addEventListener('pointermove', onMove, { passive: true })
+    return () => {
+      document.removeEventListener('pointermove', onMove)
+      current?.classList.remove('pc-event--drop-target')
+    }
+  }, [externalDragging, canEdit])
+
   // Dépôt d'une équipe ou d'une personne venue de la colonne de gauche (data-fc-drag).
   const handleDrop = useCallback(
     (arg: DropArg) => {
       const raw = arg.draggedEl.getAttribute('data-fc-drag')
       if (!raw) return
       const payload = JSON.parse(raw) as { kind: 'team' | 'person'; id: number }
+
+      // Sur une carte existante : on ajoute à cette affectation au lieu d'en créer une.
+      const point = pointOf(arg.jsEvent)
+      const targetEl = point ? eventElementAt(point.x, point.y) : null
+      const targetId = Number(targetEl?.dataset.affectationId)
+      if (targetEl && targetId && onDropOnEvent) {
+        targetEl.classList.remove('pc-event--drop-target')
+        onDropOnEvent({ affectationId: targetId, kind: payload.kind, id: payload.id })
+        return
+      }
       const rowEquipe = arg.resource && arg.resource.id !== UNASSIGNED ? Number(arg.resource.id) : undefined
       let start_time: string | null = null
       let end_time: string | null = null
@@ -217,7 +279,7 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         workerIds: payload.kind === 'person' ? [payload.id] : undefined,
       })
     },
-    [onCreate],
+    [onCreate, onDropOnEvent],
   )
 
   const handleEventClick = useCallback(
@@ -399,6 +461,7 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         resourceLabelContent={renderResource}
         events={events}
         eventContent={renderEvent}
+        eventDidMount={handleEventDidMount}
         eventOrder="start,title"
         eventMinHeight={26}
         editable={canEdit}
