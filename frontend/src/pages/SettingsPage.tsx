@@ -111,7 +111,7 @@ const planningSchema = z.object({
 
 type PlanningValues = z.infer<typeof planningSchema>
 
-/** Horaires types proposÃ©s dans le planning et heure de veille des changements tardifs. */
+/** Horaires types proposés dans le planning et heure de veille des changements tardifs. */
 function PlanningSection() {
   const { data, isLoading } = useSettings()
   const updateSettings = useUpdateSettings()
@@ -143,7 +143,7 @@ function PlanningSection() {
     updateSettings.mutate(
       { app_name: data.app_name, app_logo_url: data.app_logo_url, app_color: data.app_color, ...values },
       {
-        onSuccess: () => toast('Horaires enregistrÃ©s.', 'success'),
+        onSuccess: () => toast('Horaires enregistrés.', 'success'),
         onError: (err) => {
           if (!applyValidationErrors(err, setError)) toast(getErrorMessage(err), 'error')
         },
@@ -154,15 +154,15 @@ function PlanningSection() {
   if (isLoading) return <Spinner block />
 
   return (
-    <Card title="Planning" description="Horaires proposÃ©s par les boutons Matin / AprÃ¨s-midi / JournÃ©e, et heure aprÃ¨s laquelle un changement du planning du lendemain prÃ©vient les planificateurs par email.">
+    <Card title="Planning" description="Horaires proposés par les boutons Matin / Après-midi / Journée, et heure après laquelle un changement du planning du lendemain prévient les planificateurs par email.">
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Matin : dÃ©but" type="time" error={errors.planning_morning_start?.message} {...register('planning_morning_start')} />
+          <Input label="Matin : début" type="time" error={errors.planning_morning_start?.message} {...register('planning_morning_start')} />
           <Input label="Matin : fin" type="time" error={errors.planning_morning_end?.message} {...register('planning_morning_end')} />
-          <Input label="AprÃ¨s-midi : dÃ©but" type="time" error={errors.planning_afternoon_start?.message} {...register('planning_afternoon_start')} />
-          <Input label="AprÃ¨s-midi : fin" type="time" error={errors.planning_afternoon_end?.message} {...register('planning_afternoon_end')} />
+          <Input label="Après-midi : début" type="time" error={errors.planning_afternoon_start?.message} {...register('planning_afternoon_start')} />
+          <Input label="Après-midi : fin" type="time" error={errors.planning_afternoon_end?.message} {...register('planning_afternoon_end')} />
         </div>
-        <Input label="PrÃ©venir des changements tardifs aprÃ¨s" type="time" hint="Un email part aux planificateurs si le planning d'aujourd'hui ou de demain change aprÃ¨s cette heure." error={errors.planning_notify_after?.message} {...register('planning_notify_after')} />
+        <Input label="Prévenir des changements tardifs après" type="time" hint="Un email part aux planificateurs si le planning d'aujourd'hui ou de demain change après cette heure." error={errors.planning_notify_after?.message} {...register('planning_notify_after')} />
         <Button type="submit" loading={updateSettings.isPending}>
           Enregistrer
         </Button>
