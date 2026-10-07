@@ -34,8 +34,8 @@ function defaultView(): CalendarView {
   } catch {
     // stockage indisponible
   }
-  // Par défaut : la timeline « Par équipe » (une ligne par équipe), la plus rapide pour poser la semaine.
-  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'team'
+  // Par défaut : la semaine en grille horaire, une colonne par équipe sous chaque jour.
+  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'week'
 }
 
 function loadHidden(): Set<TeamKey> {
@@ -101,6 +101,22 @@ export default function PlanningPage() {
       // ignore
     }
   }, [hidden])
+
+  // Week-end affiché ou non (persisté par navigateur) : par défaut lundi → vendredi.
+  const [weekends, setWeekends] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('planning_weekends') === '1'
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('planning_weekends', weekends ? '1' : '0')
+    } catch {
+      // ignore
+    }
+  }, [weekends])
 
   // Période visible, fournie par FullCalendar (datesSet) : pilote le chargement et l'URL.
   const [range, setRange] = useState<CalendarRange | null>(null)
@@ -280,6 +296,12 @@ export default function PlanningPage() {
                   Effacer le filtre
                 </button>
               )}
+              {view !== 'month' && view !== 'day' && (
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                  <input type="checkbox" checked={weekends} onChange={(e) => setWeekends(e.target.checked)} className="h-4 w-4 rounded border-gray-300 accent-primary" />
+                  Week-end
+                </label>
+              )}
               {conflicts.size > 0 && (
                 <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                   <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold">!</span>
@@ -329,6 +351,7 @@ export default function PlanningPage() {
           externalDragging={externalDragging}
           onDropOnEvent={onDropOnEvent}
           absences={absences}
+          weekends={weekends}
         />
 
         {canEdit && (

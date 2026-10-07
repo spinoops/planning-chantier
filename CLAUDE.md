@@ -78,15 +78,19 @@ La version installée sous WAMP est **8.4.24** :
   (`/mon-planning`, vue ouvrier), `DashboardPage` (état du jour). Accueil `/` → `HomeRedirect` selon le rôle.
 - Calendrier : **FullCalendar 6** (même bibliothèque qu'ela-planning) dans
   `components/planning/PlanningCalendar.tsx`, maquette de référence = Apple Calendrier
-  (`_construction/*.pdf`). Vues `dayGridMonth` (Mois), `timeGridWeek` (Semaine, grille horaire
-  06:00–19:30, équipes côte à côte), `timeGridDay` (Jour), `listWeek` (Liste), `resourceTimelineWeek`
-  (« Par équipe », une ligne par équipe, plugin premium : clé `VITE_FC_LICENSE_KEY`, sinon clé
-  d'évaluation non commerciale). Header FullCalendar masqué : la barre est `CalendarToolbar`
-  (pilotage via ref `prev/next/today`). Sélection d'une plage → création, clic → modale,
-  `eventDrop`/`eventResize` → `PUT /planning/{id}` (revert si erreur) ; en vue « Par équipe »,
-  changer de ligne envoie `equipe_id` (l'API remplace les ouvriers). Cartes : titre = chantier,
-  adresse, horaire (rendu `eventContent`), couleur de l'équipe ; cartes étroites → titre seul
-  (container query). Thème CSS `.pc-calendar` / `.pc-event` dans `index.css`.
+  (`_construction/*.pdf`). Vues `dayGridMonth` (Mois), **`resourceTimeGridWeek`** (Semaine : grille
+  horaire 06:00–19:30 avec **une colonne par équipe sous chaque jour**, `datesAboveResources`, largeur
+  minimale 150 px par colonne puis défilement horizontal, week-end masqué par défaut via le bouton
+  « Week-end »), **`resourceTimeGridDay`** (Jour : une colonne par équipe), `listWeek` (Liste),
+  `resourceTimelineWeek` (« Par équipe », une ligne par équipe, `slotMinWidth` 150). Les vues
+  « ressources » sont des plugins premium (clé `VITE_FC_LICENSE_KEY`, sinon clé d'évaluation non
+  commerciale, comme ela-planning). Ne pas revenir à `timeGridWeek` : avec plusieurs équipes, FullCalendar
+  tasse les cartes côte à côte dans la colonne du jour (illisible). Header FullCalendar masqué : la barre
+  est `CalendarToolbar` (pilotage via ref `prev/next/today`). Sélection d'une plage → création (équipe de
+  la colonne pré-remplie), clic → modale, `eventDrop`/`eventResize` → `PUT /planning/{id}` (revert si
+  erreur) ; changer de colonne / ligne d'équipe envoie `equipe_id` (l'API remplace les ouvriers).
+  Cartes : titre = chantier, adresse, horaire (rendu `eventContent`), couleur de l'équipe ; cartes
+  étroites → titre seul (container query). Thème CSS `.pc-calendar` / `.pc-event` / `.pc-resource` dans `index.css`.
 - `TeamSidebar` : équipes avec case colorée (afficher / masquer, double-clic = seule ; persisté dans
   `localStorage` `planning_hidden_equipes`, filtrage côté client) **et glisser-déposer** :
   - **dnd-kit** (`@dnd-kit/core`) pour recomposer les équipes : personne → autre équipe (`PUT /equipes/{id}`
@@ -114,7 +118,7 @@ La version installée sous WAMP est **8.4.24** :
 - Pages ajoutées : `MyPlanningPage` (pointer, photos, imprévu, récap et envoi des heures de la semaine),
   `HeuresPage` (`/heures` : synthèse, validation / réouverture en lot, correction), `AbsencesPage`,
   `PrintWeekPage` (`/planning/print?d=&equipe=` : une page A4 par équipe, styles `@media print`).
-  Vue par défaut du planning : « Par équipe ».
+  Vue par défaut du planning : « Semaine » (colonnes par équipe).
 - **Hors ligne léger** : `public/sw.js` (coquille + lectures d'API « réseau d'abord, cache sinon »,
   enregistré en production dans `main.tsx`), `public/manifest.webmanifest` (installable, démarre sur
   `/mon-planning`), `lib/offlineQueue.ts` (pointages / imprévus saisis sans réseau mis en file dans

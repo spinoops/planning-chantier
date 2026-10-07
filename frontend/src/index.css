@@ -409,3 +409,51 @@ body {
   transform: scale(1.03);
   z-index: 5;
 }
+
+/* Grille horaire par équipe (Semaine / Jour) : en-têtes de colonnes d'équipe sous chaque jour. */
+.pc-resource {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  background: color-mix(in oklab, currentColor 10%, white);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.pc-resource__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: none;
+  border-radius: 9999px;
+}
+.pc-resource--none {
+  color: var(--color-gray-500);
+  background: var(--color-gray-100);
+  font-weight: 600;
+}
+/* Jour en gras au-dessus des équipes, séparateur plus marqué entre deux jours. */
+.pc-calendar .fc .fc-resource-timegrid .fc-col-header-cell.fc-day .fc-col-header-cell-cushion {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-gray-800);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.pc-calendar .fc .fc-resource-timegrid .fc-col-header-cell.fc-resource {
+  border-bottom-width: 2px;
+}
+.pc-calendar .fc .fc-resource-timegrid .fc-timegrid-col.fc-resource:first-child,
+.pc-calendar .fc .fc-resource-timegrid .fc-col-header-cell.fc-resource:first-child {
+  border-left-color: var(--color-gray-300);
+}
+.pc-calendar .fc .fc-resource-timegrid .fc-timegrid-event.pc-event {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.pc-event__meta--muted {
+  opacity: 0.7;
+}
