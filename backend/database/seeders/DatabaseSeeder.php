@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Absence;
 use App\Models\Affectation;
 use App\Models\Chantier;
 use App\Models\Equipe;
@@ -120,6 +121,12 @@ class DatabaseSeeder extends Seeder
             $this->affect($chantiers['Joray François'], $equipes['Robin'], $d(0), '10:30', '12:00', $robin);
             $this->affect($chantiers['Bureau'], $equipes['Robin'], $d(3), '07:45', '09:30', $robin, 'Devis et téléphones.');
         }
+
+        // Une absence de démo : Léo en vacances la semaine +2 (grisé dans le planning).
+        Absence::firstOrCreate(
+            ['user_id' => User::where('email', 'leo@baseapp.test')->value('id'), 'start_date' => $monday->addWeeks(2)->toDateString()],
+            ['end_date' => $monday->addWeeks(2)->addDays(4)->toDateString(), 'type' => 'vacances', 'note' => 'Vacances', 'created_by' => $robin->id],
+        );
     }
 
     /**

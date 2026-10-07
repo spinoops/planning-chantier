@@ -8,6 +8,7 @@ use App\Http\Resources\EquipeResource;
 use App\Models\Equipe;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -17,11 +18,15 @@ class EquipeController extends Controller
      * Toutes les équipes avec leurs membres (liste courte, non paginée : elle
      * alimente la colonne de gauche du planning et les sélecteurs).
      */
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
+        // ?all=1 inclut les équipes temporaires expirées (page Équipes) ; le planning ne voit que les actives.
+        $all = (bool) $request->boolean('all');
+
         $equipes = Equipe::query()
             ->with('members')
             ->withCount('affectations')
+            ->unless($all, fn ($q) => $q->active())
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -38,6 +43,7 @@ class EquipeController extends Controller
                 'name' => $data['name'],
                 'color' => $data['color'],
                 'sort_order' => $data['sort_order'] ?? (Equipe::max('sort_order') + 1),
+                'expires_at' => $data['expires_at'] ?? null,
             ]);
             if (array_key_exists('member_ids', $data)) {
                 $this->syncMembers($equipe, $data['member_ids']);
@@ -56,7 +62,7 @@ class EquipeController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($data, $equipe) {
-            $equipe->fill(collect($data)->only(['name', 'color', 'sort_order'])->all())->save();
+            $equipe->fill(collect($data)->only(['name', 'color', 'sort_order', 'expires_at'])->all())->save();
             if (array_key_exists('member_ids', $data)) {
                 $this->syncMembers($equipe, $data['member_ids']);
             }

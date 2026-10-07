@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 class PlanningController extends Controller
 {
-    private const RELATIONS = ['chantier', 'equipe', 'workers'];
+    private const RELATIONS = ['chantier', 'equipe', 'people'];
 
     /**
      * Affectations d'une période (calendrier).
@@ -50,6 +50,7 @@ class PlanningController extends Controller
 
         $affectations = Affectation::query()
             ->with(self::RELATIONS)
+            ->withCount('photos')
             ->whereHas('chantier')
             ->between($from->toDateString(), $to->toDateString())
             ->when($onlyMine, fn ($q) => $q->forWorker($user->id))
@@ -69,32 +70,40 @@ class PlanningController extends Controller
     public function show(Request $request, Affectation $affectation): AffectationResource
     {
         $user = $request->user();
-        if (! $user->isPlanner() && ! $affectation->workers()->whereKey($user->id)->exists()) {
+        if (! $user->isPlanner() && ! $affectation->people()->whereKey($user->id)->exists()) {
             abort(403, 'Action non autorisée.');
         }
 
-        return AffectationResource::make($affectation->load(self::RELATIONS));
+        return AffectationResource::make($affectation->load(self::RELATIONS)->loadCount('photos'));
     }
 
     /**
      * Crée une affectation. Sans `worker_ids`, l'équipe choisie fournit les
-     * ouvriers (copie de ses membres à cet instant).
+     * ouvriers (copie de ses membres à cet instant). Avec `repeat_until`, la
+     * même affectation est répétée les jours `repeat_days` (défaut lun–ven).
      */
     public function store(StoreAffectationRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $fields = collect($data)->except(['worker_ids', 'visitor_ids', 'repeat_until', 'repeat_days'])->all();
+        $workers = $this->resolveWorkers($data, $data['equipe_id'] ?? null);
+        $visitors = array_values($data['visitor_ids'] ?? []);
 
-        $affectation = DB::transaction(function () use ($data, $request) {
-            $affectation = Affectation::create([
-                ...collect($data)->except('worker_ids')->all(),
-                'created_by' => $request->user()->id,
-            ]);
-            $affectation->workers()->sync($this->resolveWorkers($data, $data['equipe_id'] ?? null));
+        $dates = $this->repeatDates($data['date'], $data['repeat_until'] ?? null, $data['repeat_days'] ?? [1, 2, 3, 4, 5]);
 
-            return $affectation;
+        $created = DB::transaction(function () use ($fields, $workers, $visitors, $dates, $request) {
+            $list = [];
+            foreach ($dates as $date) {
+                $affectation = Affectation::create([...$fields, 'date' => $date, 'created_by' => $request->user()->id]);
+                $affectation->syncPeople($workers, $visitors);
+                $list[] = $affectation;
+            }
+
+            return $list;
         });
 
-        return AffectationResource::make($affectation->load(self::RELATIONS))
+        return AffectationResource::make($created[0]->load(self::RELATIONS)->loadCount('photos'))
+            ->additional(['created' => count($created)])
             ->response()
             ->setStatusCode(201);
     }
@@ -110,16 +119,25 @@ class PlanningController extends Controller
 
         DB::transaction(function () use ($data, $affectation) {
             $previousEquipe = $affectation->equipe_id;
-            $affectation->fill(collect($data)->except('worker_ids')->all())->save();
+            $affectation->fill(collect($data)->except(['worker_ids', 'visitor_ids'])->all())->save();
 
+            $currentWorkers = $affectation->workers()->pluck('users.id')->all();
+            $currentVisitors = $affectation->visitors()->pluck('users.id')->all();
+
+            $workers = $currentWorkers;
             if (array_key_exists('worker_ids', $data)) {
-                $affectation->workers()->sync($data['worker_ids']);
+                $workers = array_values($data['worker_ids']);
             } elseif (array_key_exists('equipe_id', $data) && $data['equipe_id'] !== $previousEquipe) {
-                $affectation->workers()->sync($this->resolveWorkers([], $data['equipe_id']));
+                $workers = $this->resolveWorkers([], $data['equipe_id']);
+            }
+            $visitors = array_key_exists('visitor_ids', $data) ? array_values($data['visitor_ids']) : $currentVisitors;
+
+            if ($workers !== $currentWorkers || $visitors !== $currentVisitors) {
+                $affectation->syncPeople($workers, $visitors);
             }
         });
 
-        return AffectationResource::make($affectation->fresh(self::RELATIONS));
+        return AffectationResource::make($affectation->fresh(self::RELATIONS)->loadCount('photos'));
     }
 
     public function destroy(Affectation $affectation): JsonResponse
@@ -131,8 +149,8 @@ class PlanningController extends Controller
 
     /**
      * Duplique toutes les affectations de la semaine `from` (lundi) sur la
-     * semaine `to` (lundi), en conservant chantiers, équipes, horaires, notes
-     * et ouvriers. Avec `replace`, la semaine cible est d'abord vidée.
+     * semaine `to` (lundi), en conservant chantiers, équipes, horaires, notes,
+     * ouvriers et passages. Avec `replace`, la semaine cible est d'abord vidée.
      */
     public function copyWeek(CopyWeekRequest $request): JsonResponse
     {
@@ -142,7 +160,7 @@ class PlanningController extends Controller
         $offset = $from->diffInDays($to, false);
 
         $source = Affectation::query()
-            ->with('workers:id')
+            ->with('people:id')
             ->whereHas('chantier')
             ->between($from->toDateString(), $from->addDays(6)->toDateString())
             ->get();
@@ -161,9 +179,13 @@ class PlanningController extends Controller
                     'start_time' => $item->start_time,
                     'end_time' => $item->end_time,
                     'note' => $item->note,
+                    'phase' => $item->phase,
                     'created_by' => $request->user()->id,
                 ]);
-                $copy->workers()->sync($item->workers->pluck('id'));
+                $copy->syncPeople(
+                    $item->people->where('pivot.role', 'worker')->pluck('id')->all(),
+                    $item->people->where('pivot.role', 'visit')->pluck('id')->all(),
+                );
                 $count++;
             }
 
@@ -192,5 +214,29 @@ class PlanningController extends Controller
         }
 
         return Equipe::find($equipeId)?->members()->pluck('users.id')->all() ?? [];
+    }
+
+    /**
+     * Dates à créer : la date de départ, puis chaque jour autorisé jusqu'à `until` (90 jours max).
+     *
+     * @param  list<int>  $days  jours ISO (1 = lundi … 7 = dimanche)
+     * @return list<string>
+     */
+    private function repeatDates(string $start, ?string $until, array $days): array
+    {
+        $dates = [$start];
+        if (! $until) {
+            return $dates;
+        }
+        $cursor = CarbonImmutable::parse($start)->addDay();
+        $end = min(CarbonImmutable::parse($until), CarbonImmutable::parse($start)->addDays(90));
+        while ($cursor->lte($end)) {
+            if (in_array($cursor->dayOfWeekIso, $days, true)) {
+                $dates[] = $cursor->toDateString();
+            }
+            $cursor = $cursor->addDay();
+        }
+
+        return $dates;
     }
 }

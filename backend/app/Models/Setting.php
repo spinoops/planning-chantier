@@ -23,6 +23,13 @@ class Setting extends Model
             'app_name' => (string) config('app.name', 'Baseapp'),
             'app_logo_url' => '',
             'app_color' => '#4f46e5',
+            // Horaires types proposés dans le planning (boutons Matin / Après-midi / Journée).
+            'planning_morning_start' => '07:30',
+            'planning_morning_end' => '12:00',
+            'planning_afternoon_start' => '13:00',
+            'planning_afternoon_end' => '16:45',
+            // Après cette heure, un changement du planning du lendemain prévient les planificateurs.
+            'planning_notify_after' => '16:00',
         ];
     }
 

@@ -22,6 +22,8 @@ class StoreEquipeRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
+            // Équipe temporaire : disparaît du planning après cette date.
+            'expires_at' => ['nullable', 'date_format:Y-m-d'],
             // Membres : un employé quitte automatiquement son ancienne équipe.
             'member_ids' => ['sometimes', 'array'],
             'member_ids.*' => ['integer', 'distinct', Rule::exists('users', 'id')->whereNull('deleted_at')],

@@ -21,6 +21,7 @@ class EquipeResource extends JsonResource
             'name' => $this->name,
             'color' => $this->color,
             'sort_order' => $this->sort_order,
+            'expires_at' => $this->expires_at?->format('Y-m-d'),
             'members' => WorkerResource::collection($this->whenLoaded('members')),
             'affectations_count' => $this->whenCounted('affectations'),
             'created_at' => $this->created_at,

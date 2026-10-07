@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Affectation;
 use App\Models\User;
+use App\Observers\AffectationObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -38,5 +40,8 @@ class AppServiceProvider extends ServiceProvider
                 .'/reset-password?token='.$token
                 .'&email='.urlencode($notifiable->getEmailForPasswordReset());
         });
+
+        // Un changement tardif du planning du lendemain prévient les planificateurs.
+        Affectation::observe(AffectationObserver::class);
     }
 }

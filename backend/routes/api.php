@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AbsenceController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\AffectationPhotoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ChantierController;
@@ -14,6 +16,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SignalementController;
+use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkerController;
@@ -93,9 +97,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/planning/{affectation}', [PlanningController::class, 'show']);
     Route::get('/equipes', [EquipeController::class, 'index']);
 
+    // Heures pointées (un ouvrier : les siennes), absences (lecture), imprévus, photos.
+    Route::get('/heures', [TimeEntryController::class, 'index']);
+    Route::post('/heures', [TimeEntryController::class, 'store']);
+    Route::post('/heures/submit', [TimeEntryController::class, 'submit']);
+    Route::put('/heures/{timeEntry}', [TimeEntryController::class, 'update']);
+    Route::delete('/heures/{timeEntry}', [TimeEntryController::class, 'destroy']);
+    Route::get('/absences', [AbsenceController::class, 'index']);
+    Route::get('/signalements', [SignalementController::class, 'index']);
+    Route::post('/signalements', [SignalementController::class, 'store']);
+    Route::delete('/signalements/{signalement}', [SignalementController::class, 'destroy']);
+    Route::get('/planning/{affectation}/photos', [AffectationPhotoController::class, 'index']);
+    Route::post('/planning/{affectation}/photos', [AffectationPhotoController::class, 'store']);
+    Route::delete('/planning/{affectation}/photos/{photo}', [AffectationPhotoController::class, 'destroy']);
+
     Route::middleware('role:'.implode('|', (array) config('roles.planners', ['admin'])))->group(function () {
         Route::apiResource('chantiers', ChantierController::class)->only(['store', 'update', 'destroy']);
         Route::apiResource('equipes', EquipeController::class)->only(['store', 'update', 'destroy']);
+        Route::get('/heures/summary', [TimeEntryController::class, 'summary']);
+        Route::post('/heures/validate', [TimeEntryController::class, 'validateEntries']);
+        Route::post('/heures/reopen', [TimeEntryController::class, 'reopen']);
+        Route::apiResource('absences', AbsenceController::class)->only(['store', 'update', 'destroy']);
+        Route::post('/signalements/{signalement}/read', [SignalementController::class, 'read']);
         Route::get('/workers', [WorkerController::class, 'index']);
         Route::post('/planning', [PlanningController::class, 'store']);
         Route::post('/planning/copy-week', [PlanningController::class, 'copyWeek']);
