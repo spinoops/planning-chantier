@@ -280,19 +280,20 @@ envoie le front dans `backend/public`. Tout vert = en ligne.
 
 1. `https://planning.top-stores.ch/api/health` répond `{"status":"ok", …}`.
 2. `https://planning.top-stores.ch` affiche la page de connexion.
-3. Créer ton compte admin et recevoir le lien (vérifie aussi l'envoi d'e-mails) :
+3. Créer les comptes, **sans e-mail**, avec le mot de passe standard (`MakeStaff::DEFAULT_PASSWORD`,
+   à changer ensuite par chacun dans « Mon profil ») :
 
 ```bash
 cd ~/apps/planning-chantier-top-stores
 php backend/artisan planning:admin login@step-one.ch --name="Step One"
+php backend/artisan planning:staff
 ```
 
-4. Cliquer le lien reçu, définir le mot de passe, se connecter.
-5. **Administration → Équipe & comptes** : créer Robin (Administrateur + Chef de chantier),
-   Davison (Gestionnaire), Léo, Étienne et David (Ouvriers), avec leur vraie adresse ; chacun
-   définit son mot de passe par « Mot de passe oublié ? » (ou par invitation).
-6. **Configuration** : nom de l'app, logo, couleur. Puis équipes, clients et chantiers.
-7. Tâche planifiée (§4), puis sur un téléphone : ouvrir le site, « Ajouter à l'écran
+   `planning:staff` crée Robin (Administrateur + Chef), Davison (Gestionnaire), Léo, Étienne et David
+   (Ouvriers) en `@top-stores.ch`, avec métier, couleur et équipe individuelle (relançable sans doublon).
+   Options : `--password=…` pour un autre mot de passe, `planning:admin … --mail` pour envoyer plutôt un lien.
+4. **Configuration** : nom de l'app, logo, couleur. Puis clients et chantiers.
+5. Tâche planifiée (§4), puis sur un téléphone : ouvrir le site, « Ajouter à l'écran
    d'accueil », Mon profil → Alertes → activer et « Envoyer une alerte de test ».
 
 ### G. Ensuite

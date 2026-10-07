@@ -1,8 +1,11 @@
 <?php
 
+use App\Console\Commands\MakeStaff;
+use App\Models\Equipe;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -20,7 +23,7 @@ it('ne crée que les rôles en production, sans compte de démo', function () {
 it('crée le premier admin et lui envoie le lien pour définir son mot de passe', function () {
     Notification::fake();
 
-    $this->artisan('planning:admin', ['email' => 'Chef@Top-Store.ch', '--name' => 'Robin Braun'])->assertSuccessful();
+    $this->artisan('planning:admin', ['email' => 'Chef@Top-Store.ch', '--name' => 'Robin Braun', '--mail' => true])->assertSuccessful();
 
     $user = User::where('email', 'chef@top-store.ch')->firstOrFail();
     expect($user->name)->toBe('Robin Braun')
@@ -28,7 +31,7 @@ it('crée le premier admin et lui envoie le lien pour définir son mot de passe'
     Notification::assertSentTo($user, ResetPassword::class);
 
     // Relancer sur un compte existant le promeut sans le dupliquer.
-    $this->artisan('planning:admin', ['email' => 'chef@top-store.ch', '--no-mail' => true])->assertSuccessful();
+    $this->artisan('planning:admin', ['email' => 'chef@top-store.ch'])->assertSuccessful();
     expect(User::where('email', 'chef@top-store.ch')->count())->toBe(1);
 });
 
@@ -71,4 +74,30 @@ it('sert l\u2019interface React pour toute adresse hors /api une fois le front c
             unlink($index);
         }
     }
+});
+
+it('crée le compte admin avec le mot de passe standard, sans e-mail', function () {
+    Notification::fake();
+
+    $this->artisan('planning:admin', ['email' => 'login@step-one.ch', '--name' => 'Step One'])->assertSuccessful();
+
+    $user = User::where('email', 'login@step-one.ch')->firstOrFail();
+    expect(Hash::check(MakeStaff::DEFAULT_PASSWORD, $user->password))->toBeTrue()
+        ->and($user->hasRole('admin'))->toBeTrue();
+    Notification::assertNothingSent();
+    $this->postJson('/api/login', ['email' => 'login@step-one.ch', 'password' => MakeStaff::DEFAULT_PASSWORD])->assertOk();
+});
+
+it('crée les cinq employés avec un mot de passe commun, sans doublon', function () {
+    $this->artisan('planning:staff', ['--password' => 'court'])->assertFailed();
+    $this->artisan('planning:staff')->assertSuccessful();
+    $this->artisan('planning:staff')->assertSuccessful();
+
+    expect(User::count())->toBe(5)
+        ->and(Equipe::count())->toBe(5);
+    $robin = User::where('email', 'robin@top-stores.ch')->firstOrFail();
+    expect($robin->getRoleNames()->sort()->values()->all())->toBe(['admin', 'chef'])
+        ->and($robin->equipe->name)->toBe('Robin')
+        ->and(User::where('email', 'davison@top-stores.ch')->first()->hasRole('gestionnaire'))->toBeTrue();
+    $this->postJson('/api/login', ['email' => 'leo@top-stores.ch', 'password' => MakeStaff::DEFAULT_PASSWORD])->assertOk();
 });

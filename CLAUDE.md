@@ -286,7 +286,9 @@ Même méthode que ProTime-Cuttat (`D:\wamp64\www\ProTime-Cuttat\protime-baseapp
   en dernier), `optimize`, contrôle `/api/health`. Secrets `DEPLOY_HOST/USER/SSH_KEY/KNOWN_HOSTS`, variables
   `APP_DOMAIN`, `APP_PATH`.
 - **Production sans démo** : `DatabaseSeeder` ne crée que les rôles (`RolesSeeder`) si `APP_ENV=production` ;
-  premier compte `php artisan planning:admin <email> [--name=] [--no-mail]` (lien « définir le mot de passe »).
+  comptes en ligne **sans e-mail** (demande explicite) : `php artisan planning:admin <email> [--name=]` et
+  `php artisan planning:staff` (les 5 employés en `@top-stores.ch`, rôles, équipes) avec le mot de passe standard
+  `MakeStaff::DEFAULT_PASSWORD` ; `--password=` pour un autre, `planning:admin --mail` pour un lien.
 - **Tâche planifiée par URL** (pas de crontab sur le mutualisé) : `GET /api/cron/run/{CRON_TOKEN}`
   (`CronController`, 404 sans le bon jeton) → `planning:cron` : `planning:remind --grace=CRON_REMIND_GRACE`
   (défaut 20 min), sauvegarde si la dernière a plus de 20 h, `sanctum:prune-expired`. Config `config/planning.php`.
