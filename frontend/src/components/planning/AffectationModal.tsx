@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useAuth } from '@/auth/AuthContext'
 import { isAbsentOn } from '@/hooks/useAbsences'
 import { useCreateAffectation, useDeleteAffectation, useUpdateAffectation } from '@/hooks/usePlanning'
+import { PLANNER_ROLES } from '@/lib/navigation'
 import { useSettings } from '@/hooks/useSettings'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { applyValidationErrors, getErrorMessage } from '@/lib/errors'
@@ -226,7 +227,7 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
   const differsFromTeam = team && (teamMembers.length !== workerIds.length || teamMembers.some((id) => !workerIds.includes(id)))
 
   // Candidats au « passage » : chefs / planificateurs qui ne sont pas déjà dans l'équipe cochée.
-  const visitorCandidates = workers.filter((w) => (w.roles ?? []).some((r) => r === 'chef' || r === 'admin') && !workerIds.includes(w.id))
+  const visitorCandidates = workers.filter((w) => (w.roles ?? []).some((r) => PLANNER_ROLES.includes(r)) && !workerIds.includes(w.id))
 
   function onSubmit(values: FormValues) {
     setFormError(null)

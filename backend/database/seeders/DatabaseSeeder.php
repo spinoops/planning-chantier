@@ -22,8 +22,9 @@ class DatabaseSeeder extends Seeder
      *
      * Identifiants (mot de passe : password) :
      *   admin@baseapp.test — administrateur
-     *   robin@baseapp.test — Robin Braun, chef (planifie)
-     *   leo@baseapp.test, davison@baseapp.test, etienne@baseapp.test, david@baseapp.test — ouvriers
+     *   robin@baseapp.test — Robin Braun, patron : admin + chef (planifie, passe sur les chantiers)
+     *   davison@baseapp.test — Davison Da Silva Setubal, gestionnaire (bureau : prépare et planifie)
+     *   leo@baseapp.test, etienne@baseapp.test, david@baseapp.test — ouvriers
      *
      * Chaque employé a son équipe (individuelle) avec la couleur de son calendrier.
      */
@@ -39,11 +40,11 @@ class DatabaseSeeder extends Seeder
 
         $this->account('admin@baseapp.test', 'Admin', 'admin', ['job_title' => 'Direction', 'color' => '#111827']);
 
-        // Employés : [email, prénom, nom, rôle, métier, couleur (= couleur de l'équipe)]
+        // Employés : [email, prénom, nom, rôle(s), métier, couleur (= couleur de l'équipe)]
         $staff = [
-            ['robin@baseapp.test', 'Robin', 'Braun', 'chef', 'Chef de chantier', '#ef4444'],
+            ['robin@baseapp.test', 'Robin', 'Braun', ['admin', 'chef'], 'Patron / chef de chantier', '#ef4444'],
             ['leo@baseapp.test', 'Léo', 'Lançon', 'ouvrier', 'Ouvrier', '#eab308'],
-            ['davison@baseapp.test', 'Davison', 'Da Silva Setubal', 'ouvrier', 'Bureau / atelier', '#22c55e'],
+            ['davison@baseapp.test', 'Davison', 'Da Silva Setubal', 'gestionnaire', 'Gestionnaire (bureau)', '#22c55e'],
             ['etienne@baseapp.test', 'Étienne', 'Armand', 'ouvrier', 'Ouvrier', '#3b82f6'],
             ['david@baseapp.test', 'David', 'Batista Setubal', 'ouvrier', 'Ouvrier', '#a855f7'],
         ];
@@ -156,7 +157,10 @@ class DatabaseSeeder extends Seeder
      *
      * @param  array<string, mixed>  $extra
      */
-    private function account(string $email, string $name, string $role, array $extra = []): User
+    /**
+     * @param  string|string[]  $roles
+     */
+    private function account(string $email, string $name, string|array $roles, array $extra = []): User
     {
         $user = User::updateOrCreate(
             ['email' => $email],
@@ -167,7 +171,7 @@ class DatabaseSeeder extends Seeder
                 ...$extra,
             ]
         );
-        $user->syncRoles([$role]);
+        $user->syncRoles((array) $roles);
 
         return $user;
     }

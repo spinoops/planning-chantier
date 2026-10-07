@@ -30,6 +30,8 @@ export interface LoginResponse {
 export interface Role {
   name: string
   label: string
+  /** Ce que le rôle permet (config/roles.php → descriptions). */
+  description?: string | null
 }
 
 export interface RolesResponse {

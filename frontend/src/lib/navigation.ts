@@ -19,7 +19,7 @@ export interface NavItem {
 }
 
 /** Rôles qui gèrent chantiers et planning (miroir de config/roles.php → planners). */
-export const PLANNER_ROLES = ['admin', 'chef']
+export const PLANNER_ROLES = ['admin', 'gestionnaire', 'chef']
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/planning', label: 'Planning', roles: PLANNER_ROLES },

@@ -46,7 +46,7 @@ export default function Modal({ open, onClose, title, size = 'md', dismissible =
 
   return createPortal(
     <div
-      className="pc-fade fixed inset-0 z-50 flex items-end justify-center bg-[rgb(15_40_90/0.28)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="pc-fade fixed inset-0 z-50 flex items-end justify-center bg-[rgb(15_40_90/0.32)] p-0 sm:items-center sm:p-4"
       onMouseDown={dismissible ? onClose : undefined}
       role="presentation"
     >

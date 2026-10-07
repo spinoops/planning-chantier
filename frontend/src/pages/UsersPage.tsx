@@ -28,7 +28,7 @@ const schema = z.object({
   name: z.string().min(1, 'Nom requis.'),
   email: z.string().email('Email invalide.'),
   password: z.string(),
-  role: z.string().min(1, 'Rôle requis.'),
+  roles: z.array(z.string()).min(1, 'Choisis au moins un rôle.'),
   phone: z.string().max(40),
   job_title: z.string().max(100),
   color: z.string(),
@@ -39,7 +39,7 @@ type FormValues = z.infer<typeof schema>
 /** Couleurs d'avatar proposées pour les membres de l'équipe. */
 const AVATAR_COLORS = ['#007aff', '#af52de', '#ff2d55', '#ff9500', '#34c759', '#ff3b30', '#30b0c7', '#5856d6', '#ffcc00', '#a2845e', '#64d2ff', '#1c1c1e']
 
-const EMPTY_FORM = { name: '', email: '', password: '', role: '', phone: '', job_title: '', color: '' }
+const EMPTY_FORM: FormValues = { name: '', email: '', password: '', roles: [], phone: '', job_title: '', color: '' }
 
 export default function UsersPage() {
   const { user: current } = useAuth()
@@ -70,11 +70,12 @@ export default function UsersPage() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { ...EMPTY_FORM, role: 'ouvrier' },
+    defaultValues: { ...EMPTY_FORM, roles: ['ouvrier'] },
   })
   const color = watch('color')
 
   const roleLabel = (name: string) => roles?.data.find((r) => r.name === name)?.label ?? name
+  const selectedRoles = watch('roles')
 
   function setFilter(key: 'role' | 'trashed', value: string) {
     setSearchParams(
@@ -92,7 +93,7 @@ export default function UsersPage() {
   function openCreate() {
     setEditing(null)
     setFormError(null)
-    reset({ ...EMPTY_FORM, role: roles?.default ?? 'ouvrier' })
+    reset({ ...EMPTY_FORM, roles: [roles?.default ?? 'ouvrier'] })
     setModalOpen(true)
   }
 
@@ -103,7 +104,7 @@ export default function UsersPage() {
       name: target.name,
       email: target.email,
       password: '',
-      role: target.roles[0] ?? 'ouvrier',
+      roles: target.roles.length > 0 ? target.roles : ['ouvrier'],
       phone: target.phone ?? '',
       job_title: target.job_title ?? '',
       color: target.color ?? '',
@@ -117,7 +118,7 @@ export default function UsersPage() {
       name: values.name,
       email: values.email,
       password: values.password || undefined,
-      roles: [values.role],
+      roles: values.roles,
       phone: values.phone.trim() || null,
       job_title: values.job_title.trim() || null,
       color: values.color || null,
@@ -228,7 +229,7 @@ export default function UsersPage() {
               render: (u) => (
                 <div className="flex flex-wrap gap-1">
                   {u.roles.map((r) => (
-                    <Badge key={r} tone={r === 'admin' ? 'primary' : 'neutral'}>
+                    <Badge key={r} tone={r === 'admin' ? 'primary' : r === 'gestionnaire' ? 'info' : r === 'chef' ? 'warn' : 'neutral'}>
                       {roleLabel(r)}
                     </Badge>
                   ))}
@@ -272,14 +273,40 @@ export default function UsersPage() {
             error={errors.password?.message}
             {...register('password')}
           />
+          <fieldset className="space-y-1.5">
+            <legend className="text-[13px] font-medium text-gray-600">Rôles</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {roles?.data.map((r) => {
+                const checked = selectedRoles.includes(r.name)
+                return (
+                  <label
+                    key={r.name}
+                    className={`flex cursor-pointer items-start gap-3 rounded-2xl px-3.5 py-2.5 transition ${
+                      checked ? 'bg-primary/10 ring-2 ring-primary/40' : 'glass-pill hover:bg-white/70'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setValue('roles', checked ? selectedRoles.filter((x) => x !== r.name) : [...selectedRoles, r.name], {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                      className="mt-0.5 h-[18px] w-[18px] rounded-[5px] accent-primary"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-gray-900">{r.label}</span>
+                      {r.description && <span className="block text-xs leading-snug text-gray-500">{r.description}</span>}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+            {errors.roles && <p className="text-[13px] text-sys-red">{errors.roles.message}</p>}
+          </fieldset>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Select label="Rôle" error={errors.role?.message} {...register('role')}>
-              {roles?.data.map((r) => (
-                <option key={r.name} value={r.name}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
             <Input label="Métier" placeholder="Maçon, grutier, chef d'équipe…" error={errors.job_title?.message} {...register('job_title')} />
             <Input label="Téléphone" type="tel" placeholder="+41 79 …" error={errors.phone?.message} {...register('phone')} />
             <div className="space-y-1">

@@ -9,16 +9,28 @@ return [
     |
     | Clé = nom du rôle (spatie/laravel-permission), valeur = libellé affiché.
     |
-    |   - admin   : administre tout (comptes, configuration) + planifie.
-    |   - chef    : chef de chantier / planificateur : gère chantiers et planning.
-    |   - ouvrier : consulte son planning personnel (tablette / téléphone).
+    |   - admin        : administre tout (comptes, rôles, configuration) + planifie.
+    |   - gestionnaire : employé de bureau : prépare les chantiers (clients, devis, mesures),
+    |                    planifie, suit et valide les heures, gère les absences.
+    |   - chef         : chef de chantier / patron : planifie et passe sur les chantiers.
+    |   - ouvrier      : consulte son planning personnel (tablette / téléphone), pointe ses heures.
+    |
+    | Un compte peut cumuler plusieurs rôles (ex. le patron : admin + chef).
     |
     */
 
     'labels' => [
         'admin' => 'Administrateur',
+        'gestionnaire' => 'Gestionnaire',
         'chef' => 'Chef de chantier',
         'ouvrier' => 'Ouvrier',
+    ],
+
+    'descriptions' => [
+        'admin' => 'Gère les comptes, les rôles et la configuration. Peut aussi tout planifier.',
+        'gestionnaire' => 'Au bureau : prépare les chantiers, les clients et les devis, planifie, valide les heures et les absences.',
+        'chef' => 'Sur le terrain : planifie, passe sur les chantiers, peut être affecté à une équipe.',
+        'ouvrier' => 'Consulte son planning, pointe ses heures, signale les imprévus.',
     ],
 
     /*
@@ -42,7 +54,7 @@ return [
     |
     */
 
-    'planners' => ['admin', 'chef'],
+    'planners' => ['admin', 'gestionnaire', 'chef'],
 
     /*
     |--------------------------------------------------------------------------
@@ -53,6 +65,6 @@ return [
     |
     */
 
-    'assignable' => ['ouvrier', 'chef'],
+    'assignable' => ['ouvrier', 'chef', 'gestionnaire'],
 
 ];

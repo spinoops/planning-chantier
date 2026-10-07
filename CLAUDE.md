@@ -19,17 +19,22 @@ La version installée sous WAMP est **8.4.24** :
 - **`dev.bat`** (racine) lance le backend (**:8002**) + le frontend (**:5175**, hot-reload).
   **WAMP (MySQL) doit tourner.** Base : `app_planningchantier`.
 - Comptes de démo (mot de passe `password`) : `admin@baseapp.test` (admin) ·
-  `robin@baseapp.test` (Robin Braun, chef : planifie) · `leo@`, `davison@`, `etienne@`, `david@baseapp.test`
-  (ouvriers). Ce sont les vrais employés (Robin Braun, Davison Da Silva Setubal, Léo Lançon,
+  `robin@baseapp.test` (Robin Braun, patron : admin + chef) · `davison@baseapp.test` (gestionnaire, bureau) ·
+  `leo@`, `etienne@`, `david@baseapp.test` (ouvriers). Ce sont les vrais employés (Robin Braun, Davison Da Silva Setubal, Léo Lançon,
   Étienne Armand, David Batista Setubal), chacun dans une équipe individuelle à la couleur de son
   ancien calendrier Apple (réf. `_construction/*.pdf`). Le seeder ajoute des chantiers (clients)
   et deux semaines d'affectations en demi-journées.
 - Réinitialiser les données de démo : `backend\artisan.bat migrate:fresh --seed`.
 
 ## Métier
-- **Rôles** (`config/roles.php`) : `admin`, `chef` (planifie), `ouvrier` (consulte).
-  `planners` = rôles autorisés à écrire (chantiers + planning) ; `assignable` = rôles
-  qu'on peut placer sur un chantier (ouvrier + chef). `User::isPlanner()`, `User::assignable()`.
+- **Rôles** (`config/roles.php`, lignes `roles` spatie créées par migration / seeder / `ensureRoles()`) :
+  `admin` (comptes, rôles, configuration + planifie), `gestionnaire` (bureau : prépare les chantiers,
+  planifie, valide heures et absences — Davison), `chef` (patron / chef de chantier : planifie, passages),
+  `ouvrier` (consulte, pointe). **Un compte peut cumuler plusieurs rôles** (Robin = admin + chef) : la page
+  Équipe & comptes propose des cases à cocher avec la description de chaque rôle (`descriptions`,
+  renvoyées par `GET /roles`). `planners` = admin + gestionnaire + chef (écriture chantiers / planning,
+  miroir `PLANNER_ROLES` dans `lib/navigation.ts`) ; `assignable` = ouvrier + chef + gestionnaire.
+  `User::isPlanner()`, `User::assignable()`. Ajouter un rôle = config + migration `Role::findOrCreate`.
 - **Équipe** (`equipes`) : nom, couleur, ordre ; un employé a **une** équipe au plus (`users.equipe_id`,
   `PUT /equipes/{id}` avec `member_ids` retire les membres de leur ancienne équipe). Le planning se
   fait par équipe : `affectations.equipe_id` + **copie des membres** dans `affectation_user` à la

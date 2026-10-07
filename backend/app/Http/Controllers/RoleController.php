@@ -14,6 +14,7 @@ class RoleController extends Controller
     public function index(): JsonResponse
     {
         $labels = (array) config('roles.labels', []);
+        $descriptions = (array) config('roles.descriptions', []);
 
         $roles = Role::query()
             ->orderBy('id')
@@ -21,6 +22,7 @@ class RoleController extends Controller
             ->map(fn (Role $role) => [
                 'name' => $role->name,
                 'label' => $labels[$role->name] ?? ucfirst($role->name),
+                'description' => $descriptions[$role->name] ?? null,
             ])
             ->values();
 
