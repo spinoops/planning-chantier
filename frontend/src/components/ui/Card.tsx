@@ -9,12 +9,14 @@ interface CardProps {
   action?: ReactNode
   /** Sans padding interne (tableaux pleine largeur). */
   flush?: boolean
+  /** Ancre (liens `#…`). */
+  id?: string
 }
 
 /** Panneau en verre liquide (translucide, reflet en haut, sans bordure), conteneur standard des pages. */
-export default function Card({ children, className = '', title, description, action, flush = false }: CardProps) {
+export default function Card({ children, className = '', title, description, action, flush = false, id }: CardProps) {
   return (
-    <section className={`glass-panel overflow-hidden rounded-card ${className}`}>
+    <section id={id} className={`glass-panel overflow-hidden rounded-card ${className}`}>
       {(title || action) && (
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-black/[0.06] px-5 py-4">
           <div>

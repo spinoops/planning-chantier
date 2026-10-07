@@ -4,15 +4,47 @@ import { useAuth } from '@/auth/AuthContext'
 import { useSettings } from '@/hooks/useSettings'
 import { applyBranding, DEFAULT_APP_NAME, DEFAULT_LOGO } from '@/lib/branding'
 import { initials } from '@/lib/format'
-import { ADMIN_ITEMS, NAV_ITEMS, visibleItems } from '@/lib/navigation'
+import { ADMIN_ITEMS, isItemActive, NAV_ITEMS, visibleItems } from '@/lib/navigation'
+import type { NavItem } from '@/lib/navigation'
 
 /** Routes affichées sur toute la largeur de l'écran (calendrier). */
 const FULL_WIDTH_PREFIXES = ['/planning']
 
+const PILL_ACTIVE = 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15),inset_0_1px_0_rgb(255_255_255)]'
+const PILL_IDLE = 'text-gray-700 hover:bg-white/50 hover:text-gray-900'
+const PILL = 'whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition'
+const MENU_ITEM = 'block rounded-xl px-3 py-1.5 text-[13px] text-gray-800 transition hover:bg-primary hover:text-white'
+
+/** Entrée de menu avec sous-menu déroulant (Chantiers, Équipe, Administration). */
+function NavDropdown({ label, items, active }: { label: string; items: NavItem[]; active: boolean }) {
+  return (
+    <details className="group relative">
+      <summary className={`flex cursor-pointer list-none items-center gap-1 ${PILL} ${active ? PILL_ACTIVE : PILL_IDLE}`}>
+        {label}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" className="transition group-open:rotate-180">
+          <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <div className="pc-pop glass-strong absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-1.5">
+        {items.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end
+            onClick={(e) => e.currentTarget.closest('details')?.removeAttribute('open')}
+            className={({ isActive }) => `${MENU_ITEM} ${isActive ? 'font-semibold' : ''}`}
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </div>
+    </details>
+  )
+}
+
 /**
- * Cadre commun des pages connectées : barre translucide (verre dépoli, façon
- * macOS) avec logo/nom (Configuration), navigation issue de lib/navigation.ts,
- * menu utilisateur, tiroir mobile.
+ * Cadre commun des pages connectées : barre flottante en verre (façon macOS)
+ * avec logo, navigation courte (sous-menus par domaine), menu utilisateur, tiroir mobile.
  */
 export default function AppLayout() {
   const { user, logout, isAdmin } = useAuth()
@@ -21,34 +53,42 @@ export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const navRef = useRef<HTMLElement>(null)
 
   const appName = settings?.app_name || DEFAULT_APP_NAME
   const modules = settings?.modules ?? {}
   const canInvite = settings?.features?.invitations_for_everyone ?? false
   const mainItems = visibleItems(NAV_ITEMS, user, modules, { canInvite })
   const adminItems = visibleItems(ADMIN_ITEMS, user, modules, { canInvite })
-  const adminActive = adminItems.some((item) => pathname.startsWith(item.to))
+  const adminActive = adminItems.some((item) => isItemActive(item, pathname))
   const fullWidth = FULL_WIDTH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
   // Couleur / titre / favicon suivent la configuration.
   useEffect(() => applyBranding(settings), [settings])
 
-  // Fermetures : Échap, clic en dehors du menu utilisateur (les liens ferment via onClick).
+  // Fermetures : Échap, clic en dehors (menu utilisateur et sous-menus).
   const closeMenus = () => {
     setMenuOpen(false)
     setUserMenuOpen(false)
   }
 
   useEffect(() => {
-    if (!menuOpen && !userMenuOpen) return
+    function closeDropdowns() {
+      navRef.current?.querySelectorAll('details[open]').forEach((d) => d.removeAttribute('open'))
+    }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setMenuOpen(false)
         setUserMenuOpen(false)
+        closeDropdowns()
       }
     }
     function onDown(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+      const target = e.target as Element
+      navRef.current?.querySelectorAll('details[open]').forEach((d) => {
+        if (!d.contains(target)) d.removeAttribute('open')
+      })
     }
     document.addEventListener('keydown', onKey)
     document.addEventListener('mousedown', onDown)
@@ -56,17 +96,12 @@ export default function AppLayout() {
       document.removeEventListener('keydown', onKey)
       document.removeEventListener('mousedown', onDown)
     }
-  }, [menuOpen, userMenuOpen])
+  }, [])
 
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-      isActive ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15),inset_0_1px_0_rgb(255_255_255)]' : 'text-gray-700 hover:bg-white/50 hover:text-gray-900'
-    }`
   const drawerClass = ({ isActive }: { isActive: boolean }) =>
     `block rounded-xl px-3 py-2.5 text-[15px] font-medium transition ${
       isActive ? 'bg-primary-soft text-primary' : 'text-gray-800 hover:bg-gray-900/[0.05]'
     }`
-  const menuItemClass = 'block rounded-xl px-3 py-1.5 text-[13px] text-gray-800 transition hover:bg-primary hover:text-white'
 
   return (
     <div className="min-h-screen">
@@ -75,47 +110,23 @@ export default function AppLayout() {
           {/* Logo + nom */}
           <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5" aria-label={appName}>
             <img src={settings?.app_logo_url || DEFAULT_LOGO} alt="" className="h-8 w-auto max-w-44 shrink-0 object-contain" />
-            <span className="hidden h-5 w-px bg-black/10 lg:block" aria-hidden />
-            <span className="hidden truncate text-[13px] font-medium text-gray-600 lg:inline">{appName}</span>
+            <span className="hidden h-5 w-px bg-black/10 xl:block" aria-hidden />
+            <span className="hidden truncate text-[13px] font-medium text-gray-600 xl:inline">{appName}</span>
           </Link>
 
-          {/* Navigation principale (écrans larges) */}
-          <nav className="no-scrollbar hidden min-w-0 items-center gap-0.5 overflow-x-auto md:flex">
-            {mainItems.map((item) => (
-              <NavLink key={item.to} to={item.to} className={navClass}>
-                {item.label}
-              </NavLink>
-            ))}
+          {/* Navigation principale (écrans larges) : une pilule par domaine, sous-menus déroulants. */}
+          <nav ref={navRef} className="hidden min-w-0 items-center gap-0.5 md:flex">
+            {mainItems.map((item) =>
+              item.children ? (
+                <NavDropdown key={item.to} label={item.label} items={item.children} active={isItemActive(item, pathname)} />
+              ) : (
+                <NavLink key={item.to} to={item.to} className={({ isActive }) => `${PILL} ${isActive ? PILL_ACTIVE : PILL_IDLE}`}>
+                  {item.label}
+                </NavLink>
+              ),
+            )}
+            {adminItems.length > 0 && <NavDropdown label="Administration" items={adminItems} active={adminActive} />}
           </nav>
-          {/* Menu Administration : hors de la barre défilante, sinon la liste déroulante est rognée. */}
-          {adminItems.length > 0 && (
-            <div className="hidden md:block">
-              <details className="group relative">
-                <summary
-                  className={`flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-                    adminActive ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15),inset_0_1px_0_rgb(255_255_255)]' : 'text-gray-700 hover:bg-white/50 hover:text-gray-900'
-                  }`}
-                >
-                  Administration
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" className="transition group-open:rotate-180">
-                    <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </summary>
-                <div className="pc-pop glass-strong absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-1.5">
-                  {adminItems.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={(e) => e.currentTarget.closest('details')?.removeAttribute('open')}
-                      className={({ isActive }) => `${menuItemClass} ${isActive ? 'font-semibold' : ''}`}
-                    >
-                      {item.label}
-                    </NavLink>
-                  ))}
-                </div>
-              </details>
-            </div>
-          )}
 
           <div className="flex-1" />
 
@@ -141,10 +152,10 @@ export default function AppLayout() {
                   {isAdmin && <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">Administrateur</p>}
                 </div>
                 <div className="mx-2 my-1 border-t border-black/[0.06]" />
-                <Link to="/profile" role="menuitem" onClick={closeMenus} className={menuItemClass}>
+                <Link to="/profile" role="menuitem" onClick={closeMenus} className={MENU_ITEM}>
                   Mon profil
                 </Link>
-                <button type="button" role="menuitem" onClick={() => logout()} className={`${menuItemClass} w-full text-left`}>
+                <button type="button" role="menuitem" onClick={() => logout()} className={`${MENU_ITEM} w-full text-left`}>
                   Déconnexion
                 </button>
               </div>
@@ -169,8 +180,8 @@ export default function AppLayout() {
       {/* Tiroir de navigation (mobile) */}
       {menuOpen && (
         <div className="pc-fade fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden />
-          <div className="glass absolute inset-y-0 right-0 flex w-[min(320px,86vw)] flex-col rounded-l-3xl shadow-2xl">
+          <div className="absolute inset-0 bg-black/25" onClick={() => setMenuOpen(false)} aria-hidden />
+          <div className="glass-strong absolute inset-y-0 right-0 flex w-[min(320px,86vw)] flex-col rounded-l-3xl">
             <div className="flex items-center gap-3 border-b border-black/[0.06] px-4 py-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-gray-700 to-gray-900 text-xs font-bold text-white">
                 {initials(user?.name)}
@@ -191,20 +202,31 @@ export default function AppLayout() {
               </button>
             </div>
             <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-              {mainItems.map((item) => (
-                <NavLink key={item.to} to={item.to} className={drawerClass} onClick={closeMenus}>
-                  {item.label}
-                </NavLink>
-              ))}
+              {mainItems.map((item) =>
+                item.children ? (
+                  <div key={item.to} className="pt-2">
+                    <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{item.label}</p>
+                    {item.children.map((child) => (
+                      <NavLink key={child.to} to={child.to} end className={drawerClass} onClick={closeMenus}>
+                        {child.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                ) : (
+                  <NavLink key={item.to} to={item.to} className={drawerClass} onClick={closeMenus}>
+                    {item.label}
+                  </NavLink>
+                ),
+              )}
               {adminItems.length > 0 && (
-                <>
-                  <p className="mt-4 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Administration</p>
+                <div className="pt-2">
+                  <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Administration</p>
                   {adminItems.map((item) => (
                     <NavLink key={item.to} to={item.to} className={drawerClass} onClick={closeMenus}>
                       {item.label}
                     </NavLink>
                   ))}
-                </>
+                </div>
               )}
               <p className="mt-4 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Compte</p>
               <NavLink to="/profile" className={drawerClass} onClick={closeMenus}>

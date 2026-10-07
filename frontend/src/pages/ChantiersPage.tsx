@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -63,6 +63,7 @@ export default function ChantiersPage() {
   const updateChantier = useUpdateChantier()
   const deleteChantier = useDeleteChantier()
   const confirm = useConfirm()
+  const navigate = useNavigate()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Chantier | null>(null)
@@ -198,8 +199,15 @@ export default function ChantiersPage() {
           {rows.map((c) => (
             <article
               key={c.id}
-              className="group flex flex-col overflow-hidden glass-panel rounded-card transition hover:shadow-md"
+              role="link"
+              tabIndex={0}
+              onClick={() => navigate(`/chantiers/${c.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') navigate(`/chantiers/${c.id}`)
+              }}
+              className="group flex cursor-pointer flex-col overflow-hidden glass-panel rounded-card transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-[3px] focus-visible:ring-primary-ring active:translate-y-0"
               style={{ background: `color-mix(in oklab, ${c.color} 9%, rgb(255 255 255 / 0.64))` }}
+              aria-label={`Ouvrir la fiche ${c.name}`}
             >
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
@@ -210,9 +218,7 @@ export default function ChantiersPage() {
                       aria-hidden
                     />
                     <div className="min-w-0">
-                      <Link to={`/chantiers/${c.id}`} className="block truncate text-base font-semibold text-gray-900 hover:text-primary hover:underline">
-                        {c.name}
-                      </Link>
+                      <h3 className="truncate text-base font-semibold text-gray-900 transition group-hover:text-primary">{c.name}</h3>
                       <p className="truncate text-sm text-gray-500">{c.client || 'Client non renseigné'}</p>
                     </div>
                   </div>
@@ -238,20 +244,35 @@ export default function ChantiersPage() {
                   </div>
                 </dl>
 
-                <div className="mt-4 flex items-center justify-between border-t border-black/[0.06] pt-3">
-                  <Link to={`/planning?chantier=${c.id}`} className="text-xs font-medium text-primary hover:underline">
+                {/* Pied : lien planning + actions rondes (clics isolés de la carte). */}
+                <div className="mt-4 flex items-center justify-between border-t border-black/[0.06] pt-3" onClick={(e) => e.stopPropagation()}>
+                  <Link to={`/planning?chantier=${c.id}`} className="glass-pill rounded-full px-3 py-1 text-xs font-medium text-primary">
                     {c.affectations_count ?? 0} jour{(c.affectations_count ?? 0) > 1 ? 's' : ''} planifié{(c.affectations_count ?? 0) > 1 ? 's' : ''}
                   </Link>
-                  <div className="flex gap-1">
-                    <Link to={`/chantiers/${c.id}`} className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-primary transition hover:bg-primary-soft">
-                      Fiche
-                    </Link>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
-                      Modifier
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50" onClick={() => remove(c)}>
-                      Supprimer
-                    </Button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(c)}
+                      aria-label={`Modifier ${c.name}`}
+                      title="Modifier"
+                      className="glass-pill flex h-8 w-8 items-center justify-center rounded-full text-gray-700 active:scale-95"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z" strokeLinejoin="round" />
+                        <path d="m13.5 6.5 3 3" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void remove(c)}
+                      aria-label={`Supprimer ${c.name}`}
+                      title="Supprimer"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-sys-red text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.3),0_2px_6px_-2px_rgb(255_59_48/0.6)] transition hover:bg-sys-red-deep active:scale-95"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>

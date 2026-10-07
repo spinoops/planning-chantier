@@ -91,8 +91,19 @@ La version installée sous WAMP est **8.4.24** :
 
 ## Front (`frontend/src`)
 - Pages : `PlanningPage` (colonne équipes + calendrier, état dans l'URL `?view=&d=&chantier=`),
-  `ChantiersPage` (cartes + formulaire), `EquipesPage` (équipes + membres), `MyPlanningPage`
-  (`/mon-planning`, vue ouvrier), `DashboardPage` (état du jour). Accueil `/` → `HomeRedirect` selon le rôle.
+  `ChantiersPage` (cartes **entièrement cliquables** vers la fiche ; actions = icônes rondes : crayon en
+  verre, corbeille dans un rond rouge — demande explicite), `EquipesPage` (équipes + membres),
+  `MyPlanningPage` (`/mon-planning`, vue ouvrier), `DashboardPage`. Accueil `/` → `HomeRedirect` selon le
+  rôle (planificateurs → `/dashboard`).
+- **Menu** (`lib/navigation.ts`) : court, une pilule par domaine avec sous-menus (`children`) :
+  Tableau de bord · Planning · Chantiers (Tous les chantiers, Clients) · Équipe (Équipes, Heures,
+  Absences) · Mon planning · Administration. `NavDropdown` dans `AppLayout` (`<details>`, fermeture au
+  clic / Échap / clic dehors) ; le tiroir mobile aplatit les groupes avec un en-tête.
+- **Tableau de bord** (planificateurs) : tuiles d'action rapide (`Tile` : Nouveau chantier →
+  `QuickChantierModal` puis redirection vers la fiche ; Sur le terrain ; Heures à valider ; Imprévus ;
+  Absences), « Chantiers du jour » (affectations du jour regroupées par chantier, créneaux, avatars,
+  boutons Fiche / Planning), Disponibles, « La semaine en un coup d'œil » (barres), Imprévus, Heures par
+  chantier, Absences. Plus d'« Activité récente » ni de statistiques de comptes (demande explicite).
 - Calendrier : **FullCalendar 6** (même bibliothèque qu'ela-planning) dans
   `components/planning/PlanningCalendar.tsx`, maquette de référence = Apple Calendrier
   (`_construction/*.pdf`). Vues `dayGridMonth` (Mois), `timeGridWeek` (Semaine, grille horaire

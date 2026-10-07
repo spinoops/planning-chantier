@@ -25,7 +25,7 @@ class DashboardController extends Controller
     /**
      * Données du tableau de bord.
      *
-     * Un planificateur (admin / chef) reçoit l'état du jour et le pilotage de la
+     * Un planificateur (admin / gestionnaire / chef) reçoit l'état du jour et le pilotage de la
      * semaine : qui est où, chantiers sans équipe, personnes libres, heures pointées
      * par chantier, imprévus non traités, heures à valider. Un admin reçoit en plus
      * les indicateurs du socle. Un ouvrier ne voit que sa propre activité récente.
@@ -129,7 +129,8 @@ class DashboardController extends Controller
 
         $days = collect(range(0, 6))->map(function (int $i) use ($monday, $affectations, $absences, $team) {
             $date = $monday->addDays($i)->toDateString();
-            $ofDay = $affectations->where('date', $date);
+            // `date` est casté en Carbon : comparer des chaînes, sinon aucun jour ne correspond.
+            $ofDay = $affectations->filter(fn (Affectation $a) => $a->date->toDateString() === $date);
             $busy = $ofDay->flatMap(fn ($a) => $a->people->where('pivot.role', 'worker')->pluck('id'))->unique();
             $absent = $absences->filter(fn ($ab) => $ab->start_date->toDateString() <= $date && $ab->end_date->toDateString() >= $date)->pluck('user_id');
 

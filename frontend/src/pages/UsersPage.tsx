@@ -75,7 +75,7 @@ export default function UsersPage() {
   const color = watch('color')
 
   const roleLabel = (name: string) => roles?.data.find((r) => r.name === name)?.label ?? name
-  const selectedRoles = watch('roles')
+  const selectedRoles = watch('roles') ?? []
 
   function setFilter(key: 'role' | 'trashed', value: string) {
     setSearchParams(
