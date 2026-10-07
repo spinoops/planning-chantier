@@ -11,10 +11,10 @@ interface CardProps {
   flush?: boolean
 }
 
-/** Bloc blanc arrondi (style macOS : liseré fin, ombre douce), conteneur standard des pages. */
+/** Panneau en verre liquide (translucide, reflet en haut, sans bordure), conteneur standard des pages. */
 export default function Card({ children, className = '', title, description, action, flush = false }: CardProps) {
   return (
-    <section className={`overflow-hidden rounded-card border border-black/[0.06] bg-white shadow-sm ${className}`}>
+    <section className={`glass-panel overflow-hidden rounded-card ${className}`}>
       {(title || action) && (
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-black/[0.06] px-5 py-4">
           <div>

@@ -60,18 +60,18 @@ export default function AppLayout() {
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-      isActive ? 'bg-gray-900/[0.07] text-gray-900' : 'text-gray-600 hover:bg-gray-900/[0.05] hover:text-gray-900'
+      isActive ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15),inset_0_1px_0_rgb(255_255_255)]' : 'text-gray-700 hover:bg-white/50 hover:text-gray-900'
     }`
   const drawerClass = ({ isActive }: { isActive: boolean }) =>
     `block rounded-xl px-3 py-2.5 text-[15px] font-medium transition ${
       isActive ? 'bg-primary-soft text-primary' : 'text-gray-800 hover:bg-gray-900/[0.05]'
     }`
-  const menuItemClass = 'block rounded-lg px-3 py-1.5 text-[13px] text-gray-800 transition hover:bg-primary hover:text-white'
+  const menuItemClass = 'block rounded-xl px-3 py-1.5 text-[13px] text-gray-800 transition hover:bg-primary hover:text-white'
 
   return (
     <div className="min-h-screen">
-      <header className="glass sticky top-0 z-40 border-b border-black/[0.06]">
-        <div className="flex items-center gap-4 px-4 py-2 sm:px-6">
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
+        <div className="glass flex items-center gap-3 rounded-full py-1.5 pl-2 pr-2 sm:gap-4 sm:pl-3">
           {/* Logo + nom */}
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
             {settings?.app_logo_url ? (
@@ -95,7 +95,7 @@ export default function AppLayout() {
               <details className="group relative">
                 <summary
                   className={`flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-                    adminActive ? 'bg-gray-900/[0.07] text-gray-900' : 'text-gray-600 hover:bg-gray-900/[0.05] hover:text-gray-900'
+                    adminActive ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15),inset_0_1px_0_rgb(255_255_255)]' : 'text-gray-700 hover:bg-white/50 hover:text-gray-900'
                   }`}
                 >
                   Administration
@@ -103,7 +103,7 @@ export default function AppLayout() {
                     <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </summary>
-                <div className="pc-pop glass absolute left-0 top-full z-50 mt-1.5 min-w-48 rounded-xl p-1 shadow-lg ring-1 ring-black/5">
+                <div className="pc-pop glass absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-1.5">
                   {adminItems.map((item) => (
                     <NavLink
                       key={item.to}
@@ -127,7 +127,7 @@ export default function AppLayout() {
               onClick={() => setUserMenuOpen((o) => !o)}
               aria-haspopup="menu"
               aria-expanded={userMenuOpen}
-              className="flex items-center gap-2 rounded-full bg-gray-900/[0.05] py-1 pl-1 pr-3 text-[13px] transition hover:bg-gray-900/[0.09]"
+              className="glass-pill flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-[13px]"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-b from-gray-700 to-gray-900 text-[10px] font-bold text-white">
                 {initials(user?.name)}
@@ -135,7 +135,7 @@ export default function AppLayout() {
               <span className="max-w-40 truncate font-medium text-gray-800">{user?.name}</span>
             </button>
             {userMenuOpen && (
-              <div role="menu" className="pc-pop glass absolute right-0 top-full z-50 mt-1.5 w-60 rounded-xl p-1 shadow-lg ring-1 ring-black/5">
+              <div role="menu" className="pc-pop glass absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl p-1.5">
                 <div className="px-3 pb-2 pt-1.5">
                   <p className="truncate text-[13px] font-semibold text-gray-900">{user?.name}</p>
                   <p className="truncate text-xs text-gray-500">{user?.email}</p>
@@ -158,7 +158,7 @@ export default function AppLayout() {
             onClick={() => setMenuOpen(true)}
             aria-label="Ouvrir le menu"
             aria-expanded={menuOpen}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-900/[0.05] text-gray-800 md:hidden"
+            className="glass-pill flex h-9 w-9 items-center justify-center rounded-full text-gray-800 md:hidden"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
@@ -225,7 +225,7 @@ export default function AppLayout() {
         </div>
       )}
 
-      <main className={fullWidth ? 'px-3 py-4 sm:px-4' : 'mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8'}>
+      <main className={fullWidth ? 'px-3 py-4 sm:px-4' : 'mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7'}>
         <Outlet />
       </main>
     </div>

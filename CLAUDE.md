@@ -158,8 +158,18 @@ La version installée sous WAMP est **8.4.24** :
 - Hooks : `useChantiers` / `useOpenChantiers`, `usePlanning` (+ create/update/delete/copyWeek),
   `useWorkers`. Navigation et rôles planificateurs : `lib/navigation.ts` (`PLANNER_ROLES`).
 
-## Design (style Apple — macOS / iOS)
-- Demande explicite de l'utilisateur : « design style macOS, iOS, Apple ». Tout part des jetons dans
+## Design (style Apple — « Liquid Glass », macOS Tahoe / iOS 26)
+- **Règle absolue (retour utilisateur)** : jamais de liseré coloré sur **un seul côté** d'un élément aux
+  coins arrondis (`border-left-width` + `border-radius`, barre verticale à côté d'un texte…). Les couleurs
+  passent par un **fond teinté uniforme**, un point / avatar coloré ou une pastille. Pas de bordures grises
+  opaques non plus : les panneaux sont en verre.
+- **Verre liquide** (`index.css`) : fond d'écran fixe `body::before` (halos dérivés de `--color-primary`),
+  classes `.glass` (barres, menus), `.glass-panel` (cartes, colonnes, calendrier), `.glass-strong` (modales,
+  connexion), `.glass-pill` (boutons secondaires, pilules), `.gloss` (reflet des boutons pleins). Toutes =
+  blanc translucide + `backdrop-filter` + reflet `inset 0 1px` + ombre douce, **sans bordure**. Boutons et
+  contrôles segmentés en **capsules** (`rounded-full`). FullCalendar sur fond transparent, cartes d'événement
+  teintées (`tint(color, 24)`, `borderColor: 'transparent'`), aujourd'hui en rouge.
+- Demande initiale : « design style macOS, iOS, Apple ». Tout part des jetons dans
   `frontend/src/index.css` (`@theme`) : police système Apple avec repli **Inter** (chargée dans
   `index.html` pour Windows), **gris neutres iOS** (`--color-gray-*` remappés : fond `#f5f5f7`, séparateurs
   `#e5e5ea`, texte `#1c1c1e`), couleur principale **bleu système `#007aff`** par défaut (`branding.ts`,

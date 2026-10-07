@@ -196,15 +196,25 @@ export default function ChantiersPage() {
       ) : (
         <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? 'opacity-70' : ''}`}>
           {rows.map((c) => (
-            <article key={c.id} className="group flex flex-col overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
-              <div className="h-1.5" style={{ backgroundColor: c.color }} />
+            <article
+              key={c.id}
+              className="group flex flex-col overflow-hidden glass-panel rounded-card transition hover:shadow-md"
+              style={{ background: `color-mix(in oklab, ${c.color} 9%, rgb(255 255 255 / 0.64))` }}
+            >
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <Link to={`/chantiers/${c.id}`} className="block truncate text-base font-semibold text-gray-900 hover:text-primary hover:underline">
-                      {c.name}
-                    </Link>
-                    <p className="truncate text-sm text-gray-500">{c.client || 'Client non renseigné'}</p>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span
+                      className="h-3.5 w-3.5 shrink-0 rounded-full shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.15)]"
+                      style={{ backgroundColor: c.color }}
+                      aria-hidden
+                    />
+                    <div className="min-w-0">
+                      <Link to={`/chantiers/${c.id}`} className="block truncate text-base font-semibold text-gray-900 hover:text-primary hover:underline">
+                        {c.name}
+                      </Link>
+                      <p className="truncate text-sm text-gray-500">{c.client || 'Client non renseigné'}</p>
+                    </div>
                   </div>
                   <Badge tone={STATUS_TONE[c.status]}>{c.status_label}</Badge>
                 </div>
@@ -228,7 +238,7 @@ export default function ChantiersPage() {
                   </div>
                 </dl>
 
-                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+                <div className="mt-4 flex items-center justify-between border-t border-black/[0.06] pt-3">
                   <Link to={`/planning?chantier=${c.id}`} className="text-xs font-medium text-primary hover:underline">
                     {c.affectations_count ?? 0} jour{(c.affectations_count ?? 0) > 1 ? 's' : ''} planifié{(c.affectations_count ?? 0) > 1 ? 's' : ''}
                   </Link>

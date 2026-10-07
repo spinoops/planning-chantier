@@ -232,8 +232,8 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         start: timed && !isTimeline ? `${a.date}T${a.start_time}:00` : a.date,
         end: timed && !isTimeline && a.end_time ? `${a.date}T${a.end_time}:00` : undefined,
         allDay: !timed || isTimeline,
-        backgroundColor: tint(color, 16),
-        borderColor: color,
+        backgroundColor: tint(color, 24),
+        borderColor: 'transparent',
         textColor: `color-mix(in oklab, ${color} 62%, black)`,
         classNames: ['pc-event', hasConflict ? 'pc-event--conflict' : ''],
         extendedProps: { affectationId: a.id, color, hasConflict },
@@ -545,7 +545,7 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
   }, [])
 
   return (
-    <div className="pc-calendar overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm">
+    <div className="pc-calendar overflow-hidden glass-panel rounded-card">
       <FullCalendar
         ref={calRef}
         plugins={[interactionPlugin, dayGridPlugin, timeGridPlugin, listPlugin, resourcePlugin, resourceTimelinePlugin]}

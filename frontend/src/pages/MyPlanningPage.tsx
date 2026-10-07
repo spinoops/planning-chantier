@@ -86,7 +86,7 @@ export default function MyPlanningPage() {
   return (
     <div className="mx-auto max-w-3xl">
       {/* Bandeau du jour */}
-      <section className="mb-6 overflow-hidden rounded-card bg-gradient-to-br from-primary to-primary-hover text-white shadow-lg">
+      <section className="mb-6 overflow-hidden rounded-card bg-gradient-to-br from-primary to-primary-hover text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_20px_50px_-20px_var(--color-primary)]">
         <div className="p-5 sm:p-6">
           <p className="text-sm text-white/75">Bonjour {firstName},</p>
           {inWeek || cursorKey === today ? (
@@ -150,12 +150,12 @@ export default function MyPlanningPage() {
             return (
               <section
                 key={key}
-                className={`overflow-hidden rounded-card border bg-white shadow-sm ${isToday ? 'border-primary/40 ring-1 ring-primary/20' : 'border-gray-200'} ${
+                className={`glass-panel overflow-hidden rounded-card ${isToday ? 'ring-2 ring-primary/50' : ''} ${
                   isPast && !isToday ? 'opacity-80' : ''
                 }`}
               >
-                <header className={`flex items-center gap-3 px-4 py-2.5 ${isToday ? 'bg-primary-soft' : 'bg-gray-50/70'}`}>
-                  <span className={`flex h-9 w-9 items-center justify-center rounded-full text-base font-bold ${isToday ? 'bg-primary text-white' : 'bg-white text-gray-900 ring-1 ring-gray-200'}`}>
+                <header className={`flex items-center gap-3 px-4 py-2.5 ${isToday ? 'bg-primary/10' : 'bg-white/30'}`}>
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-full text-base font-bold ${isToday ? 'bg-primary text-white gloss' : 'glass-pill text-gray-900'}`}>
                     {day.getDate()}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -173,7 +173,7 @@ export default function MyPlanningPage() {
                 </header>
 
                 {items.length > 0 && (
-                  <ul className="divide-y divide-gray-100">
+                  <ul className="divide-y divide-black/[0.05]">
                     {items.map((a) => {
                       const colleagues = a.workers.filter((w) => w.id !== user?.id)
                       const isVisit = a.visitors.some((v) => v.id === user?.id)
@@ -181,7 +181,7 @@ export default function MyPlanningPage() {
                       const pointed = dayEntries.filter((e) => e.affectation_id === a.id)
                       return (
                         <li key={a.id} className="flex gap-3 p-4">
-                          <span className="mt-1 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: a.equipe?.color ?? a.chantier.color }} aria-hidden />
+                          <span className="mt-1.5 h-3.5 w-3.5 shrink-0 rounded-full shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.15)]" style={{ backgroundColor: a.chantier.color }} aria-hidden />
                           <div className="min-w-0 flex-1 space-y-2">
                             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                               <h3 className="text-base font-semibold text-gray-900">

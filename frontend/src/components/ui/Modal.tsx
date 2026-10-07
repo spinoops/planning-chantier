@@ -46,7 +46,7 @@ export default function Modal({ open, onClose, title, size = 'md', dismissible =
 
   return createPortal(
     <div
-      className="pc-fade fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-0 backdrop-blur-[3px] sm:items-center sm:p-4"
+      className="pc-fade fixed inset-0 z-50 flex items-end justify-center bg-[rgb(15_40_90/0.28)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={dismissible ? onClose : undefined}
       role="presentation"
     >
@@ -54,7 +54,7 @@ export default function Modal({ open, onClose, title, size = 'md', dismissible =
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`pc-pop max-h-[92vh] w-full ${SIZES[size]} overflow-y-auto rounded-t-[22px] bg-white p-5 shadow-2xl ring-1 ring-black/5 sm:max-h-[88vh] sm:rounded-[22px] sm:p-6`}
+        className={`pc-pop max-h-[92vh] w-full ${SIZES[size]} glass-strong overflow-y-auto rounded-t-[28px] p-5 sm:max-h-[88vh] sm:rounded-[28px] sm:p-6`}
         onMouseDown={(event) => event.stopPropagation()}
       >
         {title && <h3 className="mb-4 text-[17px] font-semibold tracking-tight text-gray-900">{title}</h3>}

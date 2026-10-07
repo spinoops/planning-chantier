@@ -20,7 +20,7 @@ export default function AuthShell({ title, children }: AuthShellProps) {
   useEffect(() => applyBranding(settings), [settings])
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
       <div className="pointer-events-none absolute -left-40 -top-40 h-[28rem] w-[28rem] rounded-full bg-primary/15 blur-3xl" aria-hidden />
       <div className="pointer-events-none absolute -bottom-48 -right-32 h-[26rem] w-[26rem] rounded-full bg-sys-purple/10 blur-3xl" aria-hidden />
       <div className="pointer-events-none absolute right-1/4 top-1/3 h-72 w-72 rounded-full bg-sys-teal/10 blur-3xl" aria-hidden />
@@ -36,7 +36,7 @@ export default function AuthShell({ title, children }: AuthShellProps) {
           )}
           <span className="text-[22px] font-bold tracking-tight text-gray-900">{appName}</span>
         </div>
-        <div className="space-y-4 rounded-[26px] border border-white/60 bg-white/75 p-8 shadow-xl backdrop-blur-2xl">
+        <div className="glass-strong space-y-4 rounded-[28px] p-8">
           <h1 className="text-[17px] font-semibold tracking-tight text-gray-900">{title}</h1>
           {children}
         </div>

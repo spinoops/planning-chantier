@@ -166,7 +166,7 @@ export default function TeamSidebar({ equipes, workers, hidden, onToggle, onShow
         onDraggingChange?.(false)
       }}
     >
-      <aside ref={containerRef} className="team-sidebar rounded-card border border-gray-200 bg-white shadow-sm">
+      <aside ref={containerRef} className="team-sidebar glass-panel rounded-card">
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Équipes</h3>
           <div className="flex items-center gap-2">

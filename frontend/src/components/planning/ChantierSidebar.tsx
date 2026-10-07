@@ -20,7 +20,7 @@ interface ChantierSidebarProps {
  */
 export default function ChantierSidebar({ chantiers, hidden, onToggle, onOnly, onShowAll, counts, canManage }: ChantierSidebarProps) {
   return (
-    <aside className="rounded-card border border-gray-200 bg-white shadow-sm">
+    <aside className="glass-panel rounded-card">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Chantiers</h3>
         {hidden.size > 0 && (

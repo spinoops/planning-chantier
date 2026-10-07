@@ -141,7 +141,7 @@ export default function EquipesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {equipes.map((e) => (
-            <article key={e.id} className="flex flex-col overflow-hidden rounded-card border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
+            <article key={e.id} className="flex flex-col overflow-hidden glass-panel rounded-card transition hover:shadow-md">
               <div className="h-1.5" style={{ backgroundColor: e.color }} />
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-center gap-2">

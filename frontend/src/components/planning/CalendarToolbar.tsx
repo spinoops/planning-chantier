@@ -27,7 +27,7 @@ interface CalendarToolbarProps {
   busy?: boolean
 }
 
-const PILL = 'inline-flex items-center justify-center rounded-full bg-gray-900/[0.05] text-gray-800 transition hover:bg-gray-900/[0.09] active:scale-95'
+const PILL = 'glass-pill inline-flex items-center justify-center rounded-full text-gray-800 active:scale-95'
 
 /** Barre de navigation du calendrier (façon Apple Calendrier) : ‹ aujourd'hui ›, titre, contrôle segmenté des vues, actions. */
 export default function CalendarToolbar({
@@ -75,7 +75,7 @@ export default function CalendarToolbar({
                 value={view}
                 onChange={(e) => onViewChange(e.target.value as CalendarView)}
                 aria-label="Vue du calendrier"
-                className="rounded-[10px] border border-black/[0.08] bg-gray-100/70 px-2 py-1.5 text-sm md:hidden"
+                className="glass-pill rounded-full px-3 py-1.5 text-sm md:hidden"
               >
                 {VIEWS.map((v) => (
                   <option key={v.value} value={v.value}>
@@ -84,7 +84,7 @@ export default function CalendarToolbar({
                 ))}
               </select>
               {/* Contrôle segmenté (macOS). */}
-              <div className="hidden rounded-[9px] bg-gray-900/[0.06] p-[3px] md:inline-flex" role="tablist" aria-label="Vue du calendrier">
+              <div className="hidden rounded-full bg-white/35 p-1 shadow-[inset_0_1px_2px_rgb(15_40_90/0.08),inset_0_0_0_1px_rgb(255_255_255/0.4)] md:inline-flex" role="tablist" aria-label="Vue du calendrier">
                 {VIEWS.map((v) => (
                   <button
                     key={v.value}
@@ -92,9 +92,9 @@ export default function CalendarToolbar({
                     role="tab"
                     aria-selected={view === v.value}
                     onClick={() => onViewChange(v.value)}
-                    className={`whitespace-nowrap rounded-[7px] px-3 py-1 text-[13px] font-medium transition ${
+                    className={`whitespace-nowrap rounded-full px-3.5 py-1 text-[13px] font-medium transition ${
                       view === v.value
-                        ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(0_0_0/0.12),0_0_0_0.5px_rgb(0_0_0/0.04)]'
+                        ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15),inset_0_1px_0_rgb(255_255_255)]'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >

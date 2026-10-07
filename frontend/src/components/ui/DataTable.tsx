@@ -54,7 +54,7 @@ export default function DataTable<T>({
   return (
     <div className={`overflow-x-auto transition-opacity ${busy ? 'opacity-60' : ''}`}>
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-black/[0.06] bg-gray-50/70 text-[12px] font-medium text-gray-500">
+        <thead className="border-b border-black/[0.06] bg-white/30 text-[12px] font-medium text-gray-500">
           <tr>
             {columns.map((col) => {
               const active = sort?.key === col.key

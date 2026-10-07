@@ -47,11 +47,11 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const STEP_TONE: Record<ChantierStep['state'], string> = {
-  done: 'bg-green-600 text-white border-green-600',
-  pending: 'bg-blue-50 text-blue-700 border-blue-300',
-  todo: 'bg-white text-gray-500 border-gray-300',
-  skipped: 'bg-gray-100 text-gray-400 border-gray-200',
-  refused: 'bg-red-50 text-red-700 border-red-300',
+  done: 'bg-sys-green text-white gloss',
+  pending: 'bg-primary/15 text-primary',
+  todo: 'glass-pill text-gray-600',
+  skipped: 'bg-white/25 text-gray-400',
+  refused: 'bg-sys-red/15 text-sys-red-deep',
 }
 
 function toForm(c: Chantier): FormValues {
@@ -214,7 +214,7 @@ export default function ChantierDetailPage() {
       {/* Déroulé en 7 étapes */}
       <ol className="mb-6 grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
         {(c.steps ?? []).map((s, i) => (
-          <li key={s.key} className={`rounded-lg border px-3 py-2 ${STEP_TONE[s.state]}`} title={s.hint ?? undefined}>
+          <li key={s.key} className={`rounded-2xl px-3.5 py-2.5 ${STEP_TONE[s.state]}`} title={s.hint ?? undefined}>
             <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">Étape {i + 1}</p>
             <p className="text-sm font-semibold leading-tight">{s.label}</p>
             {s.hint && <p className="mt-0.5 truncate text-[11px] opacity-80">{s.hint}</p>}
@@ -222,13 +222,13 @@ export default function ChantierDetailPage() {
         ))}
       </ol>
 
-      <div className="mb-4 inline-flex rounded-lg bg-gray-100 p-0.5">
+      <div className="mb-4 inline-flex rounded-full bg-white/35 p-1 shadow-[inset_0_1px_2px_rgb(15_40_90/0.08)]">
         {(['fiche', 'recap'] as const).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`rounded-md px-3 py-1 text-sm font-medium transition ${tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+            className={`rounded-full px-3.5 py-1 text-sm font-medium transition ${tab === t ? 'bg-white text-gray-900 shadow-[0_1px_3px_rgb(15_40_90/0.15)]' : 'text-gray-600 hover:text-gray-900'}`}
           >
             {t === 'fiche' ? 'Fiche de préparation' : 'Récapitulatif facturation'}
           </button>

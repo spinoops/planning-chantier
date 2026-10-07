@@ -77,10 +77,29 @@ body,
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply text-gray-900 antialiased;
   font-family: var(--font-sans);
   font-feature-settings: "cv11", "ss01", "ss03", "cv02";
   text-rendering: optimizeLegibility;
+  background: color-mix(in oklab, var(--color-primary) 10%, #eef3fa);
+}
+
+/*
+ * Fond d'écran (façon macOS Tahoe / iOS 26) : halos dérivés de la couleur de l'app,
+ * fixes derrière l'interface ; les panneaux en verre liquide le laissent transparaître.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 45% at 12% 8%, rgb(255 255 255 / 0.95), transparent 62%),
+    radial-gradient(45% 40% at 88% 12%, color-mix(in oklab, var(--color-primary) 55%, white), transparent 62%),
+    radial-gradient(60% 55% at 72% 88%, color-mix(in oklab, var(--color-primary) 70%, #1d3a8a), transparent 66%),
+    radial-gradient(45% 40% at 18% 78%, color-mix(in oklab, var(--color-sys-teal) 45%, white), transparent 60%),
+    linear-gradient(160deg, #f1f6fc 0%, color-mix(in oklab, var(--color-primary) 22%, white) 45%, color-mix(in oklab, var(--color-primary) 55%, white) 100%);
 }
 
 h1,
@@ -93,11 +112,60 @@ h3 {
   background: color-mix(in oklab, var(--color-primary) 25%, white);
 }
 
-/* Fond en verre dépoli (barres, menus). */
+/* ------------------------------------------------------------------------- */
+/*  Verre liquide : panneaux translucides, reflet en haut, ombre douce.        */
+/*  Jamais de bordure opaque ni de liseré sur un seul côté.                    */
+/* ------------------------------------------------------------------------- */
+.glass,
+.glass-panel,
+.glass-strong,
+.glass-pill {
+  -webkit-backdrop-filter: saturate(170%) blur(28px);
+  backdrop-filter: saturate(170%) blur(28px);
+}
+/* Barres, menus flottants. */
 .glass {
-  background: rgb(255 255 255 / 0.72);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  background: rgb(255 255 255 / 0.58);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.85),
+    inset 0 0 0 1px rgb(255 255 255 / 0.45),
+    0 10px 32px -12px rgb(15 40 90 / 0.28);
+}
+/* Cartes et colonnes. */
+.glass-panel {
+  background: rgb(255 255 255 / 0.64);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 0 0 1px rgb(255 255 255 / 0.45),
+    0 12px 36px -16px rgb(15 40 90 / 0.25);
+}
+/* Modales. */
+.glass-strong {
+  background: rgb(255 255 255 / 0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(40px);
+  backdrop-filter: saturate(180%) blur(40px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    inset 0 0 0 1px rgb(255 255 255 / 0.5),
+    0 30px 80px -20px rgb(15 40 90 / 0.45);
+}
+/* Boutons secondaires, pilules de navigation. */
+.glass-pill {
+  background: rgb(255 255 255 / 0.5);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 0 0 1px rgb(255 255 255 / 0.4),
+    0 1px 2px rgb(15 40 90 / 0.08);
+  transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.glass-pill:hover {
+  background: rgb(255 255 255 / 0.78);
+}
+/* Reflet en haut des boutons pleins. */
+.gloss {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 6px 16px -6px color-mix(in oklab, var(--color-primary) 60%, transparent);
 }
 
 /* Apparition des modales et menus. */
@@ -143,13 +211,13 @@ h3 {
 /* Calendrier : une carte d'affectation prend la couleur de son chantier via --chantier. */
 .chantier-card {
   --chantier: #2563eb;
-  background: color-mix(in oklab, var(--chantier) 9%, white);
-  border-color: color-mix(in oklab, var(--chantier) 28%, white);
+  background: color-mix(in oklab, var(--chantier) 14%, rgb(255 255 255 / 0.75));
+  border-color: transparent;
   color: color-mix(in oklab, var(--chantier) 70%, black);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), inset 0 0 0 1px rgb(255 255 255 / 0.35);
 }
 .chantier-card:hover {
-  background: color-mix(in oklab, var(--chantier) 15%, white);
-  border-color: color-mix(in oklab, var(--chantier) 45%, white);
+  background: color-mix(in oklab, var(--chantier) 22%, rgb(255 255 255 / 0.8));
 }
 .chantier-card.is-dragging {
   opacity: 0.45;
@@ -166,14 +234,14 @@ h3 {
 /*  FullCalendar : thème aligné sur le kit (bordures douces, couleur primaire) */
 /* ------------------------------------------------------------------------- */
 .pc-calendar .fc {
-  --fc-border-color: rgb(0 0 0 / 0.07);
-  --fc-page-bg-color: #fff;
-  --fc-neutral-bg-color: var(--color-gray-50);
-  --fc-today-bg-color: color-mix(in oklab, var(--color-primary) 5%, white);
+  --fc-border-color: rgb(15 40 90 / 0.09);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: rgb(255 255 255 / 0.3);
+  --fc-today-bg-color: color-mix(in oklab, var(--color-primary) 9%, transparent);
   --fc-now-indicator-color: var(--color-sys-red);
   --fc-highlight-color: color-mix(in oklab, var(--color-primary) 14%, white);
   --fc-event-border-color: transparent;
-  --fc-list-event-hover-bg-color: var(--color-gray-100);
+  --fc-list-event-hover-bg-color: rgb(255 255 255 / 0.5);
   --fc-small-font-size: 0.75rem;
   font-size: 0.875rem;
 }
@@ -228,7 +296,7 @@ h3 {
 }
 .pc-calendar .fc .fc-day-sat,
 .pc-calendar .fc .fc-day-sun {
-  background: color-mix(in oklab, var(--color-gray-50) 60%, white);
+  background: rgb(15 40 90 / 0.03);
 }
 .pc-calendar .fc .fc-daygrid-more-link {
   margin: 0 0.25rem;
@@ -261,15 +329,20 @@ h3 {
 
 /* Cartes d'affectation (teintées par la couleur du chantier via inline style). */
 .pc-calendar .fc .pc-event {
-  border-width: 1px;
-  border-left-width: 4px;
-  border-radius: 0.45rem;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 0.04);
+  border-width: 0;
+  border-radius: 0.6rem;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    inset 0 0 0 1px rgb(255 255 255 / 0.35),
+    0 1px 2px rgb(15 40 90 / 0.08);
   cursor: pointer;
   transition: box-shadow 0.15s, transform 0.15s;
 }
 .pc-calendar .fc .pc-event:hover {
-  box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    inset 0 0 0 1px rgb(255 255 255 / 0.5),
+    0 4px 12px rgb(15 40 90 / 0.16);
 }
 .pc-calendar .fc .fc-event-dragging.pc-event,
 .pc-calendar .fc .fc-event-resizing.pc-event {
@@ -389,8 +462,7 @@ h3 {
 
 /* Grille horaire (Semaine / Jour) : cartes façon Apple Calendrier. */
 .pc-calendar .fc .fc-timegrid-event.pc-event {
-  border-left-width: 3px;
-  border-radius: 0.45rem;
+  border-radius: 0.6rem;
 }
 .pc-calendar .fc .fc-timegrid-event.pc-event .pc-event__inner {
   gap: 0.15rem;
@@ -438,7 +510,7 @@ h3 {
   padding: 0.12rem 0.4rem;
 }
 .pc-calendar .fc .fc-timegrid-col.fc-day-today {
-  background: color-mix(in oklab, var(--color-primary) 4%, white);
+  background: color-mix(in oklab, var(--color-primary) 7%, transparent);
 }
 .pc-calendar .fc .fc-timegrid-now-indicator-line {
   border-width: 2px 0 0;
@@ -450,7 +522,7 @@ h3 {
   justify-content: flex-end;
 }
 .pc-calendar .fc .fc-timegrid-event-harness-inset .fc-timegrid-event {
-  box-shadow: 0 0 0 1px #fff;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7);
 }
 .pc-calendar .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
   color: var(--color-sys-red);
@@ -485,7 +557,9 @@ h3 {
 /* Colonne des équipes : cartes de dépôt et miroir de glisser. */
 .team-card {
   --team: #2563eb;
-  background: color-mix(in oklab, var(--team) 4%, white);
+  background: color-mix(in oklab, var(--team) 7%, rgb(255 255 255 / 0.55));
+  border-color: transparent !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8), inset 0 0 0 1px rgb(255 255 255 / 0.4);
 }
 .team-card.is-over {
   border-color: var(--team);

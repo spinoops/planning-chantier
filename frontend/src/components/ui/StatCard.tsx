@@ -14,10 +14,10 @@ const TONES = {
   danger: 'text-sys-red',
 }
 
-/** Indicateur chiffré du tableau de bord. */
+/** Indicateur chiffré du tableau de bord (panneau en verre). */
 export default function StatCard({ label, value, hint, tone = 'default' }: StatCardProps) {
   return (
-    <div className="rounded-card border border-black/[0.06] bg-white p-5 shadow-sm">
+    <div className="glass-panel rounded-card p-5">
       <p className="text-[12px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className={`mt-2 text-[30px] font-bold leading-none tracking-tight tabular-nums ${TONES[tone]}`}>{value}</p>
       {hint && <p className="mt-2 text-xs text-gray-500">{hint}</p>}

@@ -350,7 +350,7 @@ export default function PlanningPage() {
                 )}
                 <Link
                   to={`/planning/print?d=${toKey(range?.current ?? new Date())}`}
-                  className="hidden h-9 items-center justify-center rounded-[10px] bg-gray-900/[0.05] px-3.5 text-sm font-medium text-gray-900 transition hover:bg-gray-900/[0.09] active:scale-[0.97] sm:inline-flex"
+                  className="glass-pill hidden h-9 items-center justify-center rounded-full px-4 text-sm font-medium text-gray-900 active:scale-[0.96] sm:inline-flex"
                   title="Imprimer la semaine (une page par équipe)"
                 >
                   Imprimer

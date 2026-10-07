@@ -47,7 +47,7 @@ export default function SearchInput({ value, onChange, placeholder = 'Rechercher
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[10px] border border-black/[0.08] bg-gray-100/70 py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-primary focus:bg-white focus:ring-[3px] focus:ring-primary-ring"
+        className="w-full rounded-full border border-white/70 bg-white/55 py-2 pl-9 pr-3 text-sm shadow-[inset_0_1px_2px_rgb(15_40_90/0.06)] outline-none transition placeholder:text-gray-400 focus:border-primary/50 focus:bg-white/95 focus:ring-[3px] focus:ring-primary-ring"
       />
     </div>
   )

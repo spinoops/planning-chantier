@@ -10,20 +10,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /*
- * Style Apple : bouton principal plein (couleur de l'app), secondaire « teinté »
- * gris sans bordure (comme iOS), léger rétrécissement au clic.
+ * Capsules façon iOS 26 / macOS Tahoe : principal plein avec reflet (`gloss`),
+ * secondaire en verre (`glass-pill`), léger rétrécissement au clic.
  */
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-primary text-white hover:bg-primary-hover shadow-[0_1px_2px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.12)]',
-  secondary: 'bg-gray-900/[0.05] text-gray-900 hover:bg-gray-900/[0.09]',
-  danger: 'bg-sys-red text-white hover:bg-sys-red-deep shadow-[0_1px_2px_rgb(0_0_0/0.12)]',
-  ghost: 'text-gray-600 hover:bg-gray-900/[0.05] hover:text-gray-900',
+  primary: 'gloss bg-primary text-white hover:bg-primary-hover',
+  secondary: 'glass-pill text-gray-900',
+  danger: 'bg-sys-red text-white hover:bg-sys-red-deep shadow-[inset_0_1px_0_rgb(255_255_255/0.3),0_6px_16px_-6px_rgb(255_59_48/0.6)]',
+  ghost: 'text-gray-700 hover:bg-white/50 hover:text-gray-900',
 }
 
 const SIZES: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-[13px]',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-5 py-2.5 text-base',
+  sm: 'px-3.5 py-1.5 text-[13px]',
+  md: 'px-4.5 py-2 text-sm',
+  lg: 'px-6 py-2.5 text-base',
 }
 
 /**
@@ -44,7 +44,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-[10px] font-medium transition-all duration-150 focus:outline-none focus-visible:ring-[3px] focus-visible:ring-primary-ring active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-150 focus:outline-none focus-visible:ring-[3px] focus-visible:ring-primary-ring active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     >
       {loading && (
