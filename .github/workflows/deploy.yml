@@ -13,7 +13,7 @@
 #
 # Variables (même écran, onglet Variables) :
 #   APP_DOMAIN       domaine du site (défaut : planning.top-stores.ch)
-#   APP_PATH         dossier du clone sur le serveur, relatif au home (défaut : apps/planning-chantier)
+#   APP_PATH         dossier du clone sur le serveur, relatif au home (défaut : apps/planning-chantier-top-stores)
 #
 # Le serveur contient un clone du dépôt (doc root → backend/public), sa base MySQL et son
 # backend/.env. Mise en place : DEPLOY.md, § 5 « Première mise en ligne ».
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOMAIN: ${{ vars.APP_DOMAIN || 'planning.top-stores.ch' }}
-      APP_PATH: ${{ vars.APP_PATH || 'apps/planning-chantier' }}
+      APP_PATH: ${{ vars.APP_PATH || 'apps/planning-chantier-top-stores' }}
       SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4

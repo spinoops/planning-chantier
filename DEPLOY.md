@@ -42,7 +42,7 @@ C'est tout : l'Action du §2 fait le reste. Ce qu'elle exécute, pour mémoire (
 déploiement manuel en SSH si GitHub est indisponible, voir aussi §6) :
 
 ```bash
-cd ~/apps/planning-chantier
+cd ~/apps/planning-chantier-top-stores
 git pull
 composer install --no-dev --optimize-autoloader --working-dir=backend
 php backend/artisan backup:run                      # sauvegarde avant le schéma
@@ -90,7 +90,7 @@ Dépôt GitHub → **Settings → Secrets and variables → Actions**.
 | Variable     | Valeur (défaut)                              |
 |--------------|----------------------------------------------|
 | `APP_DOMAIN` | `planning.top-stores.ch` — **à régler** si le domaine diffère |
-| `APP_PATH`   | `apps/planning-chantier` (dossier du clone, relatif au home SSH) |
+| `APP_PATH`   | `apps/planning-chantier-top-stores` (dossier du clone, relatif au home SSH) |
 
 **Même hébergement que ProTime / StepWork ?** Reprendre exactement les valeurs
 `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (et `DEPLOY_KNOWN_HOSTS`) du dépôt
@@ -107,7 +107,7 @@ cat ~/.ssh/github-actions          # ← clé PRIVÉE, à copier dans le secret 
 ### Revenir à la version précédente
 
 ```bash
-cd ~/apps/planning-chantier
+cd ~/apps/planning-chantier-top-stores
 git log --oneline -5                      # repérer le commit à rétablir
 php backend/artisan down
 git reset --hard <commit>                 # code précédent
@@ -141,7 +141,7 @@ sauvegardes Infomaniak et, de temps en temps, rapatrier une copie (`scp`).
 Restaurer la base :
 
 ```bash
-cd ~/apps/planning-chantier/backend
+cd ~/apps/planning-chantier-top-stores/backend
 php artisan down
 gunzip -c storage/app/backups/backup-<date>.sql.gz | mysql -h <DB_HOST> -u <DB_USERNAME> -p <DB_DATABASE>
 php artisan up
@@ -158,7 +158,7 @@ ménage des connexions expirées.
    ```bash
    php -r 'echo bin2hex(random_bytes(24)), PHP_EOL;'
    # backend/.env :  CRON_TOKEN=<le jeton affiché>
-   cd ~/apps/planning-chantier && php backend/artisan config:cache
+   cd ~/apps/planning-chantier-top-stores && php backend/artisan config:cache
    ```
 
 2. Manager Infomaniak → **Planificateur de tâches** → *Planifier une tâche* :
@@ -182,8 +182,8 @@ la même chose (`routes/console.php`).
 |---|---|
 | Domaine | `https://planning.top-stores.ch` (interface + API) — à confirmer |
 | Dépôt Git | `https://github.com/spinoops/planning-chantier` (privé, branche `master`) |
-| Dossier sur le serveur | `~/apps/planning-chantier` (clone du dépôt) |
-| Doc root | `apps/planning-chantier/backend/public` |
+| Dossier sur le serveur | `~/apps/planning-chantier-top-stores` (clone du dépôt) |
+| Doc root | `apps/planning-chantier-top-stores/backend/public` |
 | Base MySQL | créée dans le Manager (hôte `xxxxx.myd.infomaniak.com`, nom, utilisateur, mot de passe) |
 | PHP | 8.4 (site **et** ligne de commande) |
 
@@ -212,7 +212,7 @@ git push -u origin master
 - **Adresse d'envoi** : `noreply@top-stores.ch` et son mot de passe (mot de passe oublié,
   invitations, alertes de planning).
 - **Site `planning.top-stores.ch`** : version PHP **8.4**, doc root
-  **`apps/planning-chantier/backend/public`**, certificat SSL activé.
+  **`apps/planning-chantier-top-stores/backend/public`**, certificat SSL activé.
 
 ### C. Sur le serveur (SSH), une seule fois
 
@@ -239,12 +239,12 @@ EOF
 chmod 600 ~/.ssh/config
 ```
 
-**Clone, dépendances, configuration** : le dossier `~/apps/planning-chantier` (créé par le
+**Clone, dépendances, configuration** : le dossier `~/apps/planning-chantier-top-stores` (créé par le
 Manager avec le site) doit être **vide** pour le clone. Vérifier avec `ls -A` ; s'il ne
 contient que la page par défaut d'Infomaniak, la supprimer d'abord.
 
 ```bash
-mkdir -p ~/apps/planning-chantier && cd ~/apps/planning-chantier
+mkdir -p ~/apps/planning-chantier-top-stores && cd ~/apps/planning-chantier-top-stores
 ls -A
 git clone git@github-planning:spinoops/planning-chantier.git .
 composer install --no-dev --optimize-autoloader --working-dir=backend
@@ -283,7 +283,7 @@ envoie le front dans `backend/public`. Tout vert = en ligne.
 3. Créer ton compte admin et recevoir le lien (vérifie aussi l'envoi d'e-mails) :
 
 ```bash
-cd ~/apps/planning-chantier
+cd ~/apps/planning-chantier-top-stores
 php backend/artisan planning:admin login@step-one.ch --name="Step One"
 ```
 
@@ -304,5 +304,5 @@ sa base est une base de démo, ne pas y saisir de données réelles.
 
 `.\release.ps1` (en local) produit `release\planning-<date>.zip` : le dossier `backend/`
 avec ses dépendances de production et le front déjà copié dans `public/`. Le décompresser
-dans `~/apps/planning-chantier/backend` (sans écraser `.env` ni `storage/`), puis lancer les
+dans `~/apps/planning-chantier-top-stores/backend` (sans écraser `.env` ni `storage/`), puis lancer les
 commandes artisan du §1.

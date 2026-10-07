@@ -275,7 +275,7 @@ Même méthode que ProTime-Cuttat (`D:\wamp64\www\ProTime-Cuttat\protime-baseapp
 - **Un seul domaine** (défaut `planning.top-stores.ch`, à confirmer) : doc root `backend/public`, le build du
   front y est copié, `routes/web.php` renvoie `index.html` hors `/api`, le front appelle l'API en relatif
   (`lib/api.ts` : sans `VITE_API_URL` en build de production). Dépôt GitHub privé `spinoops/planning-chantier`,
-  clone serveur `~/apps/planning-chantier`.
+  clone serveur `~/apps/planning-chantier-top-stores`.
 - **GitHub Actions** : `ci.yml` (Pest SQLite + MySQL, Pint `--test`, ESLint, build) ; `deploy.yml` à chaque push
   sur `master` : CI, build front, SSH (maintenance, `merge --ff-only` du commit testé, Composer, `backup:run`
   avec retour arrière si échec, `migrate --force`, `RolesSeeder`, `storage:link`), rsync du front (`index.html`
