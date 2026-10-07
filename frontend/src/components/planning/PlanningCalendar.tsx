@@ -5,31 +5,29 @@ import frLocale from '@fullcalendar/core/locales/fr'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import type { DropArg, EventResizeDoneArg } from '@fullcalendar/interaction'
-import listPlugin from '@fullcalendar/list'
 import resourcePlugin from '@fullcalendar/resource'
 import type { ResourceLabelContentArg } from '@fullcalendar/resource'
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import { toKey } from '@/lib/dates'
-import type { Absence, Affectation, AffectationPayload, Chantier, Equipe } from '@/types'
+import type { Absence, Affectation, AffectationPayload, Worker } from '@/types'
 import Avatar, { colorFor } from '@/components/ui/Avatar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
 
 /**
  * Vues FullCalendar derrière chaque vue de la barre d'outils.
  * Un calendrier par chantier (couleur du chantier), les personnes affectées
- * dans chaque carte ; « Par équipe » et « Par chantier » sont des timelines.
+ * dans chaque carte ; « Par employé » est une timeline : une ligne par personne,
+ * ses chantiers de la semaine dessus (changer de ligne = réaffecter la personne).
  */
 const FC_VIEWS: Record<CalendarView, string> = {
   month: 'dayGridMonth',
   week: 'timeGridWeek',
   day: 'timeGridDay',
-  list: 'listWeek',
-  team: 'resourceTimelineWeek',
-  site: 'resourceTimelineWeek',
+  staff: 'resourceTimelineWeek',
 }
 
-/** Ressource virtuelle de la vue « Par équipe » pour les affectations sans équipe. */
+/** Ligne virtuelle de la vue « Par employé » pour les affectations sans personne. */
 const UNASSIGNED = '__unassigned__'
 const NO_TEAM_COLOR = '#9ca3af'
 
@@ -61,10 +59,8 @@ export interface CreateRequest {
 export interface MoveRequest {
   id: number
   patch: Partial<AffectationPayload>
-  /** Vue « Par équipe » : changement de ligne. */
-  equipeChange?: { from: number | null; to: number | null }
-  /** Vue « Par chantier » : changement de ligne. */
-  chantierChange?: { from: number; to: number }
+  /** Vue « Par employé » : changement de ligne (null = ligne « Personne affectée »). */
+  workerChange?: { from: number | null; to: number | null }
 }
 
 /** Dépôt d'une équipe / personne de la colonne de gauche sur une carte existante. */
@@ -85,9 +81,8 @@ interface PlanningCalendarProps {
   view: CalendarView
   initialDate: Date
   affectations: Affectation[]
-  equipes: Equipe[]
-  /** Chantiers affichés (lignes de la vue « Par chantier »). */
-  chantiers: Chantier[]
+  /** Personnes affectables (lignes de la vue « Par employé »). */
+  workers: Worker[]
   /** Clés « date:workerId » des ouvriers affectés deux fois le même jour. */
   conflicts: Set<string>
   canEdit: boolean
@@ -155,15 +150,14 @@ function firstName(name: string): string {
  * en changeant de ligne.
  */
 const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProps>(function PlanningCalendar(
-  { view, initialDate, affectations, equipes, chantiers, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove, externalDragging = false, onDropOnEvent, absences = [] },
+  { view, initialDate, affectations, workers, conflicts, canEdit, onRangeChange, onCreate, onEdit, onMove, externalDragging = false, onDropOnEvent, absences = [] },
   ref,
 ) {
   const calRef = useRef<FullCalendar>(null)
   const api = () => calRef.current?.getApi()
   const byId = useMemo(() => new Map(affectations.map((a) => [a.id, a])), [affectations])
-  const byTeam = view === 'team'
-  const bySite = view === 'site'
-  const isTimeline = byTeam || bySite
+  const byStaff = view === 'staff'
+  const isTimeline = byStaff
 
   useImperativeHandle(ref, () => ({
     prev: () => api()?.prev(),
@@ -181,53 +175,40 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
   /* ---------------------------------------------------------------- données */
 
   const resources = useMemo(() => {
-    if (byTeam) {
-      return [
-        ...equipes.map((e, i) => ({ id: String(e.id), title: e.name, extendedProps: { equipe: e, order: i } })),
-        // Toujours en dernière ligne (resourceOrder="order").
-        { id: UNASSIGNED, title: 'Sans équipe', extendedProps: { equipe: null, order: 9999 } },
-      ]
-    }
-    if (bySite) {
-      return chantiers.map((c, i) => ({ id: String(c.id), title: c.name, extendedProps: { chantier: c, order: i } }))
-    }
-    return undefined
-  }, [byTeam, bySite, equipes, chantiers])
+    if (!byStaff) return undefined
+    return [
+      ...workers.map((w, i) => ({ id: String(w.id), title: w.name, extendedProps: { worker: w, order: i } })),
+      // Toujours en dernière ligne (resourceOrder="order").
+      { id: UNASSIGNED, title: 'Personne affectée', extendedProps: { worker: null, order: 9999 } },
+    ]
+  }, [byStaff, workers])
 
   const events = useMemo<EventInput[]>(() => {
-    // Absences en fond : colonne du jour grisée avec le prénom (Semaine / Jour) ou ligne de l'équipe (Par équipe).
-    const absenceEvents: EventInput[] = bySite
-      ? []
-      : absences.flatMap((ab) => {
-          const equipe = equipes.find((e) => e.members.some((m) => m.id === ab.user_id))
-          if (byTeam && !equipe) return []
-          const end = new Date(ab.end_date)
-          end.setDate(end.getDate() + 1) // `end` exclusif
-          return [
-            {
-              id: `absence:${ab.id}`,
-              start: ab.start_date,
-              end: toKey(end),
-              allDay: true,
-              display: 'background',
-              resourceId: byTeam && equipe ? String(equipe.id) : undefined,
-              backgroundColor: 'rgba(107, 114, 128, 0.14)',
-              classNames: ['pc-absence'],
-              title: `${firstName(ab.user?.name ?? '')} absent(e) · ${ab.type_label}`,
-              extendedProps: { absence: true, label: `${firstName(ab.user?.name ?? '')} · ${ab.type_label}` },
-              editable: false,
-            },
-          ]
-        })
+    // Absences en fond : colonne du jour grisée avec le prénom (Semaine / Jour) ou ligne de la personne (Par employé).
+    const absenceEvents: EventInput[] = absences.map((ab) => {
+      const end = new Date(ab.end_date)
+      end.setDate(end.getDate() + 1) // `end` exclusif
+      return {
+        id: `absence:${ab.id}`,
+        start: ab.start_date,
+        end: toKey(end),
+        allDay: true,
+        display: 'background',
+        resourceId: byStaff ? String(ab.user_id) : undefined,
+        backgroundColor: 'rgba(107, 114, 128, 0.14)',
+        classNames: ['pc-absence'],
+        title: `${firstName(ab.user?.name ?? '')} absent(e) · ${ab.type_label}`,
+        extendedProps: { absence: true, label: `${firstName(ab.user?.name ?? '')} · ${ab.type_label}` },
+        editable: false,
+      }
+    })
 
-    const list: EventInput[] = affectations.map((a) => {
+    const base = (a: Affectation): EventInput => {
       const color = a.chantier.color
       const timed = Boolean(a.start_time)
       const hasConflict = a.workers.some((w) => conflicts.has(`${a.date}:${w.id}`))
-      const resourceId = byTeam ? (a.equipe_id ? String(a.equipe_id) : UNASSIGNED) : bySite ? String(a.chantier_id) : undefined
       return {
         id: String(a.id),
-        resourceId,
         title: a.chantier.name,
         start: timed && !isTimeline ? `${a.date}T${a.start_time}:00` : a.date,
         end: timed && !isTimeline && a.end_time ? `${a.date}T${a.end_time}:00` : undefined,
@@ -238,10 +219,27 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         classNames: ['pc-event', hasConflict ? 'pc-event--conflict' : ''],
         extendedProps: { affectationId: a.id, color, hasConflict },
       }
-    })
+    }
+
+    const list: EventInput[] = byStaff
+      ? affectations.flatMap((a) => {
+          const ev = base(a)
+          const rows: EventInput[] = [
+            ...a.workers.map((w) => ({ ...ev, id: `${a.id}:${w.id}`, resourceId: String(w.id), extendedProps: { ...ev.extendedProps, workerId: w.id } })),
+            ...a.visitors.map((v) => ({
+              ...ev,
+              id: `${a.id}:visit:${v.id}`,
+              resourceId: String(v.id),
+              classNames: [...(ev.classNames as string[]), 'pc-event--visit'],
+              extendedProps: { ...ev.extendedProps, workerId: v.id, visit: true },
+            })),
+          ]
+          return rows.length > 0 ? rows : [{ ...ev, id: `${a.id}:none`, resourceId: UNASSIGNED }]
+        })
+      : affectations.map(base)
 
     return [...absenceEvents, ...list]
-  }, [affectations, conflicts, isTimeline, byTeam, bySite, absences, equipes])
+  }, [affectations, conflicts, isTimeline, byStaff, absences])
 
   /* ------------------------------------------------------------ interactions */
 
@@ -254,15 +252,13 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
     [onRangeChange],
   )
 
-  /** Équipe / chantier de la ligne cliquée ou survolée (selon la timeline affichée). */
+  /** Personne de la ligne cliquée ou survolée (vue « Par employé »). */
   const rowContext = useCallback(
-    (resourceId: string | undefined): { equipeId?: number; chantierId?: number } => {
-      if (!resourceId) return {}
-      if (byTeam) return resourceId === UNASSIGNED ? {} : { equipeId: Number(resourceId) }
-      if (bySite) return { chantierId: Number(resourceId) }
-      return {}
+    (resourceId: string | undefined): { workerIds?: number[] } => {
+      if (!resourceId || !byStaff || resourceId === UNASSIGNED) return {}
+      return { workerIds: [Number(resourceId)] }
     },
-    [byTeam, bySite],
+    [byStaff],
   )
 
   const handleSelect = useCallback(
@@ -331,9 +327,8 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         date: toKey(arg.date),
         start_time,
         end_time,
-        chantierId: ctx.chantierId,
-        equipeId: payload.kind === 'team' ? payload.id : ctx.equipeId,
-        workerIds: payload.kind === 'person' ? [payload.id] : undefined,
+        equipeId: payload.kind === 'team' ? payload.id : undefined,
+        workerIds: payload.kind === 'person' ? [...new Set([payload.id, ...(ctx.workerIds ?? [])])] : ctx.workerIds,
       })
     },
     [onCreate, onDropOnEvent, rowContext],
@@ -366,28 +361,25 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         }
       }
 
-      let equipeChange: MoveRequest['equipeChange']
-      let chantierChange: MoveRequest['chantierChange']
-      if ('newResource' in arg && arg.newResource && arg.oldResource && arg.newResource.id !== arg.oldResource.id) {
-        if (byTeam) {
-          const to = arg.newResource.id === UNASSIGNED ? null : Number(arg.newResource.id)
-          const from = arg.oldResource.id === UNASSIGNED ? null : Number(arg.oldResource.id)
-          equipeChange = { from, to }
-          // Sans worker_ids, l'API remplace les ouvriers par les membres de la nouvelle équipe.
-          patch.equipe_id = to
-        } else if (bySite) {
-          chantierChange = { from: Number(arg.oldResource.id), to: Number(arg.newResource.id) }
-          patch.chantier_id = chantierChange.to
-        }
+      let workerChange: MoveRequest['workerChange']
+      if (byStaff && 'newResource' in arg && arg.newResource && arg.oldResource && arg.newResource.id !== arg.oldResource.id) {
+        // Un « passage » (patron / chef) ne se déplace pas d'une personne à l'autre.
+        if (ev.extendedProps.visit) return arg.revert()
+        const from = arg.oldResource.id === UNASSIGNED ? null : Number(arg.oldResource.id)
+        const to = arg.newResource.id === UNASSIGNED ? null : Number(arg.newResource.id)
+        const ids = a.workers.map((w) => w.id).filter((wid) => wid !== from)
+        if (to && !ids.includes(to)) ids.push(to)
+        patch.worker_ids = ids
+        workerChange = { from, to }
       }
 
       try {
-        await onMove({ id, patch, equipeChange, chantierChange })
+        await onMove({ id, patch, workerChange })
       } catch {
         arg.revert()
       }
     },
-    [byId, isTimeline, byTeam, bySite, onMove],
+    [byId, isTimeline, byStaff, onMove],
   )
 
   /* ---------------------------------------------------------------- rendu */
@@ -405,31 +397,6 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
       const people = a?.workers ?? []
       const peopleLabel = people.map((w) => firstName(w.name)).join(', ')
 
-      if (type.startsWith('list')) {
-        return (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-semibold text-gray-900">{arg.event.title}</span>
-            {address && <span className="text-xs text-gray-500">{address}</span>}
-            {people.length > 0 && (
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-700">
-                {people.map((w) => (
-                  <span key={w.id} className="inline-flex items-center gap-1">
-                    <Avatar name={w.name} color={w.color} size="xs" />
-                    {w.name}
-                  </span>
-                ))}
-              </span>
-            )}
-            {a?.equipe && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-white" style={{ backgroundColor: a.equipe.color }}>
-                {a.equipe.name}
-              </span>
-            )}
-            {a?.note && <span className="w-full text-xs italic text-gray-500">{a.note}</span>}
-          </div>
-        )
-      }
-
       // Mois : une ligne compacte avec les prénoms.
       if (type === 'dayGridMonth') {
         return (
@@ -443,20 +410,19 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         )
       }
 
-      // Timelines : chantier (ou prénoms sur la ligne du chantier) + horaire.
+      // Par employé : chantier + horaire sur la ligne de la personne (passage en pointillé).
       if (type.startsWith('resourceTimeline')) {
+        const visit = Boolean(arg.event.extendedProps.visit)
+        const others = people.filter((w) => w.id !== Number(arg.event.extendedProps.workerId))
         return (
-          <div className="pc-event__inner pc-event__inner--compact" title={a ? `${a.chantier.name} · ${time} · ${peopleLabel || 'personne'}` : undefined}>
+          <div className="pc-event__inner pc-event__inner--compact" title={a ? `${a.chantier.name}${address ? ` · ${address}` : ''} · ${time} · ${peopleLabel || 'personne'}` : undefined}>
             <div className="pc-event__head">
-              {bySite ? (
-                <span className="pc-event__title">{peopleLabel || <span className="italic opacity-60">Personne</span>}</span>
-              ) : (
-                <span className="pc-event__title">{arg.event.title}</span>
-              )}
-              {conflict && <span className="pc-event__conflict" title="Ouvrier affecté deux fois ce jour">!</span>}
-              {a?.start_time && <span className="pc-event__time">{a.start_time}</span>}
+              <span className="pc-event__title">{arg.event.title}</span>
+              {visit && <span className="pc-event__time">passage</span>}
+              {conflict && !visit && <span className="pc-event__conflict" title="Personne affectée deux fois ce jour">!</span>}
+              {a?.start_time && <span className="pc-event__time">{time}</span>}
             </div>
-            {!bySite && people.length > 0 && <div className="pc-event__meta pc-event__meta--muted">{peopleLabel}</div>}
+            {others.length > 0 && <div className="pc-event__meta pc-event__meta--muted">avec {others.map((w) => firstName(w.name)).join(', ')}</div>}
           </div>
         )
       }
@@ -515,30 +481,18 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
         </div>
       )
     },
-    [byId, bySite],
+    [byId],
   )
 
   const renderResource = useCallback((arg: ResourceLabelContentArg) => {
-    const e = arg.resource.extendedProps.equipe as Equipe | null | undefined
-    const c = arg.resource.extendedProps.chantier as Chantier | undefined
-    if (c) {
-      return (
-        <span className="flex items-center gap-2">
-          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.color }} />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium text-gray-900">{c.name}</span>
-            <span className="block truncate text-[11px] text-gray-500">{[c.address, c.city].filter(Boolean).join(', ') || c.status_label}</span>
-          </span>
-        </span>
-      )
-    }
-    if (!e) return <span className="text-sm italic text-gray-500">Sans équipe</span>
+    const w = arg.resource.extendedProps.worker as Worker | null | undefined
+    if (!w) return <span className="text-sm italic text-gray-500">Personne affectée</span>
     return (
-      <span className="flex items-center gap-2">
-        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
+      <span className="flex items-center gap-2.5">
+        <Avatar name={w.name} color={w.color} size="md" />
         <span className="min-w-0">
-          <span className="block truncate text-sm font-medium text-gray-900">{e.name}</span>
-          <span className="block truncate text-[11px] text-gray-500">{e.members.map((m) => firstName(m.name)).join(', ') || 'Aucun membre'}</span>
+          <span className="block truncate text-sm font-medium text-gray-900">{w.name}</span>
+          <span className="block truncate text-[11px] text-gray-500">{w.job_title || '—'}</span>
         </span>
       </span>
     )
@@ -548,7 +502,7 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
     <div className="pc-calendar overflow-hidden glass-panel rounded-card">
       <FullCalendar
         ref={calRef}
-        plugins={[interactionPlugin, dayGridPlugin, timeGridPlugin, listPlugin, resourcePlugin, resourceTimelinePlugin]}
+        plugins={[interactionPlugin, dayGridPlugin, timeGridPlugin, resourcePlugin, resourceTimelinePlugin]}
         schedulerLicenseKey={LICENSE_KEY}
         locale={frLocale}
         firstDay={1}
@@ -578,8 +532,8 @@ const PlanningCalendar = forwardRef<PlanningCalendarHandle, PlanningCalendarProp
           resourceTimelineWeek: {
             slotDuration: { days: 1 },
             slotLabelFormat: [{ weekday: 'short', day: 'numeric' }],
-            resourceAreaHeaderContent: bySite ? 'Chantiers' : 'Équipes',
-            resourceAreaWidth: '230px',
+            resourceAreaHeaderContent: 'Employés',
+            resourceAreaWidth: '220px',
           },
         }}
         resources={resources}

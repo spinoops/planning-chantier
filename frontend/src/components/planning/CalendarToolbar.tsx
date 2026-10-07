@@ -1,14 +1,12 @@
 import type { ReactNode } from 'react'
 
-export type CalendarView = 'month' | 'week' | 'day' | 'list' | 'team' | 'site'
+export type CalendarView = 'month' | 'week' | 'day' | 'staff'
 
-const VIEWS: { value: CalendarView; label: string; mobile?: boolean }[] = [
+const VIEWS: { value: CalendarView; label: string }[] = [
   { value: 'month', label: 'Mois' },
   { value: 'week', label: 'Semaine' },
-  { value: 'day', label: 'Jour', mobile: true },
-  { value: 'list', label: 'Liste', mobile: true },
-  { value: 'team', label: 'Par équipe' },
-  { value: 'site', label: 'Par chantier' },
+  { value: 'day', label: 'Jour' },
+  { value: 'staff', label: 'Par employé' },
 ]
 
 interface CalendarToolbarProps {

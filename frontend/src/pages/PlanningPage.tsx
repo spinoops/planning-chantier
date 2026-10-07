@@ -26,7 +26,7 @@ import type { TeamKey } from '@/components/planning/TeamSidebar'
 const VIEW_KEY = 'planning_view'
 const HIDDEN_TEAMS_KEY = 'planning_hidden_equipes'
 const HIDDEN_SITES_KEY = 'planning_hidden_chantiers'
-const ALL_VIEWS: CalendarView[] = ['month', 'week', 'day', 'list', 'team', 'site']
+const ALL_VIEWS: CalendarView[] = ['month', 'week', 'day', 'staff']
 
 function defaultView(): CalendarView {
   try {
@@ -35,7 +35,7 @@ function defaultView(): CalendarView {
   } catch {
     // stockage indisponible
   }
-  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'week'
+  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'day' : 'week'
 }
 
 function loadSet<T>(key: string): Set<T> {
@@ -192,12 +192,15 @@ export default function PlanningPage() {
       const name = current?.chantier.name ?? 'Affectation'
       try {
         await updateAffectation.mutateAsync({ id: req.id, payload: req.patch })
-        if (req.equipeChange) {
-          const to = equipes.find((e) => e.id === req.equipeChange?.to)
-          toast(to ? `${name} → équipe ${to.name}.` : `${name} sans équipe.`, 'success')
-        } else if (req.chantierChange) {
-          const to = chantiers.find((c) => c.id === req.chantierChange?.to)
-          toast(`Équipe déplacée sur ${to?.name ?? 'un autre chantier'}.`, 'success')
+        if (req.workerChange) {
+          const to = workers.find((w) => w.id === req.workerChange?.to)
+          const from = workers.find((w) => w.id === req.workerChange?.from)
+          toast(
+            to
+              ? `${name} : ${to.name.split(' ')[0]} affecté${from ? ` à la place de ${from.name.split(' ')[0]}` : ''}.`
+              : `${name} : ${from?.name.split(' ')[0] ?? 'personne'} retiré.`,
+            'success',
+          )
         } else {
           toast(`${name} déplacé.`, 'success')
         }
@@ -206,7 +209,7 @@ export default function PlanningPage() {
         throw err
       }
     },
-    [loaded, updateAffectation, equipes, chantiers],
+    [loaded, updateAffectation, workers],
   )
 
   // Glisser depuis la colonne de gauche : les cartes survolées se mettent en évidence,
@@ -371,8 +374,7 @@ export default function PlanningPage() {
           view={view}
           initialDate={initialDate}
           affectations={affectations}
-          equipes={equipes.filter((e) => !hiddenTeams.has(e.id))}
-          chantiers={sidebarChantiers.filter((c) => !effectiveHiddenSites.has(c.id))}
+          workers={workers}
           conflicts={conflicts}
           canEdit={canEdit}
           onRangeChange={onRangeChange}

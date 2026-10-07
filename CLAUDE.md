@@ -122,12 +122,15 @@ La version installée sous WAMP est **8.4.24** :
 - Calendrier : **FullCalendar 6** (même bibliothèque qu'ela-planning) dans
   `components/planning/PlanningCalendar.tsx`, maquette de référence = Apple Calendrier
   (`_construction/*.pdf`). Vues `dayGridMonth` (Mois), `timeGridWeek` (Semaine, grille horaire
-  06:00–19:30, équipes côte à côte), `timeGridDay` (Jour), `listWeek` (Liste), `resourceTimelineWeek`
-  (« Par équipe », une ligne par équipe, plugin premium : clé `VITE_FC_LICENSE_KEY`, sinon clé
-  d'évaluation non commerciale). Header FullCalendar masqué : la barre est `CalendarToolbar`
+  06:00–19:30, équipes côte à côte), `timeGridDay` (Jour) et `resourceTimelineWeek` « **Par employé** »
+  (`staff` : une ligne par personne affectable — prop `workers` —, une carte par personne et par
+  affectation (id `affectation:worker`), passages en pointillé, ligne « Personne affectée » pour les
+  affectations vides ; changer de ligne envoie `worker_ids` recalculés = réaffectation ; sélection ou
+  dépôt sur une ligne pré-coche la personne ; plugin premium : clé `VITE_FC_LICENSE_KEY`, sinon clé
+  d'évaluation non commerciale). Les vues Liste, Par équipe et Par chantier ont été **retirées à la
+  demande de l'utilisateur** — ne pas les réintroduire. Header FullCalendar masqué : la barre est `CalendarToolbar`
   (pilotage via ref `prev/next/today`). Sélection d'une plage → création, clic → modale,
-  `eventDrop`/`eventResize` → `PUT /planning/{id}` (revert si erreur) ; en vue « Par équipe »,
-  changer de ligne envoie `equipe_id` (l'API remplace les ouvriers). Cartes : titre = chantier,
+  `eventDrop`/`eventResize` → `PUT /planning/{id}` (revert si erreur). Cartes : titre = chantier,
   adresse, horaire (rendu `eventContent`), couleur de l'équipe ; cartes étroites → titre seul
   (container query). Thème CSS `.pc-calendar` / `.pc-event` dans `index.css`.
 - **Un calendrier par chantier** (demande explicite, à la manière d'Apple Calendrier) : les cartes
@@ -135,9 +138,7 @@ La version installée sous WAMP est **8.4.24** :
   (avatar + prénom ; prénoms masqués sous 150 px par container query). `ChantierSidebar` liste les
   chantiers ouverts (+ ceux qui ont encore des affectations) avec une case colorée afficher / masquer
   (double-clic = seul ; persisté `planning_hidden_chantiers`). `?chantier=ID` dans l'URL = ce chantier
-  seul tant qu'on n'a pas touché aux cases (dérivé, pas d'effet setState). Vue « Par chantier »
-  (`site`, timeline une ligne par chantier, prénoms dans les cartes ; changer de ligne envoie
-  `chantier_id`). **Pas de carte en double** : à la création, si le même chantier a déjà une affectation
+  seul tant qu'on n'a pas touché aux cases (dérivé, pas d'effet setState). **Pas de carte en double** : à la création, si le même chantier a déjà une affectation
   sur ce jour et ce créneau exact, `AffectationModal` ajoute les personnes à cette carte (`PUT` avec
   `worker_ids` fusionnés) au lieu d'en créer une seconde ; le seeder crée lui aussi une seule affectation
   par chantier et créneau (plusieurs équipes → `equipe_id` vide, membres réunis). La vue Semaine reste `timeGridWeek` : l'utilisateur a refusé les colonnes par équipe
