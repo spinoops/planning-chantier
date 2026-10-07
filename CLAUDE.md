@@ -87,6 +87,15 @@ La version installée sous WAMP est **8.4.24** :
   changer de ligne envoie `equipe_id` (l'API remplace les ouvriers). Cartes : titre = chantier,
   adresse, horaire (rendu `eventContent`), couleur de l'équipe ; cartes étroites → titre seul
   (container query). Thème CSS `.pc-calendar` / `.pc-event` dans `index.css`.
+- **Un calendrier par chantier** (demande explicite, à la manière d'Apple Calendrier) : les cartes
+  prennent la **couleur du chantier** (plus celle de l'équipe) et montrent les **personnes affectées**
+  (avatar + prénom ; prénoms masqués sous 150 px par container query). `ChantierSidebar` liste les
+  chantiers ouverts (+ ceux qui ont encore des affectations) avec une case colorée afficher / masquer
+  (double-clic = seul ; persisté `planning_hidden_chantiers`). `?chantier=ID` dans l'URL = ce chantier
+  seul tant qu'on n'a pas touché aux cases (dérivé, pas d'effet setState). Vue « Par chantier »
+  (`site`, timeline une ligne par chantier, prénoms dans les cartes ; changer de ligne envoie
+  `chantier_id`). La vue Semaine reste `timeGridWeek` : l'utilisateur a refusé les colonnes par équipe
+  (`resourceTimeGridWeek`, commit annulé) — ne pas y revenir.
 - `TeamSidebar` : équipes avec case colorée (afficher / masquer, double-clic = seule ; persisté dans
   `localStorage` `planning_hidden_equipes`, filtrage côté client) **et glisser-déposer** :
   - **dnd-kit** (`@dnd-kit/core`) pour recomposer les équipes : personne → autre équipe (`PUT /equipes/{id}`
@@ -114,7 +123,7 @@ La version installée sous WAMP est **8.4.24** :
 - Pages ajoutées : `MyPlanningPage` (pointer, photos, imprévu, récap et envoi des heures de la semaine),
   `HeuresPage` (`/heures` : synthèse, validation / réouverture en lot, correction), `AbsencesPage`,
   `PrintWeekPage` (`/planning/print?d=&equipe=` : une page A4 par équipe, styles `@media print`).
-  Vue par défaut du planning : « Par équipe ».
+  Vue par défaut du planning : « Semaine ».
 - **Hors ligne léger** : `public/sw.js` (coquille + lectures d'API « réseau d'abord, cache sinon »,
   enregistré en production dans `main.tsx`), `public/manifest.webmanifest` (installable, démarre sur
   `/mon-planning`), `lib/offlineQueue.ts` (pointages / imprévus saisis sans réseau mis en file dans

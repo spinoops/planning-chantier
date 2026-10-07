@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import Button from '@/components/ui/Button'
 
-export type CalendarView = 'month' | 'week' | 'day' | 'list' | 'team'
+export type CalendarView = 'month' | 'week' | 'day' | 'list' | 'team' | 'site'
 
 const VIEWS: { value: CalendarView; label: string; mobile?: boolean }[] = [
   { value: 'month', label: 'Mois' },
@@ -9,6 +9,7 @@ const VIEWS: { value: CalendarView; label: string; mobile?: boolean }[] = [
   { value: 'day', label: 'Jour', mobile: true },
   { value: 'list', label: 'Liste', mobile: true },
   { value: 'team', label: 'Par équipe' },
+  { value: 'site', label: 'Par chantier' },
 ]
 
 interface CalendarToolbarProps {

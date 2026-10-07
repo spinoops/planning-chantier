@@ -57,6 +57,8 @@ export type AffectationTarget =
       end_time?: string | null
       /** Présélection d'équipe (vue « Par équipe », ligne cliquée, ou équipe déposée). */
       equipeId?: number
+      /** Présélection de chantier (vue « Par chantier », ligne cliquée). */
+      chantierId?: number
       /** Personnes présélectionnées (personne déposée depuis la colonne de gauche). */
       workerIds?: number[]
     }
@@ -151,7 +153,7 @@ export default function AffectationModal({ target, onClose, chantiers, equipes, 
       // jour entier (Mois, Par équipe) garde les horaires de chantier par défaut.
       const fromCalendar = target.start_time != null
       const equipeId = target.workerIds ? undefined : (target.equipeId ?? (equipes.length === 1 ? equipes[0].id : undefined))
-      const last = readLastChantier()
+      const last = target.chantierId ?? readLastChantier()
       const defaultChantier = chantiers.find((c) => c.id === last) ?? chantiers[0]
       reset({
         chantier_id: defaultChantier ? String(defaultChantier.id) : '',

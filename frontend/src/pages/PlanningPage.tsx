@@ -13,19 +13,20 @@ import { isPlanner } from '@/lib/navigation'
 import { toast } from '@/lib/toast'
 import type { Affectation, AffectationPayload } from '@/types'
 import Button from '@/components/ui/Button'
-import Select from '@/components/ui/Select'
 import AffectationModal from '@/components/planning/AffectationModal'
 import type { AffectationTarget } from '@/components/planning/AffectationModal'
 import CalendarToolbar from '@/components/planning/CalendarToolbar'
 import type { CalendarView } from '@/components/planning/CalendarToolbar'
+import ChantierSidebar from '@/components/planning/ChantierSidebar'
 import PlanningCalendar from '@/components/planning/PlanningCalendar'
 import type { CalendarRange, CreateRequest, DropOnEventRequest, MoveRequest, PlanningCalendarHandle } from '@/components/planning/PlanningCalendar'
 import TeamSidebar, { NO_TEAM } from '@/components/planning/TeamSidebar'
 import type { TeamKey } from '@/components/planning/TeamSidebar'
 
 const VIEW_KEY = 'planning_view'
-const HIDDEN_KEY = 'planning_hidden_equipes'
-const ALL_VIEWS: CalendarView[] = ['month', 'week', 'day', 'list', 'team']
+const HIDDEN_TEAMS_KEY = 'planning_hidden_equipes'
+const HIDDEN_SITES_KEY = 'planning_hidden_chantiers'
+const ALL_VIEWS: CalendarView[] = ['month', 'week', 'day', 'list', 'team', 'site']
 
 function defaultView(): CalendarView {
   try {
@@ -34,26 +35,32 @@ function defaultView(): CalendarView {
   } catch {
     // stockage indisponible
   }
-  // Par défaut : la timeline « Par équipe » (une ligne par équipe), la plus rapide pour poser la semaine.
-  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'team'
+  return typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'week'
 }
 
-function loadHidden(): Set<TeamKey> {
+function loadSet<T>(key: string): Set<T> {
   try {
-    const raw = localStorage.getItem(HIDDEN_KEY)
-    if (raw) return new Set(JSON.parse(raw) as TeamKey[])
+    const raw = localStorage.getItem(key)
+    if (raw) return new Set(JSON.parse(raw) as T[])
   } catch {
     // ignore
   }
   return new Set()
 }
 
+function saveSet<T>(key: string, set: Set<T>): void {
+  try {
+    localStorage.setItem(key, JSON.stringify([...set]))
+  } catch {
+    // ignore
+  }
+}
+
 /**
- * Planning (planificateurs) : à gauche les équipes (couleur + case pour les
- * afficher ou non), à droite le calendrier FullCalendar. Vue semaine horaire
- * façon Apple Calendrier : sélectionner une plage crée une affectation pour
- * une équipe, glisser-déposer / étirer déplace et change l'horaire.
- * L'état (vue, date, chantier) vit dans l'URL : ?view=week&d=2026-09-21&chantier=3.
+ * Planning (planificateurs) : à gauche un calendrier par chantier (couleur +
+ * case pour l'afficher) et les équipes (glisser-déposer), à droite le calendrier
+ * FullCalendar. Les cartes prennent la couleur du chantier et montrent les
+ * personnes affectées. L'état (vue, date) vit dans l'URL : ?view=week&d=2026-09-21.
  */
 export default function PlanningPage() {
   const { user } = useAuth()
@@ -65,7 +72,6 @@ export default function PlanningPage() {
   const viewParam = searchParams.get('view') as CalendarView | null
   const view = viewParam && ALL_VIEWS.includes(viewParam) ? viewParam : defaultView()
   const [initialDate] = useState(() => fromKey(searchParams.get('d') ?? todayKey()))
-  const chantierFilter = Number(searchParams.get('chantier')) || 0
 
   const setParams = useCallback(
     (patch: Record<string, string | number | null>) => {
@@ -92,15 +98,11 @@ export default function PlanningPage() {
     }
   }, [view])
 
-  // Équipes masquées dans le calendrier (persisté par navigateur).
-  const [hidden, setHidden] = useState<Set<TeamKey>>(loadHidden)
-  useEffect(() => {
-    try {
-      localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hidden]))
-    } catch {
-      // ignore
-    }
-  }, [hidden])
+  // Équipes et chantiers masqués dans le calendrier (persistés par navigateur).
+  const [hiddenTeams, setHiddenTeams] = useState<Set<TeamKey>>(() => loadSet<TeamKey>(HIDDEN_TEAMS_KEY))
+  const [hiddenSites, setHiddenSites] = useState<Set<number>>(() => loadSet<number>(HIDDEN_SITES_KEY))
+  useEffect(() => saveSet(HIDDEN_TEAMS_KEY, hiddenTeams), [hiddenTeams])
+  useEffect(() => saveSet(HIDDEN_SITES_KEY, hiddenSites), [hiddenSites])
 
   // Période visible, fournie par FullCalendar (datesSet) : pilote le chargement et l'URL.
   const [range, setRange] = useState<CalendarRange | null>(null)
@@ -113,7 +115,7 @@ export default function PlanningPage() {
   )
 
   const query = { from: range?.from ?? todayKey(), to: range?.to ?? todayKey() }
-  const { data: loaded = [], isLoading, isFetching } = usePlanning({ ...query, chantier_id: chantierFilter || undefined }, range !== null)
+  const { data: loaded = [], isLoading, isFetching } = usePlanning(query, range !== null)
   const { data: chantiers = [] } = useOpenChantiers()
   const { data: equipes = [] } = useEquipes()
   const { data: absences = [] } = useAbsences(query, range !== null)
@@ -123,17 +125,46 @@ export default function PlanningPage() {
 
   const [target, setTarget] = useState<AffectationTarget | null>(null)
 
-  const teamKey = (a: Affectation): TeamKey => a.equipe_id ?? NO_TEAM
-  const affectations = useMemo(() => loaded.filter((a) => !hidden.has(teamKey(a))), [loaded, hidden])
+  // Chantiers à lister à gauche : les chantiers ouverts + ceux (terminés) qui ont encore des affectations sur la période.
+  const sidebarChantiers = useMemo(() => {
+    const extra = loaded.map((a) => a.chantier).filter((c) => !chantiers.some((o) => o.id === c.id))
+    const seen = new Set<number>()
+    return [...chantiers, ...extra].filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)))
+  }, [chantiers, loaded])
 
-  const counts = useMemo(() => {
+  // Lien « voir dans le planning » depuis la page Chantiers : ?chantier=ID → seul ce chantier affiché,
+  // tant que l'utilisateur n'a pas touché aux cases (le premier clic retire le paramètre).
+  const chantierParam = Number(searchParams.get('chantier')) || 0
+  const effectiveHiddenSites = useMemo(
+    () => (chantierParam ? new Set(sidebarChantiers.filter((c) => c.id !== chantierParam).map((c) => c.id)) : hiddenSites),
+    [chantierParam, sidebarChantiers, hiddenSites],
+  )
+  const updateHiddenSites = useCallback(
+    (next: Set<number>) => {
+      if (chantierParam) setParams({ chantier: null })
+      setHiddenSites(next)
+    },
+    [chantierParam, setParams],
+  )
+
+  const teamKey = (a: Affectation): TeamKey => a.equipe_id ?? NO_TEAM
+  const affectations = useMemo(
+    () => loaded.filter((a) => !hiddenTeams.has(teamKey(a)) && !effectiveHiddenSites.has(a.chantier_id)),
+    [loaded, hiddenTeams, effectiveHiddenSites],
+  )
+
+  const teamCounts = useMemo(() => {
     const map = new Map<TeamKey, number>()
     for (const a of loaded) map.set(teamKey(a), (map.get(teamKey(a)) ?? 0) + 1)
     return map
   }, [loaded])
+  const siteCounts = useMemo(() => {
+    const map = new Map<number, number>()
+    for (const a of loaded) map.set(a.chantier_id, (map.get(a.chantier_id) ?? 0) + 1)
+    return map
+  }, [loaded])
 
-  // Doublons : une personne sur deux créneaux qui se chevauchent le même jour
-  // (deux demi-journées ne comptent pas). Calculé sur tout ce qui est chargé, même masqué.
+  // Doublons : une personne sur deux créneaux qui se chevauchent le même jour (calculé sur tout ce qui est chargé).
   const conflicts = useMemo(() => {
     const byWorkerDay = new Map<string, Affectation[]>()
     for (const a of loaded) {
@@ -150,7 +181,7 @@ export default function PlanningPage() {
   }, [loaded])
 
   const onCreate = useCallback((req: CreateRequest) => {
-    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, equipeId: req.equipeId, workerIds: req.workerIds })
+    setTarget({ date: req.date, start_time: req.start_time, end_time: req.end_time, equipeId: req.equipeId, chantierId: req.chantierId, workerIds: req.workerIds })
   }, [])
 
   const onEdit = useCallback((a: Affectation) => setTarget({ affectation: a }), [])
@@ -158,20 +189,24 @@ export default function PlanningPage() {
   const onMove = useCallback(
     async (req: MoveRequest) => {
       const current = loaded.find((a) => a.id === req.id)
+      const name = current?.chantier.name ?? 'Affectation'
       try {
         await updateAffectation.mutateAsync({ id: req.id, payload: req.patch })
         if (req.equipeChange) {
           const to = equipes.find((e) => e.id === req.equipeChange?.to)
-          toast(to ? `${current?.chantier.name ?? 'Affectation'} → équipe ${to.name}.` : `${current?.chantier.name ?? 'Affectation'} sans équipe.`, 'success')
+          toast(to ? `${name} → équipe ${to.name}.` : `${name} sans équipe.`, 'success')
+        } else if (req.chantierChange) {
+          const to = chantiers.find((c) => c.id === req.chantierChange?.to)
+          toast(`Équipe déplacée sur ${to?.name ?? 'un autre chantier'}.`, 'success')
         } else {
-          toast(`${current?.chantier.name ?? 'Affectation'} déplacé.`, 'success')
+          toast(`${name} déplacé.`, 'success')
         }
       } catch (err) {
         toast(getErrorMessage(err, 'Déplacement impossible.'), 'error')
         throw err
       }
     },
-    [loaded, updateAffectation, equipes],
+    [loaded, updateAffectation, equipes, chantiers],
   )
 
   // Glisser depuis la colonne de gauche : les cartes survolées se mettent en évidence,
@@ -190,7 +225,6 @@ export default function PlanningPage() {
         return
       }
       const payload: Partial<AffectationPayload> = { worker_ids }
-      // Une équipe déposée sur une affectation sans équipe la lui attribue (couleur, ligne « Par équipe »).
       if (team && !a.equipe_id) payload.equipe_id = team.id
       const label = team ? `Équipe ${team.name}` : (workers.find((w) => w.id === req.id)?.name.split(' ')[0] ?? 'Personne')
       updateAffectation.mutate(
@@ -231,26 +265,40 @@ export default function PlanningPage() {
     const t = todayKey()
     return range && range.from <= t && t <= range.to ? t : toKey(range?.current ?? new Date())
   }
+  const toggle = <T,>(set: (fn: (prev: Set<T>) => Set<T>) => void, key: T) =>
+    set((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      <div className="lg:sticky lg:top-20 lg:w-64 lg:shrink-0">
+      <div className="space-y-4 lg:sticky lg:top-20 lg:w-64 lg:shrink-0">
+        <ChantierSidebar
+          chantiers={sidebarChantiers}
+          hidden={effectiveHiddenSites}
+          counts={siteCounts}
+          canManage={canEdit}
+          onToggle={(id) => {
+            const next = new Set(effectiveHiddenSites)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            updateHiddenSites(next)
+          }}
+          onOnly={(id) => updateHiddenSites(new Set(sidebarChantiers.filter((c) => c.id !== id).map((c) => c.id)))}
+          onShowAll={() => updateHiddenSites(new Set())}
+        />
         <TeamSidebar
           equipes={equipes}
           workers={workers}
-          hidden={hidden}
-          counts={counts}
+          hidden={hiddenTeams}
+          counts={teamCounts}
           canManage={canEdit}
-          onToggle={(key) =>
-            setHidden((prev) => {
-              const next = new Set(prev)
-              if (next.has(key)) next.delete(key)
-              else next.add(key)
-              return next
-            })
-          }
-          onOnly={(key) => setHidden(new Set<TeamKey>([...equipes.map((e) => e.id as TeamKey), NO_TEAM].filter((k) => k !== key)))}
-          onShowAll={() => setHidden(new Set())}
+          onToggle={(key) => toggle(setHiddenTeams, key)}
+          onOnly={(key) => setHiddenTeams(new Set<TeamKey>([...equipes.map((e) => e.id as TeamKey), NO_TEAM].filter((k) => k !== key)))}
+          onShowAll={() => setHiddenTeams(new Set())}
           onDraggingChange={setExternalDragging}
         />
       </div>
@@ -267,18 +315,22 @@ export default function PlanningPage() {
           busy={isFetching || isLoading}
           filters={
             <>
-              <Select value={chantierFilter || ''} onChange={(e) => setParams({ chantier: e.target.value })} className="w-auto min-w-44 py-1.5" aria-label="Filtrer par chantier">
-                <option value="">Tous les chantiers</option>
-                {chantiers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-              {chantierFilter !== 0 && (
-                <button type="button" onClick={() => setParams({ chantier: null })} className="text-sm text-gray-500 hover:text-gray-800">
-                  Effacer le filtre
-                </button>
+              {(effectiveHiddenSites.size > 0 || hiddenTeams.size > 0) && (
+                <span className="text-xs text-gray-500">
+                  {effectiveHiddenSites.size > 0 && `${effectiveHiddenSites.size} chantier${effectiveHiddenSites.size > 1 ? 's' : ''} masqué${effectiveHiddenSites.size > 1 ? 's' : ''}`}
+                  {effectiveHiddenSites.size > 0 && hiddenTeams.size > 0 && ' · '}
+                  {hiddenTeams.size > 0 && `${hiddenTeams.size} équipe${hiddenTeams.size > 1 ? 's' : ''} masquée${hiddenTeams.size > 1 ? 's' : ''}`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateHiddenSites(new Set())
+                      setHiddenTeams(new Set())
+                    }}
+                    className="ml-2 font-medium text-primary hover:underline"
+                  >
+                    Tout afficher
+                  </button>
+                </span>
               )}
               {conflicts.size > 0 && (
                 <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
@@ -319,7 +371,8 @@ export default function PlanningPage() {
           view={view}
           initialDate={initialDate}
           affectations={affectations}
-          equipes={equipes.filter((e) => !hidden.has(e.id))}
+          equipes={equipes.filter((e) => !hiddenTeams.has(e.id))}
+          chantiers={sidebarChantiers.filter((c) => !effectiveHiddenSites.has(c.id))}
           conflicts={conflicts}
           canEdit={canEdit}
           onRangeChange={onRangeChange}
@@ -333,8 +386,8 @@ export default function PlanningPage() {
 
         {canEdit && (
           <p className="mt-3 text-xs text-gray-400">
-            Astuce : sélectionne une plage horaire pour créer, glisse une carte pour la déplacer, étire-la pour changer l'horaire. En vue « Par équipe »,
-            glisse une carte sur une autre ligne pour changer d'équipe.
+            Astuce : coche à gauche les chantiers et équipes à afficher (double-clic : un seul). Sélectionne une plage pour créer, glisse une carte pour la
+            déplacer, étire-la pour changer l'horaire. Glisse une équipe ou une personne depuis la colonne de gauche sur un créneau ou sur une carte.
           </p>
         )}
 

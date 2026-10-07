@@ -409,3 +409,28 @@ body {
   transform: scale(1.03);
   z-index: 5;
 }
+
+/* Personnes affectées dans une carte (grille horaire) : avatar + prénom. */
+.pc-event__person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.pc-event__person .pc-event__avatar {
+  margin-right: 0;
+}
+.pc-event__person-name {
+  white-space: nowrap;
+}
+@container (max-width: 150px) {
+  .pc-event__person-name {
+    display: none;
+  }
+  .pc-event__person {
+    margin-right: -0.2rem;
+  }
+}
