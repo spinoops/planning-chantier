@@ -14,7 +14,6 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -34,8 +33,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (array_keys((array) config('roles.labels', [])) as $role) {
-            Role::firstOrCreate(['name' => $role]);
+        $this->call(RolesSeeder::class);
+
+        // Jamais de comptes ni de données de démo en production (mots de passe connus).
+        // Premier compte en ligne : php artisan planning:admin <email>.
+        if (app()->isProduction()) {
+            return;
         }
 
         if (Setting::query()->where('key', 'app_color')->doesntExist()) {

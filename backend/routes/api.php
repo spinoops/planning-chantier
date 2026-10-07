@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ChantierController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\InvitationController;
@@ -54,6 +55,10 @@ Route::get('/health', function () {
         'time' => now()->toIso8601String(),
     ], $database === 'ok' ? 200 : 503);
 });
+
+// Tâche planifiée par URL (planificateur Infomaniak) : rappels push, sauvegarde, ménage.
+// 404 sans le bon jeton CRON_TOKEN.
+Route::get('/cron/run/{token}', CronController::class)->middleware('throttle:10,1');
 
 // Authentification (token Sanctum). Throttle anti-brute-force.
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');

@@ -21,3 +21,13 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Build du front copié par le déploiement (frontend/dist → public/), jamais commité
+/public/index.html
+/public/assets/
+/public/sw.js
+/public/manifest.webmanifest
+/public/favicon.svg
+/public/logo.svg
+/public/logo-blanc.svg
+/public/icons.svg

@@ -40,7 +40,7 @@ it('refuse de sauvegarder une base autre que MySQL (422)', function () {
 
     // Les tests tournent sur SQLite : le service doit l'expliquer, pas planter.
     $this->postJson('/api/backups')->assertStatus(422)->assertJsonStructure(['message']);
-});
+})->skip(fn () => in_array(config('database.connections.'.config('database.default').'.driver'), ['mysql', 'mariadb'], true), 'Vérifie le refus hors MySQL : sans objet quand la CI tourne sur MySQL.');
 
 it('applique la rotation en ne gardant que les N plus récentes', function () {
     foreach (['01', '02', '03', '04'] as $month) {

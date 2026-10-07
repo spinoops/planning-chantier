@@ -17,3 +17,6 @@ Thumbs.db
 
 # Réglages locaux Claude Code (personnels, non partagés)
 .claude/settings.local.json
+
+# Archives de mise en ligne de secours (release.ps1)
+release/

@@ -267,8 +267,25 @@ La version installée sous WAMP est **8.4.24** :
 - Schéma **uniquement via migrations**. phpMyAdmin : http://localhost/phpmyadmin (`root`, sans mot de passe).
 
 ## Ne jamais committer
-`.env`, `vendor/`, `node_modules/`, `frontend/dist/`, `storage/*`, `backend/public/storage`.
+`.env`, `vendor/`, `node_modules/`, `frontend/dist/`, `storage/*`, `backend/public/storage`, le build copié
+dans `backend/public` (`index.html`, `assets/`, `sw.js`… : ignorés par `backend/.gitignore`), `release/`.
 
 ## Déploiement
-Voir `DEPLOY.md` (Infomaniak mutualisé : doc root → `backend/public`, build front en
-local, `migrate --force` en prod, `storage:link`, cron `schedule:run`).
+Même méthode que ProTime-Cuttat (`D:\wamp64\www\ProTime-Cuttat\protime-baseapp`) : voir `DEPLOY.md`.
+- **Un seul domaine** (défaut `planning.top-stores.ch`, à confirmer) : doc root `backend/public`, le build du
+  front y est copié, `routes/web.php` renvoie `index.html` hors `/api`, le front appelle l'API en relatif
+  (`lib/api.ts` : sans `VITE_API_URL` en build de production). Dépôt GitHub privé `spinoops/planning-chantier`,
+  clone serveur `~/apps/planning-chantier`.
+- **GitHub Actions** : `ci.yml` (Pest SQLite + MySQL, Pint `--test`, ESLint, build) ; `deploy.yml` à chaque push
+  sur `master` : CI, build front, SSH (maintenance, `merge --ff-only` du commit testé, Composer, `backup:run`
+  avec retour arrière si échec, `migrate --force`, `RolesSeeder`, `storage:link`), rsync du front (`index.html`
+  en dernier), `optimize`, contrôle `/api/health`. Secrets `DEPLOY_HOST/USER/SSH_KEY/KNOWN_HOSTS`, variables
+  `APP_DOMAIN`, `APP_PATH`.
+- **Production sans démo** : `DatabaseSeeder` ne crée que les rôles (`RolesSeeder`) si `APP_ENV=production` ;
+  premier compte `php artisan planning:admin <email> [--name=] [--no-mail]` (lien « définir le mot de passe »).
+- **Tâche planifiée par URL** (pas de crontab sur le mutualisé) : `GET /api/cron/run/{CRON_TOKEN}`
+  (`CronController`, 404 sans le bon jeton) → `planning:cron` : `planning:remind --grace=CRON_REMIND_GRACE`
+  (défaut 20 min), sauvegarde si la dernière a plus de 20 h, `sanctum:prune-expired`. Config `config/planning.php`.
+  `SANCTUM_EXPIRATION` (minutes) règle l'expiration des connexions.
+- `.env.production.example` (QUEUE sync, LOG daily, VAPID à générer une fois, CRON_TOKEN) ; `release.ps1`
+  (UTF-8 avec BOM) = archive de secours sans GitHub.

@@ -1,0 +1,132 @@
+# Déploiement automatique sur Infomaniak à chaque push sur master (même méthode que
+# ProTime-Cuttat et StepWork) : tests (CI) d'abord, build du front sur GitHub (l'API est
+# relative : même domaine), puis en SSH sur le serveur : maintenance, commit exact,
+# Composer, sauvegarde, migrations, rôles, envoi du build dans backend/public, caches, santé.
+#
+# Secrets (dépôt → Settings → Secrets and variables → Actions → Secrets) :
+#   DEPLOY_HOST         hôte SSH de l'hébergement (Manager Infomaniak → SSH)
+#   DEPLOY_USER         utilisateur SSH
+#   DEPLOY_SSH_KEY      clé privée dont la clé publique est dans ~/.ssh/authorized_keys du serveur
+#   DEPLOY_KNOWN_HOSTS  (recommandé) empreinte du serveur : sortie de `ssh-keyscan -H <hôte>`
+#                       vérifiée une fois à la main. Sans lui, l'empreinte est lue à chaque
+#                       déploiement (moins sûr).
+#
+# Variables (même écran, onglet Variables) :
+#   APP_DOMAIN       domaine du site (défaut : planning.top-stores.ch)
+#   APP_PATH         dossier du clone sur le serveur, relatif au home (défaut : apps/planning-chantier)
+#
+# Le serveur contient un clone du dépôt (doc root → backend/public), sa base MySQL et son
+# backend/.env. Mise en place : DEPLOY.md, § 5 « Première mise en ligne ».
+# Retour arrière : DEPLOY.md, § « Revenir à la version précédente ».
+name: Deploy (Infomaniak)
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # Rien ne part en production si les tests ou le build échouent.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: planning (${{ vars.APP_DOMAIN || 'planning.top-stores.ch' }})
+    needs: ci
+    runs-on: ubuntu-latest
+    env:
+      DOMAIN: ${{ vars.APP_DOMAIN || 'planning.top-stores.ch' }}
+      APP_PATH: ${{ vars.APP_PATH || 'apps/planning-chantier' }}
+      SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Sans VITE_API_URL, le front appelle l'API en relatif (même domaine).
+      # VITE_FC_LICENSE_KEY (secret facultatif) : licence commerciale FullCalendar Scheduler.
+      - name: "Build du front (API relative : même domaine)"
+        working-directory: frontend
+        env:
+          VITE_FC_LICENSE_KEY: ${{ secrets.VITE_FC_LICENSE_KEY }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Clé SSH du serveur
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          if [ -n "${{ secrets.DEPLOY_KNOWN_HOSTS }}" ]; then
+            printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          else
+            echo "::warning::Secret DEPLOY_KNOWN_HOSTS absent : empreinte du serveur lue sans vérification."
+            ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
+
+      # Maintenance pendant la mise à jour ; le site repart même en cas d'échec (trap).
+      # Le commit déployé est exactement celui qui a été testé et buildé ($SHA).
+      - name: Code, dépendances, sauvegarde et base (sur le serveur)
+        run: |
+          ssh -i ~/.ssh/deploy "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -ls <<EOF
+          set -e
+          cd ~/$APP_PATH
+          git fetch --prune origin
+          php backend/artisan down --retry=15 || true
+          trap 'php backend/artisan up || true' EXIT
+          PREV=\$(git rev-parse HEAD)
+          rollback() {
+            echo "::error::Échec avant migration : retour au commit \$PREV"
+            git reset --hard "\$PREV"
+            composer install --no-dev --optimize-autoloader --no-interaction --working-dir=backend
+            exit 1
+          }
+          git merge --ff-only $SHA
+          composer install --no-dev --optimize-autoloader --no-interaction --working-dir=backend || rollback
+          # Sauvegarde obligatoire avant de toucher au schéma.
+          php backend/artisan backup:run || rollback
+          php backend/artisan migrate --force
+          php backend/artisan db:seed --class=RolesSeeder --force
+          # Photos des chantiers servies via /storage (sans effet si le lien existe déjà).
+          php backend/artisan storage:link || true
+          EOF
+
+      # Nouveaux fichiers d'abord (noms hachés : pas de collision), index.html et le service
+      # worker en dernier : jamais de page qui pointe vers des fichiers absents.
+      - name: Envoi du build dans backend/public
+        run: |
+          RS="ssh -i ~/.ssh/deploy"
+          DEST="${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$APP_PATH/backend/public"
+          rsync -az -e "$RS" frontend/dist/assets/ "$DEST/assets/"
+          rsync -az -e "$RS" --exclude assets --exclude index.html --exclude sw.js frontend/dist/ "$DEST/"
+          rsync -az -e "$RS" frontend/dist/sw.js "$DEST/sw.js"
+          rsync -az -e "$RS" frontend/dist/index.html "$DEST/index.html"
+
+      - name: Caches Laravel et ménage des anciens fichiers du front
+        run: |
+          ssh -i ~/.ssh/deploy "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -ls <<EOF
+          set -e
+          cd ~/$APP_PATH
+          php backend/artisan optimize:clear
+          php backend/artisan optimize
+          php backend/artisan up
+          # Les onglets encore ouverts chargent d'anciens fichiers : on les garde 7 jours.
+          find backend/public/assets -type f -mtime +7 -delete || true
+          EOF
+
+      - name: Vérification de l'API et de l'application
+        run: |
+          body=$(curl -fsS "https://$DOMAIN/api/health")
+          echo "$body"
+          echo "$body" | grep -q '"status":"ok"'
+          curl -fsS -o /dev/null -w "Application : HTTP %{http_code}\n" "https://$DOMAIN/login"
