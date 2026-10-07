@@ -73,8 +73,8 @@ export default function AppLayout() {
       <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
         <div className="glass flex items-center gap-3 rounded-full py-1.5 pl-2 pr-2 sm:gap-4 sm:pl-3">
           {/* Logo + nom */}
-          <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5" aria-label={appName}>
-            <img src={settings?.app_logo_url || DEFAULT_LOGO} alt="" className="h-8 w-auto max-w-44 object-contain" />
+          <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5" aria-label={appName}>
+            <img src={settings?.app_logo_url || DEFAULT_LOGO} alt="" className="h-8 w-auto max-w-44 shrink-0 object-contain" />
             <span className="hidden h-5 w-px bg-black/10 lg:block" aria-hidden />
             <span className="hidden truncate text-[13px] font-medium text-gray-600 lg:inline">{appName}</span>
           </Link>
@@ -86,7 +86,10 @@ export default function AppLayout() {
                 {item.label}
               </NavLink>
             ))}
-            {adminItems.length > 0 && (
+          </nav>
+          {/* Menu Administration : hors de la barre défilante, sinon la liste déroulante est rognée. */}
+          {adminItems.length > 0 && (
+            <div className="hidden md:block">
               <details className="group relative">
                 <summary
                   className={`flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
@@ -98,11 +101,12 @@ export default function AppLayout() {
                     <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </summary>
-                <div className="pc-pop glass absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-1.5">
+                <div className="pc-pop glass-strong absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-1.5">
                   {adminItems.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
+                      onClick={(e) => e.currentTarget.closest('details')?.removeAttribute('open')}
                       className={({ isActive }) => `${menuItemClass} ${isActive ? 'font-semibold' : ''}`}
                     >
                       {item.label}
@@ -110,8 +114,8 @@ export default function AppLayout() {
                   ))}
                 </div>
               </details>
-            )}
-          </nav>
+            </div>
+          )}
 
           <div className="flex-1" />
 
@@ -130,7 +134,7 @@ export default function AppLayout() {
               <span className="max-w-40 truncate font-medium text-gray-800">{user?.name}</span>
             </button>
             {userMenuOpen && (
-              <div role="menu" className="pc-pop glass absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl p-1.5">
+              <div role="menu" className="pc-pop glass-strong absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl p-1.5">
                 <div className="px-3 pb-2 pt-1.5">
                   <p className="truncate text-[13px] font-semibold text-gray-900">{user?.name}</p>
                   <p className="truncate text-xs text-gray-500">{user?.email}</p>
