@@ -99,7 +99,8 @@ La version installée sous WAMP est **8.4.24** :
 - `GET /equipes` (tous, avec membres) ; `GET /planning` accepte aussi `&equipe_id=`.
 - Planificateurs (`role:admin|chef`) : `POST/PUT/DELETE /chantiers`, `POST/PUT/DELETE /equipes`, `GET /workers`,
   `POST /planning`, `PUT /planning/{id}` (champs optionnels : `{date}` seul = déplacement),
-  `DELETE /planning/{id}`, `POST /planning/copy-week {from, to, replace?}` (lundis).
+  `DELETE /planning/{id}`, `POST /planning/copy-week {from, to, replace?}` (lundis ; l'API reste, mais le bouton
+  « Copier sem. précédente » a été retiré du planning à la demande de l'utilisateur).
 - `GET /dashboard` renvoie `planning` (état du jour) pour les planificateurs.
 - `GET /clients`, `GET /clients/{id}`, `GET /sous-traitants` (tous) ; planificateurs : `apiResource` clients et
   sous-traitants, `GET /chantiers?client_id=`, `GET /chantiers/{id}/recap` et `/recap.csv`.

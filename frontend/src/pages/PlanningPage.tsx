@@ -4,11 +4,10 @@ import { useAuth } from '@/auth/AuthContext'
 import { useAbsences } from '@/hooks/useAbsences'
 import { useOpenChantiers } from '@/hooks/useChantiers'
 import { useEquipes } from '@/hooks/useEquipes'
-import { useCopyWeek, usePlanning, useUpdateAffectation } from '@/hooks/usePlanning'
+import { usePlanning, useUpdateAffectation } from '@/hooks/usePlanning'
 import { useWorkers } from '@/hooks/useWorkers'
-import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { getErrorMessage } from '@/lib/errors'
-import { addDays, fromKey, isoWeek, startOfWeek, timesOverlap, toKey, todayKey } from '@/lib/dates'
+import { fromKey, isoWeek, timesOverlap, toKey, todayKey } from '@/lib/dates'
 import { isPlanner } from '@/lib/navigation'
 import { toast } from '@/lib/toast'
 import type { Affectation, AffectationPayload } from '@/types'
@@ -66,7 +65,6 @@ export default function PlanningPage() {
   const { user } = useAuth()
   const canEdit = isPlanner(user)
   const [searchParams, setSearchParams] = useSearchParams()
-  const confirm = useConfirm()
   const calendar = useRef<PlanningCalendarHandle>(null)
 
   const viewParam = searchParams.get('view') as CalendarView | null
@@ -121,7 +119,6 @@ export default function PlanningPage() {
   const { data: absences = [] } = useAbsences(query, range !== null)
   const { data: workers = [] } = useWorkers(canEdit)
   const updateAffectation = useUpdateAffectation()
-  const copyWeek = useCopyWeek()
 
   const [target, setTarget] = useState<AffectationTarget | null>(null)
 
@@ -241,28 +238,6 @@ export default function PlanningPage() {
     [loaded, equipes, workers, updateAffectation],
   )
 
-  async function onCopyPreviousWeek() {
-    const monday = startOfWeek(range?.current ?? new Date())
-    const from = toKey(addDays(monday, -7))
-    const to = toKey(monday)
-    const ok = await confirm({
-      title: 'Copier la semaine précédente ?',
-      message:
-        loaded.length > 0
-          ? 'Les affectations de la semaine précédente seront ajoutées à celles déjà présentes cette semaine.'
-          : 'Chantiers, équipes, horaires et notes de la semaine précédente seront recopiés sur cette semaine.',
-      confirmLabel: 'Copier',
-    })
-    if (!ok) return
-    copyWeek.mutate(
-      { from, to },
-      {
-        onSuccess: (res) => toast(res.message, res.created > 0 ? 'success' : 'info'),
-        onError: (err) => toast(getErrorMessage(err), 'error'),
-      },
-    )
-  }
-
   const subtitle = range && view !== 'month' ? `Semaine ${isoWeek(range.current)}` : undefined
   const newDate = () => {
     const t = todayKey()
@@ -346,11 +321,6 @@ export default function PlanningPage() {
           actions={
             canEdit && (
               <>
-                {view !== 'month' && (
-                  <Button variant="secondary" size="sm" onClick={onCopyPreviousWeek} loading={copyWeek.isPending} className="hidden sm:inline-flex">
-                    Copier sem. précédente
-                  </Button>
-                )}
                 <Link
                   to={`/planning/print?d=${toKey(range?.current ?? new Date())}`}
                   className="glass-pill hidden h-9 items-center justify-center rounded-full px-4 text-sm font-medium text-gray-900 active:scale-[0.96] sm:inline-flex"
