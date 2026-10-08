@@ -39,9 +39,7 @@ const CONTEXT: [prefix: string, section: string][] = [
   ['/absences', 'absences'],
   ['/statistiques', 'statistiques-les-heures'],
   ['/mon-planning', AIDE_EMPLOYEE_SECTION],
-  ['/users', 'comptes-et-roles'],
-  ['/settings', 'configuration'],
-  ['/profile', 'mon-profil'],
+  ['/profile', 'recevoir-une-alerte-avant-chaque-chantier'],
 ]
 
 export function aideSectionFor(pathname: string): string | null {

@@ -606,62 +606,6 @@
  },
  {
   "t": "h1",
-  "text": "Administration",
-  "id": "administration"
- },
- {
-  "t": "h2",
-  "text": "Comptes et rôles",
-  "id": "comptes-et-roles"
- },
- {
-  "t": "p",
-  "text": "Le menu *Administration → Équipe & comptes* (administrateurs) liste les comptes. **Nouveau compte** crée un employé : nom, e-mail, mot de passe, rôles, métier, téléphone, couleur d’avatar. Un compte peut cumuler plusieurs rôles (par exemple Administrateur et Chef de chantier)."
- },
- {
-  "t": "img",
-  "src": "/aide/14-comptes.webp",
-  "caption": "Équipe & comptes",
-  "w": 1280,
-  "h": 800,
-  "mobile": false
- },
- {
-  "t": "li",
-  "text": "*Modifier* change les informations ou les rôles ; *Supprimer* met le compte à la corbeille (il peut être restauré)."
- },
- {
-  "t": "li",
-  "text": "Un employé qui a oublié son mot de passe utilise « Mot de passe oublié ? » ; un administrateur peut aussi lui en définir un nouveau dans *Modifier*."
- },
- {
-  "t": "h2",
-  "text": "Configuration",
-  "id": "configuration"
- },
- {
-  "t": "p",
-  "text": "*Administration → Configuration* règle le nom de l’application, le logo, la couleur principale, les horaires proposés par les boutons *Matin* / *Après-midi* / *Journée* et l’heure à partir de laquelle un changement de planning de dernière minute prévient les autres planificateurs."
- },
- {
-  "t": "img",
-  "src": "/aide/15-configuration.webp",
-  "caption": "Configuration",
-  "w": 1280,
-  "h": 800,
-  "mobile": false
- },
- {
-  "t": "h2",
-  "text": "Mon profil",
-  "id": "mon-profil"
- },
- {
-  "t": "p",
-  "text": "Chaque personne retrouve dans *Mon profil* (menu en haut à droite) ses informations, le changement de mot de passe et le réglage des alertes."
- },
- {
-  "t": "h1",
   "text": "Questions fréquentes",
   "id": "questions-frequentes"
  },
