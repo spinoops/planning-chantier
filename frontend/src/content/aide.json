@@ -1,0 +1,692 @@
+[
+ {
+  "t": "h1",
+  "text": "Connexion",
+  "id": "connexion"
+ },
+ {
+  "t": "p",
+  "text": "L’application fonctionne dans un navigateur, sur ordinateur, tablette ou téléphone :"
+ },
+ {
+  "t": "p",
+  "text": "Adresse : **https://planning.top-stores.ch**"
+ },
+ {
+  "t": "p",
+  "text": "Chaque personne a son propre compte (adresse e-mail et mot de passe). Au premier démarrage, le mot de passe est **Test1234$** : changez-le ensuite dans *Mon profil*."
+ },
+ {
+  "t": "img",
+  "src": "/aide/01-connexion.webp",
+  "caption": "Page de connexion",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "tip",
+  "text": "Mot de passe oublié ? Cliquez sur « Mot de passe oublié ? » sous le bouton de connexion : un e-mail vous permet d’en choisir un nouveau."
+ },
+ {
+  "t": "h2",
+  "text": "Installer l’application sur le téléphone",
+  "id": "installer-lapplication-sur-le-telephone"
+ },
+ {
+  "t": "p",
+  "text": "Pour les employés, le plus pratique est d’ajouter l’application à l’écran d’accueil du téléphone. Elle s’ouvre alors comme une application normale, directement sur « Mon planning », et peut envoyer des alertes."
+ },
+ {
+  "t": "ol",
+  "text": "**iPhone / iPad** : ouvrez l’adresse dans Safari, touchez le bouton Partager, puis « Sur l’écran d’accueil »."
+ },
+ {
+  "t": "ol",
+  "text": "**Android** : ouvrez l’adresse dans Chrome, menu ⋮ puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »)."
+ },
+ {
+  "t": "ol",
+  "text": "Ouvrez ensuite l’application depuis sa nouvelle icône et connectez-vous."
+ },
+ {
+  "t": "h2",
+  "text": "Les rôles",
+  "id": "les-roles"
+ },
+ {
+  "t": "p",
+  "text": "Ce que chacun peut faire dépend de son rôle, attribué par un administrateur :"
+ },
+ {
+  "t": "li",
+  "text": "**Administrateur** : gère les comptes, les rôles et la configuration ; peut aussi tout planifier."
+ },
+ {
+  "t": "li",
+  "text": "**Gestionnaire** (bureau) : prépare les chantiers, les clients et les devis, planifie, contrôle et valide les heures, gère les absences."
+ },
+ {
+  "t": "li",
+  "text": "**Chef de chantier** : planifie, passe sur les chantiers, peut être affecté à une équipe."
+ },
+ {
+  "t": "li",
+  "text": "**Ouvrier** : consulte son planning, pointe ses heures, signale les imprévus."
+ },
+ {
+  "t": "p",
+  "text": "Les chapitres 2 à 8 concernent le bureau et les chefs de chantier ; le chapitre 9 concerne tous les employés sur le téléphone."
+ },
+ {
+  "t": "h1",
+  "text": "Tableau de bord",
+  "id": "tableau-de-bord"
+ },
+ {
+  "t": "p",
+  "text": "Le tableau de bord est la page d’accueil des planificateurs. Il donne l’essentiel du jour en un coup d’œil :"
+ },
+ {
+  "t": "img",
+  "src": "/aide/02-tableau-de-bord.webp",
+  "caption": "Tableau de bord",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "li",
+  "text": "**Les tuiles** en haut : créer un chantier, personnes sur le terrain, heures à valider, imprévus signalés, absences de la semaine. Chaque tuile mène à la page concernée."
+ },
+ {
+  "t": "li",
+  "text": "**Chantiers du jour** : qui est où, à quelle heure. Les boutons *Fiche* et *Planning* ouvrent directement le chantier ou la journée dans le calendrier."
+ },
+ {
+  "t": "li",
+  "text": "**Disponibles aujourd’hui** : les personnes sans affectation, avec un lien « Affecter »."
+ },
+ {
+  "t": "li",
+  "text": "**La semaine en un coup d’œil** : nombre d’affectations par jour, personnes libres et absentes. Un clic sur un jour ouvre le planning de ce jour."
+ },
+ {
+  "t": "li",
+  "text": "Plus bas : les imprévus à traiter, les heures pointées par chantier et les absences de la semaine."
+ },
+ {
+  "t": "h1",
+  "text": "Planning",
+  "id": "planning"
+ },
+ {
+  "t": "p",
+  "text": "Le planning est un calendrier : **un chantier = une couleur**, et chaque carte montre les personnes affectées. À gauche, la liste des chantiers et des équipes ; au centre, la semaine."
+ },
+ {
+  "t": "img",
+  "src": "/aide/03-planning-semaine.webp",
+  "caption": "Planning, vue Semaine",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h2",
+  "text": "Se déplacer et choisir une vue",
+  "id": "se-deplacer-et-choisir-une-vue"
+ },
+ {
+  "t": "li",
+  "text": "Les flèches **‹ ›** changent de semaine ; **Aujourd’hui** revient à la date du jour."
+ },
+ {
+  "t": "li",
+  "text": "Les vues **Mois**, **Semaine**, **Jour** et **Par employé** se choisissent en haut à droite. « Par employé » affiche une ligne par personne avec ses chantiers de la semaine : pratique pour vérifier que personne n’est oublié ni en double."
+ },
+ {
+  "t": "li",
+  "text": "Dans la colonne de gauche, **cochez ou décochez** un chantier ou une équipe pour l’afficher ou le masquer. Un double-clic n’affiche que celui-là ; « Tout afficher » rétablit la vue complète."
+ },
+ {
+  "t": "img",
+  "src": "/aide/05-planning-par-employe.webp",
+  "caption": "Vue « Par employé »",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h2",
+  "text": "Créer une affectation",
+  "id": "creer-une-affectation"
+ },
+ {
+  "t": "p",
+  "text": "Une affectation = un chantier, un jour, un créneau, et les personnes qui y vont. Trois façons de la créer :"
+ },
+ {
+  "t": "ol",
+  "text": "**Sélectionner une plage** dans le calendrier (cliquer-glisser sur les heures du jour voulu) : la fenêtre de création s’ouvre avec le jour et l’horaire déjà remplis."
+ },
+ {
+  "t": "ol",
+  "text": "**Glisser une équipe ou une personne** depuis la colonne de gauche sur un créneau du calendrier."
+ },
+ {
+  "t": "ol",
+  "text": "Cliquer sur le bouton **+ Affectation** en haut à droite."
+ },
+ {
+  "t": "img",
+  "src": "/aide/04-affectation-modale.webp",
+  "caption": "Fenêtre d’affectation",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "p",
+  "text": "Dans la fenêtre :"
+ },
+ {
+  "t": "li",
+  "text": "choisissez le **chantier** (le bouton **+** à côté crée un chantier en quelques secondes : client, adresse, couleur) ;"
+ },
+ {
+  "t": "li",
+  "text": "choisissez l’**équipe** : ses membres sont cochés automatiquement, vous pouvez ajuster personne par personne. Si quelqu’un est déjà pris ce jour-là, la mention « déjà sur … » le signale ;"
+ },
+ {
+  "t": "li",
+  "text": "réglez le **créneau** avec les boutons *Matin*, *Après-midi*, *Journée*, ou saisissez les heures ;"
+ },
+ {
+  "t": "li",
+  "text": "indiquez si besoin un **passage** (le patron ou un chef qui passe sans faire partie de l’équipe), une étape, une note ;"
+ },
+ {
+  "t": "li",
+  "text": "pour un chantier qui dure, cochez **Répéter** et choisissez la date de fin et les jours de la semaine : une affectation est créée pour chaque jour."
+ },
+ {
+  "t": "tip",
+  "text": "Si le chantier a déjà une carte sur ce jour et ce créneau, les personnes sont ajoutées à cette carte : jamais deux cartes identiques."
+ },
+ {
+  "t": "h2",
+  "text": "Modifier, déplacer, supprimer",
+  "id": "modifier-deplacer-supprimer"
+ },
+ {
+  "t": "li",
+  "text": "**Cliquer sur une carte** ouvre la fenêtre de modification (équipe, horaire, note, photos…). Le bouton *Supprimer* s’y trouve."
+ },
+ {
+  "t": "li",
+  "text": "**Glisser une carte** sur un autre jour ou une autre heure la déplace ; **tirer son bord inférieur** change l’heure de fin."
+ },
+ {
+  "t": "li",
+  "text": "**Glisser une personne ou une équipe sur une carte existante** l’ajoute à cette affectation (la carte se met en évidence pendant le glisser)."
+ },
+ {
+  "t": "li",
+  "text": "Dans la vue *Par employé*, déplacer une carte sur la ligne d’une autre personne la réaffecte à cette personne."
+ },
+ {
+  "t": "li",
+  "text": "Un **« ! »** sur une carte signale qu’une personne est affectée deux fois sur des créneaux qui se chevauchent."
+ },
+ {
+  "t": "h2",
+  "text": "Imprimer la semaine",
+  "id": "imprimer-la-semaine"
+ },
+ {
+  "t": "p",
+  "text": "Le bouton **Imprimer** prépare une page A4 par équipe pour la semaine affichée : utile à afficher à l’atelier ou à donner en main propre."
+ },
+ {
+  "t": "h1",
+  "text": "Chantiers",
+  "id": "chantiers"
+ },
+ {
+  "t": "p",
+  "text": "La page *Chantiers* liste les lieux d’intervention. Chaque carte a la couleur du chantier, son client, son adresse et le nombre de jours planifiés. **Cliquez sur une carte** pour ouvrir sa fiche ; le crayon modifie les informations de base, la corbeille rouge supprime."
+ },
+ {
+  "t": "img",
+  "src": "/aide/06-chantiers.webp",
+  "caption": "Liste des chantiers",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h2",
+  "text": "Créer un chantier",
+  "id": "creer-un-chantier"
+ },
+ {
+  "t": "ol",
+  "text": "Cliquez sur **Nouveau chantier** (page Chantiers, tableau de bord, ou le **+** de la fenêtre d’affectation)."
+ },
+ {
+  "t": "ol",
+  "text": "Choisissez d’abord le **client** : tapez les premières lettres de son nom, puis sélectionnez-le. S’il n’existe pas encore, « Créer le client … » le crée sans quitter la fenêtre."
+ },
+ {
+  "t": "ol",
+  "text": "Le **titre du chantier reprend le nom du client**. Ajoutez si besoin un complément (« Garage », « Terrasse »…) : le titre devient par exemple *Joray François – Garage*."
+ },
+ {
+  "t": "ol",
+  "text": "L’adresse du client est reprise automatiquement ; corrigez-la si le chantier est ailleurs. Choisissez la **couleur** qui apparaîtra dans le calendrier, puis enregistrez."
+ },
+ {
+  "t": "h2",
+  "text": "La fiche du chantier : les 7 étapes",
+  "id": "la-fiche-du-chantier-les-7-etapes"
+ },
+ {
+  "t": "p",
+  "text": "La fiche suit le chantier du premier contact à la facturation. La frise du haut montre où il en est : vert = fait, rouge = en attente, gris = à venir."
+ },
+ {
+  "t": "img",
+  "src": "/aide/07-fiche-chantier.webp",
+  "caption": "Fiche de préparation d’un chantier",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "ol",
+  "text": "**Création** : client, adresse, estimation du temps, mesures, remarques."
+ },
+ {
+  "t": "ol",
+  "text": "**Devis** : état (à préparer, envoyé, accepté, refusé), montant et dates."
+ },
+ {
+  "t": "ol",
+  "text": "**Reprise des mesures** sur place après acceptation, si nécessaire."
+ },
+ {
+  "t": "ol",
+  "text": "**Estimation pour le planning** : le nombre d’heures à planifier."
+ },
+ {
+  "t": "ol",
+  "text": "**Planning** : se remplit tout seul avec les affectations."
+ },
+ {
+  "t": "ol",
+  "text": "**Heures des employés** : se remplit avec les pointages."
+ },
+ {
+  "t": "ol",
+  "text": "**Récapitulatif pour la facturation** : voir ci-dessous."
+ },
+ {
+  "t": "p",
+  "text": "La fiche contient aussi la **liste du matériel** à prévoir (cochée au fur et à mesure) et les **sous-traitants** avec leur date d’intervention. Les employés voient ces informations depuis leur planning."
+ },
+ {
+  "t": "h2",
+  "text": "Récapitulatif pour la facturation",
+  "id": "recapitulatif-pour-la-facturation"
+ },
+ {
+  "t": "p",
+  "text": "L’onglet *Récapitulatif facturation* additionne les heures pointées par personne, les compare au planifié et à l’estimation, et rappelle le devis. **Exporter CSV** produit un fichier à ouvrir dans Excel. Une période peut être choisie (Du / Au)."
+ },
+ {
+  "t": "img",
+  "src": "/aide/08-recap-facturation.webp",
+  "caption": "Récapitulatif d’un chantier",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h1",
+  "text": "Clients",
+  "id": "clients"
+ },
+ {
+  "t": "p",
+  "text": "Le menu *Chantiers → Clients* regroupe les donneurs d’ordre : nom, personne de contact, téléphone, e-mail, adresse. Un client peut avoir plusieurs chantiers. **Nouveau client** crée une fiche ; *Modifier* et *Supprimer* sont en bout de ligne."
+ },
+ {
+  "t": "img",
+  "src": "/aide/09-clients.webp",
+  "caption": "Liste des clients",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h1",
+  "text": "Équipes",
+  "id": "equipes"
+ },
+ {
+  "t": "p",
+  "text": "Le planning se fait par équipe : une personne seule ou un binôme, chacune avec sa couleur. La page *Équipe → Équipes* les liste avec leurs membres."
+ },
+ {
+  "t": "img",
+  "src": "/aide/10-equipes.webp",
+  "caption": "Équipes",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "li",
+  "text": "**Nouvelle équipe** crée une équipe vide ; *Modifier* change le nom, la couleur et les membres."
+ },
+ {
+  "t": "li",
+  "text": "Le plus rapide reste la **colonne de gauche du planning** : glissez une personne d’une équipe à l’autre, vers « Sans équipe », ou vers « Nouvelle équipe ». Déposer une équipe sur une autre fusionne leurs membres."
+ },
+ {
+  "t": "li",
+  "text": "Une personne n’appartient qu’à **une** équipe à la fois. Changer l’équipe ne modifie pas les affectations déjà planifiées."
+ },
+ {
+  "t": "h1",
+  "text": "Absences",
+  "id": "absences"
+ },
+ {
+  "t": "p",
+  "text": "Saisissez vacances, maladie, école ou autre absence avec une date de début et de fin. Les personnes absentes apparaissent **grisées** dans le planning et dans la fenêtre d’affectation, et leurs jours sont marqués dans la feuille d’heures."
+ },
+ {
+  "t": "img",
+  "src": "/aide/11-absences.webp",
+  "caption": "Absences",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h1",
+  "text": "Statistiques : les heures",
+  "id": "statistiques-les-heures"
+ },
+ {
+  "t": "p",
+  "text": "Le menu *Statistiques → Heures* sert à **contrôler, corriger et valider** les heures pointées par les employés, par semaine ou par mois."
+ },
+ {
+  "t": "img",
+  "src": "/aide/12-heures.webp",
+  "caption": "Feuille d’heures de la semaine",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h2",
+  "text": "Lire la feuille d’heures",
+  "id": "lire-la-feuille-dheures"
+ },
+ {
+  "t": "li",
+  "text": "En haut, les **indicateurs** : heures pointées par rapport au planifié, écart, heures à valider, heures validées, oublis de pointage."
+ },
+ {
+  "t": "li",
+  "text": "La **feuille d’heures** : une ligne par employé, une case par jour. **Vert** = validé, **bleu** = à valider, **gris** = brouillon, **rouge « Oubli »** = jour planifié sans pointage, texte clair = prévu, « Vac. » = absence."
+ },
+ {
+  "t": "li",
+  "text": "La rubrique **À contrôler** liste ce qui mérite un regard : oublis, journées de plus de 10 h, gros écarts avec le planning, pointages qui se chevauchent, heures sans chantier."
+ },
+ {
+  "t": "li",
+  "text": "Le filtre **Toute l’équipe** permet de n’afficher qu’une personne."
+ },
+ {
+  "t": "h2",
+  "text": "Corriger et valider une journée",
+  "id": "corriger-et-valider-une-journee"
+ },
+ {
+  "t": "ol",
+  "text": "**Cliquez sur une case** : le détail de la journée s’ouvre sous le tableau, avec à gauche ce qui était prévu et à droite ce qui a été pointé."
+ },
+ {
+  "t": "ol",
+  "text": "Le **crayon** corrige un pointage (heures, pause, chantier, commentaire). **+ Ajouter des heures** en crée un. En cas d’oubli, **Pointer selon le planning** remplit le pointage avec l’horaire prévu."
+ },
+ {
+  "t": "ol",
+  "text": "**Valider la journée** verrouille les heures ; l’employé ne peut plus les modifier. **Rouvrir** annule la validation."
+ },
+ {
+  "t": "img",
+  "src": "/aide/13-heures-journee.webp",
+  "caption": "Détail d’une journée",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "p",
+  "text": "Le bouton **Valider** en bout de ligne valide d’un coup toutes les heures d’une personne ; dans la liste des pointages en bas de page, cochez plusieurs lignes pour valider ou rouvrir en lot."
+ },
+ {
+  "t": "h2",
+  "text": "Export pour les salaires",
+  "id": "export-pour-les-salaires"
+ },
+ {
+  "t": "p",
+  "text": "**Exporter CSV** produit un fichier Excel pour la période affichée : total par personne (validé, soumis, brouillon) puis le détail de chaque pointage."
+ },
+ {
+  "t": "tip",
+  "text": "Les employés envoient leurs heures depuis leur téléphone en fin de semaine (bouton « Envoyer la semaine »). Les heures encore en brouillon n’ont pas été envoyées : un rappel peut être utile."
+ },
+ {
+  "t": "h1",
+  "text": "Sur le téléphone : Mon planning",
+  "id": "sur-le-telephone-mon-planning"
+ },
+ {
+  "t": "p",
+  "text": "Tous les employés utilisent la page **Mon planning**, pensée pour le téléphone. Elle montre les chantiers du jour et de la semaine, permet de pointer les heures, d’ajouter des photos et de signaler un imprévu."
+ },
+ {
+  "t": "img",
+  "src": "/aide/17-mobile-mon-planning.webp",
+  "caption": "Mon planning sur téléphone",
+  "w": 750,
+  "h": 1624,
+  "mobile": true
+ },
+ {
+  "t": "h2",
+  "text": "Voir ses chantiers",
+  "id": "voir-ses-chantiers"
+ },
+ {
+  "t": "li",
+  "text": "Le bandeau du haut résume la journée. En dessous, chaque jour de la semaine liste les chantiers avec l’horaire, l’adresse (cliquable : elle ouvre le plan) et les collègues présents."
+ },
+ {
+  "t": "li",
+  "text": "Le bouton **Fiche** ouvre les informations du chantier : client et téléphone, adresse, matériel à prévoir, mesures, sous-traitants, remarques du bureau."
+ },
+ {
+  "t": "li",
+  "text": "Les flèches changent de semaine."
+ },
+ {
+  "t": "h2",
+  "text": "Pointer ses heures",
+  "id": "pointer-ses-heures"
+ },
+ {
+  "t": "ol",
+  "text": "Sur le chantier du jour, touchez **Pointer mes heures** : l’horaire prévu est proposé, ajustez le début, la fin et la pause."
+ },
+ {
+  "t": "ol",
+  "text": "Ajoutez un commentaire si besoin (attente de livraison, fin plus tôt…), puis **Pointer**."
+ },
+ {
+  "t": "ol",
+  "text": "En fin de semaine, touchez **Envoyer la semaine** : les heures partent au bureau pour validation. Une heure envoyée reste modifiable tant qu’elle n’est pas validée."
+ },
+ {
+  "t": "img",
+  "src": "/aide/18-mobile-pointer.webp",
+  "caption": "Pointage des heures",
+  "w": 750,
+  "h": 1624,
+  "mobile": true
+ },
+ {
+  "t": "tip",
+  "text": "Sans réseau sur le chantier, le pointage est enregistré sur le téléphone et envoyé automatiquement au retour du réseau."
+ },
+ {
+  "t": "h2",
+  "text": "Photos et imprévus",
+  "id": "photos-et-imprevus"
+ },
+ {
+  "t": "li",
+  "text": "**Photos** : ajoutez des photos du chantier (avancement, problème, livraison). Elles sont visibles par le bureau dans l’affectation."
+ },
+ {
+  "t": "li",
+  "text": "**Imprévu** : prévient le bureau en quelques mots (absence, fin anticipée, matériel manquant, autre). Le message apparaît sur le tableau de bord jusqu’à ce qu’il soit traité."
+ },
+ {
+  "t": "h2",
+  "text": "Recevoir une alerte avant chaque chantier",
+  "id": "recevoir-une-alerte-avant-chaque-chantier"
+ },
+ {
+  "t": "p",
+  "text": "Le téléphone peut rappeler chaque chantier une heure avant son début, et prévenir quand le planning du jour ou du lendemain change."
+ },
+ {
+  "t": "ol",
+  "text": "Sur iPhone, l’application doit d’abord être **ajoutée à l’écran d’accueil** et ouverte depuis son icône (voir chapitre 1)."
+ },
+ {
+  "t": "ol",
+  "text": "Ouvrez **Mon profil** (menu en haut à droite, ou le bandeau « Recevoir une alerte avant chaque chantier ? » dans Mon planning)."
+ },
+ {
+  "t": "ol",
+  "text": "Dans la carte **Alertes**, activez **Alertes sur cet appareil** et acceptez les notifications."
+ },
+ {
+  "t": "ol",
+  "text": "Choisissez le délai (15 min, 30 min, 1 h…) et touchez **Envoyer une alerte de test** pour vérifier."
+ },
+ {
+  "t": "img",
+  "src": "/aide/16-profil-alertes.webp",
+  "caption": "Mon profil : alertes et mot de passe",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h1",
+  "text": "Administration",
+  "id": "administration"
+ },
+ {
+  "t": "h2",
+  "text": "Comptes et rôles",
+  "id": "comptes-et-roles"
+ },
+ {
+  "t": "p",
+  "text": "Le menu *Administration → Équipe & comptes* (administrateurs) liste les comptes. **Nouveau compte** crée un employé : nom, e-mail, mot de passe, rôles, métier, téléphone, couleur d’avatar. Un compte peut cumuler plusieurs rôles (par exemple Administrateur et Chef de chantier)."
+ },
+ {
+  "t": "img",
+  "src": "/aide/14-comptes.webp",
+  "caption": "Équipe & comptes",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "li",
+  "text": "*Modifier* change les informations ou les rôles ; *Supprimer* met le compte à la corbeille (il peut être restauré)."
+ },
+ {
+  "t": "li",
+  "text": "Un employé qui a oublié son mot de passe utilise « Mot de passe oublié ? » ; un administrateur peut aussi lui en définir un nouveau dans *Modifier*."
+ },
+ {
+  "t": "h2",
+  "text": "Configuration",
+  "id": "configuration"
+ },
+ {
+  "t": "p",
+  "text": "*Administration → Configuration* règle le nom de l’application, le logo, la couleur principale, les horaires proposés par les boutons *Matin* / *Après-midi* / *Journée* et l’heure à partir de laquelle un changement de planning de dernière minute prévient les autres planificateurs."
+ },
+ {
+  "t": "img",
+  "src": "/aide/15-configuration.webp",
+  "caption": "Configuration",
+  "w": 800,
+  "h": 500,
+  "mobile": false
+ },
+ {
+  "t": "h2",
+  "text": "Mon profil",
+  "id": "mon-profil"
+ },
+ {
+  "t": "p",
+  "text": "Chaque personne retrouve dans *Mon profil* (menu en haut à droite) ses informations, le changement de mot de passe et le réglage des alertes."
+ },
+ {
+  "t": "h1",
+  "text": "Questions fréquentes",
+  "id": "questions-frequentes"
+ },
+ {
+  "t": "p",
+  "text": "**Un employé ne voit pas un chantier dans Mon planning.** Vérifiez dans le planning qu’il est bien coché dans l’affectation (clic sur la carte). Un « passage » le voit aussi, mais n’est pas compté comme membre de l’équipe."
+ },
+ {
+  "t": "p",
+  "text": "**Une carte apparaît en double.** Deux cartes du même chantier sur le même jour correspondent à deux créneaux différents (matin et après-midi, par exemple). Pour un même créneau, les personnes sont regroupées sur une seule carte."
+ },
+ {
+  "t": "p",
+  "text": "**Les heures d’un employé sont bloquées.** Elles ont été validées : dans *Statistiques → Heures*, ouvrez la journée et touchez *Rouvrir*."
+ },
+ {
+  "t": "p",
+  "text": "**Les alertes n’arrivent pas sur iPhone.** L’application doit être ouverte depuis l’icône de l’écran d’accueil, pas depuis Safari, et les notifications doivent être autorisées dans Réglages → Notifications."
+ },
+ {
+  "t": "p",
+  "text": "**Changer de mot de passe.** *Mon profil → Mot de passe*. Les autres appareils connectés sont déconnectés."
+ },
+ {
+  "t": "p",
+  "text": "Support : Step One · hello@step-one.ch · +41 77 535 40 88"
+ }
+]

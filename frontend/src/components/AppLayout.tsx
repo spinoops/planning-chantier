@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { useSettings } from '@/hooks/useSettings'
 import { applyBranding, DEFAULT_APP_NAME, DEFAULT_LOGO } from '@/lib/branding'
 import { initials } from '@/lib/format'
+import { aideSectionFor } from '@/lib/aide'
 import { ADMIN_ITEMS, isItemActive, NAV_ITEMS, visibleItems } from '@/lib/navigation'
 import type { NavItem } from '@/lib/navigation'
 
@@ -105,7 +106,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4 print:hidden">
         <div className="glass flex items-center gap-3 rounded-full py-1.5 pl-2 pr-2 sm:gap-4 sm:pl-3">
           {/* Logo + nom */}
           <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5" aria-label={appName}>
@@ -246,9 +247,21 @@ export default function AppLayout() {
         </div>
       )}
 
-      <main className={fullWidth ? 'px-3 py-4 sm:px-4' : 'mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-7'}>
+      <main className={fullWidth ? 'px-3 pb-16 pt-4 sm:px-4' : 'mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 sm:pt-7'}>
         <Outlet />
       </main>
+
+      {/* Mode d'emploi : bouton « ? » flottant, ouvre l'aide sur la section de la page en cours. */}
+      {!pathname.startsWith('/aide') && !pathname.startsWith('/planning/print') && (
+        <Link
+          to={`/aide${aideSectionFor(pathname) ? `#${aideSectionFor(pathname)}` : ''}`}
+          aria-label="Mode d'emploi"
+          title="Mode d'emploi"
+          className="glass-strong fixed bottom-4 right-4 z-30 flex h-11 w-11 items-center justify-center rounded-full text-[19px] font-semibold text-primary transition hover:scale-105 active:scale-95 sm:bottom-5 sm:right-5 print:hidden"
+        >
+          ?
+        </Link>
+      )}
     </div>
   )
 }

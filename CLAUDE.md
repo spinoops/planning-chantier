@@ -202,6 +202,13 @@ La version installée sous WAMP est **8.4.24** :
   « Fiche » dans `MyPlanningPage` et lien dans `AffectationModal`). Hooks : `useClients`, `useSousTraitants`,
   `useChantier(id)`, `useChantierRecap`. `AddressInput` ne lance la recherche qu'après une frappe de l'utilisateur
   (pas lors d'un `reset` du formulaire).
+- **Mode d'emploi intégré** (demande explicite) : page `AidePage` (`/aide`, tout le monde) = même texte que
+  `_construction/Planning-Chantier-Mode-d-emploi.docx`, contenu dans `src/content/aide.json` (blocs h1/h2/p/li/ol/tip/img,
+  **gras** / *italique*), captures WebP dans `public/aide/`, helpers `lib/aide.ts`. Sommaire collant (section en cours
+  surlignée), bandeau « terrain » pour les non-planificateurs, bouton « Imprimer / PDF » (`window.print()`, styles
+  `@media print` en fin d'`index.css` : couverture, un chapitre par page). Bouton rond **« ? » en bas à droite** de
+  toutes les pages (`AppLayout`, masqué sur `/aide` et à l'impression) qui ouvre l'aide sur la section de la page en
+  cours (`aideSectionFor`). Modifier le mode d'emploi = mettre à jour le JSON (et le Word si besoin).
 - **Hors ligne léger** : `public/sw.js` (coquille + lectures d'API « réseau d'abord, cache sinon »,
   enregistré en production dans `main.tsx`), `public/manifest.webmanifest` (installable, démarre sur
   `/mon-planning`), `lib/offlineQueue.ts` (pointages / imprévus saisis sans réseau mis en file dans

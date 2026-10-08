@@ -622,3 +622,62 @@ h3 {
     inset 0 1px 0 rgb(255 255 255 / 0.5);
   background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(255 255 255 / 0.35) 6px 10px);
 }
+
+/* ------------------------------------------------------------------------- */
+/*  Impression : pas de fond d'écran ni de verre (aide, semaine imprimable).   */
+/* ------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+  body {
+    background: #fff;
+  }
+  body::before {
+    display: none;
+  }
+  .aide-page main,
+  main:has(.aide-page) {
+    max-width: none;
+    padding: 0;
+  }
+  .aide-content {
+    background: none !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .aide-content .aide-h1 {
+    break-before: page;
+    margin-top: 0;
+    padding-top: 0;
+    box-shadow: none;
+  }
+  .aide-content .aide-h1,
+  .aide-content .aide-h2 {
+    break-after: avoid;
+  }
+  .aide-content .aide-figure,
+  .aide-content .aide-tip {
+    break-inside: avoid;
+  }
+  .aide-content .aide-figure img {
+    box-shadow: none;
+    outline: 1px solid #e5e5ea;
+    max-height: 120mm;
+    width: auto;
+    max-width: 100%;
+  }
+  .aide-content p,
+  .aide-content li {
+    font-size: 10.5pt;
+    color: #1c1c1e;
+  }
+  .aide-content .aide-tip {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

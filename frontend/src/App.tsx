@@ -19,6 +19,7 @@ import UsersPage from '@/pages/UsersPage'
 import ActivityPage from '@/pages/ActivityPage'
 import SettingsPage from '@/pages/SettingsPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import AidePage from '@/pages/AidePage'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import AdminRoute from '@/components/AdminRoute'
 import RoleRoute from '@/components/RoleRoute'
@@ -47,6 +48,9 @@ export default function App() {
 
           {/* Planning personnel : tout le monde (ouvriers sur tablette / téléphone). */}
           <Route path="/mon-planning" element={<MyPlanningPage />} />
+
+          {/* Mode d'emploi intégré (bouton « ? » en bas à droite) : tout le monde. */}
+          <Route path="/aide" element={<AidePage />} />
 
           {/* Planification : chefs de chantier et admins. */}
           <Route element={<RoleRoute roles={PLANNER_ROLES} redirectTo="/mon-planning" />}>
