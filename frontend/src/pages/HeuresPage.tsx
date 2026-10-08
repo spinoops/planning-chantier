@@ -342,7 +342,6 @@ export default function HeuresPage() {
     <div>
       <PageHeader
         title="Heures"
-        subtitle="Statistiques · contrôle, correction et validation des heures des employés."
         action={
           <>
             <Button variant="secondary" onClick={() => void exportCsv()} loading={exporting}>

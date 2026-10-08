@@ -279,7 +279,7 @@ function BackupsSection() {
 export default function SettingsPage() {
   return (
     <div>
-      <PageHeader title="Configuration" subtitle="Identité de l'application, modules et sauvegardes." />
+      <PageHeader title="Configuration" />
       <div className="space-y-6">
         <IdentitySection />
         <PlanningSection />

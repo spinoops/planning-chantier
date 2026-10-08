@@ -106,7 +106,7 @@ export default function ClientsPage() {
 
   return (
     <div>
-      <PageHeader title="Clients" subtitle="Les donneurs d'ordre, à sélectionner à la création d'un chantier." action={<Button onClick={openCreate}>Nouveau client</Button>} />
+      <PageHeader title="Clients" action={<Button onClick={openCreate}>Nouveau client</Button>} />
 
       <div className="mb-4">
         <SearchInput value={params.search} onChange={setSearch} placeholder="Nom, contact, ville…" className="w-full sm:w-72" />

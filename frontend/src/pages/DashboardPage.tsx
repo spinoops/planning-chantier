@@ -142,7 +142,7 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title={`Bonjour ${user?.name.split(' ')[0] ?? ''}`}
-        subtitle={planning ? formatLongDay(fromKey(planning.today)) : "Voici un aperçu de l'application."}
+        subtitle={planning ? formatLongDay(fromKey(planning.today)) : undefined}
         action={
           planning && (
             <>

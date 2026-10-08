@@ -122,7 +122,7 @@ export default function AbsencesPage() {
 
   return (
     <div>
-      <PageHeader title="Absences" subtitle="Vacances, maladie, école : les personnes absentes sont grisées dans le planning." action={<Button onClick={openCreate}>Nouvelle absence</Button>} />
+      <PageHeader title="Absences" action={<Button onClick={openCreate}>Nouvelle absence</Button>} />
 
       {isLoading ? (
         <Spinner block />

@@ -259,9 +259,7 @@ export default function TeamSidebar({ equipes, workers, hidden, onToggle, onShow
         </div>
 
         {canManage && (
-          <div className="border-t border-gray-100 px-4 py-2.5 text-[11px] leading-snug text-gray-400">
-            Glisse une <strong className="font-medium text-gray-500">équipe</strong> ou une <strong className="font-medium text-gray-500">personne</strong> sur le
-            calendrier pour l'affecter à un chantier.{' '}
+          <div className="border-t border-gray-100 px-4 py-2.5 text-[11px] leading-snug">
             <Link to="/equipes" className="font-medium text-primary hover:underline">
               Gérer les équipes
             </Link>

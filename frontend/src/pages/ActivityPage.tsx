@@ -46,7 +46,7 @@ export default function ActivityPage() {
 
   return (
     <div>
-      <PageHeader title="Journal d'activité" subtitle="Qui a fait quoi, et quand : créations, modifications, suppressions, connexions." />
+      <PageHeader title="Journal d'activité" />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput value={search} onChange={(v) => setParam('search', v)} placeholder="Rechercher dans les descriptions…" className="w-full sm:w-72" />

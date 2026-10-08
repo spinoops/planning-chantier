@@ -100,7 +100,6 @@ export default function InvitationsPage() {
     <div>
       <PageHeader
         title="Invitations"
-        subtitle={isAdmin ? "Toutes les invitations émises dans l'application." : "Invite quelqu'un à rejoindre l'application."}
         action={<Button onClick={openCreate}>Inviter quelqu'un</Button>}
       />
 

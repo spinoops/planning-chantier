@@ -76,7 +76,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="Mon profil" subtitle="Tes informations, ton mot de passe et tes alertes." />
+      <PageHeader title="Mon profil" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Informations" description="Nom affiché et adresse de connexion.">

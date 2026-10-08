@@ -124,7 +124,6 @@ export default function EquipesPage() {
     <div>
       <PageHeader
         title="Équipes"
-        subtitle="Le planning se fait par équipe : une personne seule ou un binôme, chacune avec sa couleur dans le calendrier."
         action={<Button onClick={() => openCreate()}>Nouvelle équipe</Button>}
       />
 

@@ -356,13 +356,6 @@ export default function PlanningPage() {
           absences={absences}
         />
 
-        {canEdit && (
-          <p className="mt-3 text-xs text-gray-400">
-            Astuce : coche à gauche les chantiers et équipes à afficher (double-clic : un seul). Sélectionne une plage pour créer, glisse une carte pour la
-            déplacer, étire-la pour changer l'horaire. Glisse une équipe ou une personne depuis la colonne de gauche sur un créneau ou sur une carte.
-          </p>
-        )}
-
         <AffectationModal target={target} onClose={() => setTarget(null)} chantiers={chantiers} equipes={equipes} workers={workers} existing={loaded} absences={absences} />
       </div>
     </div>

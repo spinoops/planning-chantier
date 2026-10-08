@@ -170,7 +170,7 @@ export default function ChantiersPage() {
 
   return (
     <div>
-      <PageHeader title="Chantiers" subtitle="Les lieux d'intervention que tu places ensuite dans le planning." action={<Button onClick={openCreate}>Nouveau chantier</Button>} />
+      <PageHeader title="Chantiers" action={<Button onClick={openCreate}>Nouveau chantier</Button>} />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput value={params.search} onChange={setSearch} placeholder="Nom, client, ville…" className="w-full sm:w-72" />

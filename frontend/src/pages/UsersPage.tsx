@@ -160,7 +160,6 @@ export default function UsersPage() {
     <div>
       <PageHeader
         title="Équipe & comptes"
-        subtitle="Ouvriers, chefs de chantier et administrateurs ayant accès à l'application."
         action={<Button onClick={openCreate}>Nouveau compte</Button>}
       />
 
