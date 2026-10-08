@@ -2,9 +2,11 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { isPlanner } from '@/lib/navigation'
-import { AIDE_BLOCKS, AIDE_CHAPTERS, AIDE_EMPLOYEE_SECTION, type AideBlock } from '@/lib/aide'
+import { AIDE_EMPLOYEE_SECTION, chaptersOf, type AideBlock, type AideChapter } from '@/lib/aide'
+import { useAide, useAideImage } from '@/hooks/useAide'
 import { DEFAULT_LOGO } from '@/lib/branding'
 import Button from '@/components/ui/Button'
+import Spinner from '@/components/ui/Spinner'
 
 /** **gras** et *italique* → éléments React. */
 function rich(text: string): ReactNode[] {
@@ -37,8 +39,19 @@ function groupBlocks(blocks: AideBlock[]): Group[] {
   return out
 }
 
-const CHAPTER_NO = new Map(AIDE_CHAPTERS.map((c) => [c.id, c.number]))
-const chapterOf = (id: string) => AIDE_CHAPTERS.find((c) => c.id === id || c.sections.some((s) => s.id === id))?.id
+const chapterOf = (chapters: AideChapter[], id: string) => chapters.find((c) => c.id === id || c.sections.some((s) => s.id === id))?.id
+
+/** Capture chargée avec le jeton ; emplacement réservé (même format) en attendant. */
+function AideImage({ block }: { block: Extract<AideBlock, { t: 'img' }> }) {
+  const { data: url } = useAideImage(block.src)
+  const width = block.mobile ? 'max-w-[260px]' : 'max-w-[760px]'
+  if (!url) return <div className={`mx-auto w-full rounded-xl bg-gray-900/[0.04] ${width}`} style={{ aspectRatio: `${block.w} / ${block.h}` }} aria-hidden />
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="block" title="Agrandir">
+      <img src={url} alt={block.caption} width={block.w} height={block.h} className={`mx-auto h-auto w-full rounded-xl shadow-[0_10px_30px_-12px_rgb(15_40_90/0.35)] ${width}`} />
+    </a>
+  )
+}
 
 /**
  * Mode d'emploi intégré : sommaire à gauche (section en cours surlignée), contenu avec
@@ -48,9 +61,13 @@ const chapterOf = (id: string) => AIDE_CHAPTERS.find((c) => c.id === id || c.sec
 export default function AidePage() {
   const { user } = useAuth()
   const { hash } = useLocation()
-  const groups = useMemo(() => groupBlocks(AIDE_BLOCKS), [])
-  const [active, setActive] = useState<string>(AIDE_CHAPTERS[0]?.id ?? '')
+  const { data: blocks = [], isLoading } = useAide()
+  const groups = useMemo(() => groupBlocks(blocks), [blocks])
+  const chapters = useMemo(() => chaptersOf(blocks), [blocks])
+  const chapterNumbers = useMemo(() => new Map(chapters.map((c) => [c.id, c.number])), [chapters])
+  const [active, setActive] = useState<string>('')
   const employee = !isPlanner(user)
+  const loaded = blocks.length > 0
 
   // Arrivée par le bouton « ? » ou un lien du sommaire : aller à la section demandée.
   useEffect(() => {
@@ -58,7 +75,7 @@ export default function AidePage() {
     const el = id ? document.getElementById(id) : null
     if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' }))
     else window.scrollTo({ top: 0 })
-  }, [hash])
+  }, [hash, loaded])
 
   // Titre visible → surligné dans le sommaire.
   useEffect(() => {
@@ -72,9 +89,9 @@ export default function AidePage() {
     )
     headings.forEach((h) => observer.observe(h))
     return () => observer.disconnect()
-  }, [])
+  }, [loaded])
 
-  const openChapter = chapterOf(active)
+  const openChapter = chapterOf(chapters, active || (chapters[0]?.id ?? ''))
 
   return (
     <div className="aide-page">
@@ -110,7 +127,7 @@ export default function AidePage() {
         >
           <p className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">Sommaire</p>
           <ol className="space-y-0.5">
-            {AIDE_CHAPTERS.map((c) => (
+            {chapters.map((c) => (
               <li key={c.id}>
                 <Link
                   to={`#${c.id}`}
@@ -144,6 +161,7 @@ export default function AidePage() {
 
         {/* Contenu */}
         <article className="glass-panel aide-content min-w-0 flex-1 rounded-[18px] px-5 py-6 sm:px-8 sm:py-8">
+          {isLoading && <Spinner block />}
           {employee && (
             <Link
               to={`#${AIDE_EMPLOYEE_SECTION}`}
@@ -182,7 +200,7 @@ export default function AidePage() {
             const b = g.block
             switch (b.t) {
               case 'h1': {
-                const chapterNo = CHAPTER_NO.get(b.id) ?? 0
+                const chapterNo = chapterNumbers.get(b.id) ?? 0
                 return (
                   <h2
                     key={i}
@@ -222,17 +240,7 @@ export default function AidePage() {
               case 'img':
                 return (
                   <figure key={i} className="aide-figure my-6">
-                    <a href={b.src} target="_blank" rel="noreferrer" className="block" title="Agrandir">
-                      <img
-                        src={b.src}
-                        alt={b.caption}
-                        width={b.w}
-                        height={b.h}
-                        className={`mx-auto h-auto w-full rounded-xl shadow-[0_10px_30px_-12px_rgb(15_40_90/0.35)] ${
-                          b.mobile ? 'max-w-[260px]' : 'max-w-[760px]'
-                        }`}
-                      />
-                    </a>
+                    <AideImage block={b} />
                     {b.caption && <figcaption className="mt-2 text-center text-[13px] italic text-gray-500">{b.caption}</figcaption>}
                   </figure>
                 )

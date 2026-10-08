@@ -3,6 +3,7 @@
 use App\Http\Controllers\AbsenceController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\AffectationPhotoController;
+use App\Http\Controllers\AideController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ChantierController;
@@ -89,6 +90,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Notifications push (un abonnement par appareil).
     Route::get('/push/public-key', [PushSubscriptionController::class, 'publicKey']);
+
+    // Mode d'emploi intégré : texte et captures réservés aux personnes connectées.
+    Route::get('/aide', [AideController::class, 'index']);
+    Route::get('/aide/images/{name}', [AideController::class, 'image'])->where('name', '[A-Za-z0-9._-]+');
     Route::post('/push/subscriptions', [PushSubscriptionController::class, 'store']);
     Route::delete('/push/subscriptions', [PushSubscriptionController::class, 'destroy']);
     Route::post('/push/test', [PushSubscriptionController::class, 'test']);

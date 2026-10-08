@@ -99,6 +99,9 @@ jobs:
           php backend/artisan db:seed --class=RolesSeeder --force
           # Photos des chantiers servies via /storage (sans effet si le lien existe déjà).
           php backend/artisan storage:link || true
+          # Fichiers du front qui ne sont plus livrés (rsync sans --delete) : un dossier
+          # homonyme d'une route de l'interface la masquerait (403 Apache).
+          rm -rf backend/public/aide
           EOF
 
       # Nouveaux fichiers d'abord (noms hachés : pas de collision), index.html et le service

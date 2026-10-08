@@ -18,7 +18,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/01-connexion.webp",
+  "src": "01-connexion.webp",
   "caption": "Page de connexion",
   "w": 1280,
   "h": 800,
@@ -89,7 +89,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/02-tableau-de-bord.webp",
+  "src": "02-tableau-de-bord.webp",
   "caption": "Tableau de bord",
   "w": 1280,
   "h": 800,
@@ -126,7 +126,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/03-planning-semaine.webp",
+  "src": "03-planning-semaine.webp",
   "caption": "Planning, vue Semaine",
   "w": 1280,
   "h": 800,
@@ -151,7 +151,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/05-planning-par-employe.webp",
+  "src": "05-planning-par-employe.webp",
   "caption": "Vue « Par employé »",
   "w": 1280,
   "h": 800,
@@ -180,7 +180,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/04-affectation-modale.webp",
+  "src": "04-affectation-modale.webp",
   "caption": "Fenêtre d’affectation",
   "w": 1280,
   "h": 800,
@@ -259,7 +259,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/06-chantiers.webp",
+  "src": "06-chantiers.webp",
   "caption": "Liste des chantiers",
   "w": 1280,
   "h": 800,
@@ -297,7 +297,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/07-fiche-chantier.webp",
+  "src": "07-fiche-chantier.webp",
   "caption": "Fiche de préparation d’un chantier",
   "w": 1280,
   "h": 800,
@@ -346,7 +346,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/08-recap-facturation.webp",
+  "src": "08-recap-facturation.webp",
   "caption": "Récapitulatif d’un chantier",
   "w": 1280,
   "h": 800,
@@ -363,7 +363,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/09-clients.webp",
+  "src": "09-clients.webp",
   "caption": "Liste des clients",
   "w": 1280,
   "h": 800,
@@ -380,7 +380,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/10-equipes.webp",
+  "src": "10-equipes.webp",
   "caption": "Équipes",
   "w": 1280,
   "h": 800,
@@ -409,7 +409,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/11-absences.webp",
+  "src": "11-absences.webp",
   "caption": "Absences",
   "w": 1280,
   "h": 800,
@@ -426,7 +426,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/12-heures.webp",
+  "src": "12-heures.webp",
   "caption": "Feuille d’heures de la semaine",
   "w": 1280,
   "h": 800,
@@ -472,7 +472,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/13-heures-journee.webp",
+  "src": "13-heures-journee.webp",
   "caption": "Détail d’une journée",
   "w": 1280,
   "h": 800,
@@ -506,7 +506,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/17-mobile-mon-planning.webp",
+  "src": "17-mobile-mon-planning.webp",
   "caption": "Mon planning sur téléphone",
   "w": 780,
   "h": 1688,
@@ -548,7 +548,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/18-mobile-pointer.webp",
+  "src": "18-mobile-pointer.webp",
   "caption": "Pointage des heures",
   "w": 780,
   "h": 1688,
@@ -598,7 +598,7 @@
  },
  {
   "t": "img",
-  "src": "/aide/16-profil-alertes.webp",
+  "src": "16-profil-alertes.webp",
   "caption": "Mon profil : alertes et mot de passe",
   "w": 1280,
   "h": 800,
