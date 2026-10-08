@@ -14,14 +14,14 @@
  },
  {
   "t": "p",
-  "text": "Chaque personne a son propre compte (adresse e-mail et mot de passe). Au premier démarrage, le mot de passe est **Test1234$** : changez-le ensuite dans *Mon profil*."
+  "text": "Chaque personne a son propre compte (adresse e-mail et mot de passe). Le mot de passe de départ vous est communiqué par le bureau : changez-le dès la première connexion dans *Mon profil*."
  },
  {
   "t": "img",
   "src": "/aide/01-connexion.webp",
   "caption": "Page de connexion",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -91,8 +91,8 @@
   "t": "img",
   "src": "/aide/02-tableau-de-bord.webp",
   "caption": "Tableau de bord",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -128,8 +128,8 @@
   "t": "img",
   "src": "/aide/03-planning-semaine.webp",
   "caption": "Planning, vue Semaine",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -153,8 +153,8 @@
   "t": "img",
   "src": "/aide/05-planning-par-employe.webp",
   "caption": "Vue « Par employé »",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -182,8 +182,8 @@
   "t": "img",
   "src": "/aide/04-affectation-modale.webp",
   "caption": "Fenêtre d’affectation",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -261,8 +261,8 @@
   "t": "img",
   "src": "/aide/06-chantiers.webp",
   "caption": "Liste des chantiers",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -280,7 +280,7 @@
  },
  {
   "t": "ol",
-  "text": "Le **titre du chantier reprend le nom du client**. Ajoutez si besoin un complément (« Garage », « Terrasse »…) : le titre devient par exemple *Joray François – Garage*."
+  "text": "Le **titre du chantier reprend le nom du client**. Ajoutez si besoin un complément (« Garage », « Terrasse »…) : le titre devient par exemple *Dubois Claire – Garage*."
  },
  {
   "t": "ol",
@@ -299,8 +299,8 @@
   "t": "img",
   "src": "/aide/07-fiche-chantier.webp",
   "caption": "Fiche de préparation d’un chantier",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -348,8 +348,8 @@
   "t": "img",
   "src": "/aide/08-recap-facturation.webp",
   "caption": "Récapitulatif d’un chantier",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -365,8 +365,8 @@
   "t": "img",
   "src": "/aide/09-clients.webp",
   "caption": "Liste des clients",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -382,8 +382,8 @@
   "t": "img",
   "src": "/aide/10-equipes.webp",
   "caption": "Équipes",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -411,8 +411,8 @@
   "t": "img",
   "src": "/aide/11-absences.webp",
   "caption": "Absences",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -428,8 +428,8 @@
   "t": "img",
   "src": "/aide/12-heures.webp",
   "caption": "Feuille d’heures de la semaine",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -474,8 +474,8 @@
   "t": "img",
   "src": "/aide/13-heures-journee.webp",
   "caption": "Détail d’une journée",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -508,8 +508,8 @@
   "t": "img",
   "src": "/aide/17-mobile-mon-planning.webp",
   "caption": "Mon planning sur téléphone",
-  "w": 750,
-  "h": 1624,
+  "w": 780,
+  "h": 1688,
   "mobile": true
  },
  {
@@ -550,8 +550,8 @@
   "t": "img",
   "src": "/aide/18-mobile-pointer.webp",
   "caption": "Pointage des heures",
-  "w": 750,
-  "h": 1624,
+  "w": 780,
+  "h": 1688,
   "mobile": true
  },
  {
@@ -600,8 +600,8 @@
   "t": "img",
   "src": "/aide/16-profil-alertes.webp",
   "caption": "Mon profil : alertes et mot de passe",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -622,8 +622,8 @@
   "t": "img",
   "src": "/aide/14-comptes.webp",
   "caption": "Équipe & comptes",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {
@@ -647,8 +647,8 @@
   "t": "img",
   "src": "/aide/15-configuration.webp",
   "caption": "Configuration",
-  "w": 800,
-  "h": 500,
+  "w": 1280,
+  "h": 800,
   "mobile": false
  },
  {

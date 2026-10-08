@@ -136,7 +136,7 @@ export default function QuickChantierModal({ open, onClose, onCreated, existing 
                 setValue('address', s.street, { shouldDirty: true })
                 if (s.city) setValue('city', s.city, { shouldDirty: true })
               }}
-              placeholder="Rue des Pèlerins 35"
+              placeholder="Rue des Tilleuls 12"
               error={errors.address?.message}
             />
           </div>

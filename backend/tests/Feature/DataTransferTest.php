@@ -13,8 +13,8 @@ beforeEach(fn () => ensureRoles());
 it('reprend les données exportées dans une autre base (comptes, clients, planning)', function () {
     $robin = User::factory()->create(['email' => 'robin@top-stores.ch', 'password' => Hash::make('Test1234$')]);
     $robin->assignRole(['admin', 'chef']);
-    $client = Client::create(['name' => 'Joray François', 'city' => 'Porrentruy', 'notes' => "Ligne 1\nL'accès par la cour"]);
-    $chantier = Chantier::create(['name' => 'Joray François – Garage', 'client' => $client->name, 'client_id' => $client->id, 'color' => '#e30917', 'status' => 'active']);
+    $client = Client::create(['name' => 'Dubois Claire', 'city' => 'Porrentruy', 'notes' => "Ligne 1\nL'accès par la cour"]);
+    $chantier = Chantier::create(['name' => 'Dubois Claire – Garage', 'client' => $client->name, 'client_id' => $client->id, 'color' => '#e30917', 'status' => 'active']);
     $a = Affectation::create(['chantier_id' => $chantier->id, 'date' => '2026-10-12', 'start_time' => '07:30', 'end_time' => '12:00']);
     $a->syncPeople([$robin->id], []);
     TimeEntry::create(['user_id' => $robin->id, 'date' => '2026-10-05', 'start_time' => '07:30', 'end_time' => '12:00', 'break_minutes' => 0, 'status' => 'draft']);

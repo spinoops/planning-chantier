@@ -32,7 +32,7 @@ interface ClientSelectProps {
   canCreate?: boolean
 }
 
-/** Comparaison sans accents ni casse (« joray » trouve « Joray François »). */
+/** Comparaison sans accents ni casse (« dubois » trouve « Dubois Claire »). */
 function norm(s: string): string {
   return s
     .normalize('NFD')

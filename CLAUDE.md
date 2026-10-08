@@ -209,6 +209,10 @@ La version installée sous WAMP est **8.4.24** :
   `@media print` en fin d'`index.css` : couverture, un chapitre par page). Bouton rond **« ? » en bas à droite** de
   toutes les pages (`AppLayout`, masqué sur `/aide` et à l'impression) qui ouvre l'aide sur la section de la page en
   cours (`aideSectionFor`). Modifier le mode d'emploi = mettre à jour le JSON (et le Word si besoin).
+  **Tout ce contenu est public** (dossier `public/` et code du front lisibles sans connexion) : jamais de mot de passe,
+  d'e-mail de connexion réel ni de vrai client. Les captures se font sur une base de démo séparée
+  (`app_planningchantier_demo`, seeder aux clients fictifs Dubois Claire, Fontaine Marc… et comptes `@baseapp.test`),
+  jamais sur la base locale qui contient les vraies données.
 - **Hors ligne léger** : `public/sw.js` (coquille + lectures d'API « réseau d'abord, cache sinon »,
   enregistré en production dans `main.tsx`), `public/manifest.webmanifest` (installable, démarre sur
   `/mon-planning`), `lib/offlineQueue.ts` (pointages / imprévus saisis sans réseau mis en file dans

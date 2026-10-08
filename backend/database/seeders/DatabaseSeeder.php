@@ -76,14 +76,15 @@ class DatabaseSeeder extends Seeder
 
         $monday = CarbonImmutable::today()->startOfWeek();
 
-        // Chantiers = clients, dans l'esprit des calendriers actuels (client + adresse).
+        // Chantiers = clients fictifs (client + adresse) : ces données apparaissent dans les captures
+        // du mode d'emploi, publiques. Ne pas y mettre de vrais clients.
         $chantiers = collect([
-            ['Joray François', 'Rue des Pèlerins 35', 'Porrentruy', '#2563eb', 'active'],
-            ['Chételat Nicolas', 'Chemin du Bruye 16', 'Courgenay', '#0891b2', 'active'],
-            ['Migy Eloi', 'Dos les Laves 136', 'Alle', '#16a34a', 'active'],
-            ['Varin Bernard', 'En Chaudron 4', 'Cornol', '#9333ea', 'active'],
-            ['Rausis Gérard', 'Chemin de la Fiole 13', 'Fontenais', '#ea580c', 'active'],
-            ['Regalo Celeste', 'Impasse en Cortio 3', 'Bressaucourt', '#db2777', 'planned'],
+            ['Dubois Claire', 'Rue des Tilleuls 12', 'Porrentruy', '#2563eb', 'active'],
+            ['Fontaine Marc', 'Chemin des Vergers 5', 'Courgenay', '#0891b2', 'active'],
+            ['Girard Julie', 'Route de la Gare 21', 'Alle', '#16a34a', 'active'],
+            ['Lambert Paul', 'Rue du Moulin 4', 'Cornol', '#9333ea', 'active'],
+            ['Morel Sophie', 'Chemin des Prés 13', 'Fontenais', '#ea580c', 'active'],
+            ['Perrin Lucas', 'Impasse des Saules 3', 'Bressaucourt', '#db2777', 'planned'],
             ['Bureau', 'Atelier', 'Porrentruy', '#78716c', 'active'],
         ])->mapWithKeys(function (array $c) use ($monday) {
             // Un client par chantier (sauf le Bureau), avec les infos de la fiche de préparation.
@@ -114,7 +115,7 @@ class DatabaseSeeder extends Seeder
 
         // Un sous-traitant prévu sur le chantier à venir.
         $electricien = SousTraitant::firstOrCreate(['name' => 'Électro Jura Sàrl'], ['trade' => 'Électricien', 'phone' => '+41 32 466 11 22']);
-        $chantiers['Regalo Celeste']->sousTraitants()->syncWithoutDetaching([$electricien->id => ['note' => 'Après la dalle', 'planned_date' => $monday->addWeeks(3)->toDateString()]]);
+        $chantiers['Perrin Lucas']->sousTraitants()->syncWithoutDetaching([$electricien->id => ['note' => 'Après la dalle', 'planned_date' => $monday->addWeeks(3)->toDateString()]]);
 
         $robin = User::where('email', 'robin@baseapp.test')->first();
 
@@ -122,24 +123,24 @@ class DatabaseSeeder extends Seeder
         foreach ([-1, 0, 1] as $week) {
             $d = fn (int $day) => $monday->addWeeks($week)->addDays($day)->toDateString();
 
-            // Léo : Joray lundi (journée), Chételat mardi matin, Vantaggiato… simplifié.
-            $this->affect($chantiers['Joray François'], $equipes['Léo'], $d(0), '08:00', '12:00', $robin);
-            $this->affect($chantiers['Joray François'], $equipes['Léo'], $d(0), '13:00', '14:45', $robin);
-            $this->affect($chantiers['Regalo Celeste'], $equipes['Léo'], $d(0), '14:45', '17:00', $robin);
-            $this->affect($chantiers['Chételat Nicolas'], $equipes['Léo'], $d(1), '08:00', '12:00', $robin);
-            $this->affect($chantiers['Migy Eloi'], $equipes['Léo'], $d(3), '08:00', '12:00', $robin);
-            $this->affect($chantiers['Migy Eloi'], $equipes['Léo'], $d(3), '13:00', '17:00', $robin);
-            $this->affect($chantiers['Varin Bernard'], $equipes['Léo'], $d(4), '08:00', '12:00', $robin);
+            // Léo : Dubois lundi (journée), Fontaine mardi matin, etc.
+            $this->affect($chantiers['Dubois Claire'], $equipes['Léo'], $d(0), '08:00', '12:00', $robin);
+            $this->affect($chantiers['Dubois Claire'], $equipes['Léo'], $d(0), '13:00', '14:45', $robin);
+            $this->affect($chantiers['Perrin Lucas'], $equipes['Léo'], $d(0), '14:45', '17:00', $robin);
+            $this->affect($chantiers['Fontaine Marc'], $equipes['Léo'], $d(1), '08:00', '12:00', $robin);
+            $this->affect($chantiers['Girard Julie'], $equipes['Léo'], $d(3), '08:00', '12:00', $robin);
+            $this->affect($chantiers['Girard Julie'], $equipes['Léo'], $d(3), '13:00', '17:00', $robin);
+            $this->affect($chantiers['Lambert Paul'], $equipes['Léo'], $d(4), '08:00', '12:00', $robin);
 
-            // Étienne et David : ensemble chez Rausis, puis Varin — une seule carte par chantier
+            // Étienne et David : ensemble chez Morel, puis Lambert — une seule carte par chantier
             // et par créneau, avec les deux personnes dedans (pas une carte par équipe).
             $duo = [$equipes['Étienne'], $equipes['David']];
-            $this->affect($chantiers['Rausis Gérard'], $duo, $d(0), '07:30', '12:00', $robin);
-            $this->affect($chantiers['Rausis Gérard'], $duo, $d(0), '13:00', '16:45', $robin);
-            $this->affect($chantiers['Rausis Gérard'], $duo, $d(1), '07:30', '12:00', $robin);
-            $this->affect($chantiers['Varin Bernard'], $duo, $d(2), '07:30', '16:45', $robin, 'Prendre la remorque.');
-            $this->affect($chantiers['Chételat Nicolas'], $duo, $d(3), '07:30', '16:45', $robin);
-            $this->affect($chantiers['Migy Eloi'], $duo, $d(4), '07:30', '12:00', $robin);
+            $this->affect($chantiers['Morel Sophie'], $duo, $d(0), '07:30', '12:00', $robin);
+            $this->affect($chantiers['Morel Sophie'], $duo, $d(0), '13:00', '16:45', $robin);
+            $this->affect($chantiers['Morel Sophie'], $duo, $d(1), '07:30', '12:00', $robin);
+            $this->affect($chantiers['Lambert Paul'], $duo, $d(2), '07:30', '16:45', $robin, 'Prendre la remorque.');
+            $this->affect($chantiers['Fontaine Marc'], $duo, $d(3), '07:30', '16:45', $robin);
+            $this->affect($chantiers['Girard Julie'], $duo, $d(4), '07:30', '12:00', $robin);
 
             // Davison : bureau / atelier.
             for ($day = 0; $day < 5; $day++) {
@@ -148,8 +149,8 @@ class DatabaseSeeder extends Seeder
             }
 
             // Robin : passages sur les chantiers.
-            $this->affect($chantiers['Rausis Gérard'], $equipes['Robin'], $d(2), '08:00', '13:00', $robin, 'Contrôle et métrés.');
-            $this->affect($chantiers['Joray François'], $equipes['Robin'], $d(0), '10:30', '12:00', $robin);
+            $this->affect($chantiers['Morel Sophie'], $equipes['Robin'], $d(2), '08:00', '13:00', $robin, 'Contrôle et métrés.');
+            $this->affect($chantiers['Dubois Claire'], $equipes['Robin'], $d(0), '10:30', '12:00', $robin);
             $this->affect($chantiers['Bureau'], $equipes['Robin'], $d(3), '07:45', '09:30', $robin, 'Devis et téléphones.');
         }
 

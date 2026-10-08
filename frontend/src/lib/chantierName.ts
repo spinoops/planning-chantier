@@ -1,6 +1,6 @@
 /*
  * Titre d'un chantier = nom du client, suivi d'un complément facultatif :
- * « Joray François – Garage ». Le client se choisit d'abord, le complément précise
+ * « Dubois Claire – Garage ». Le client se choisit d'abord, le complément précise
  * le lieu ou l'ouvrage quand un client a plusieurs chantiers.
  */
 export const CHANTIER_NAME_SEP = ' – '

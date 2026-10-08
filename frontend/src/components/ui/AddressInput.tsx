@@ -100,7 +100,7 @@ export default function AddressInput({ label = 'Adresse', value, onChange, onPic
   )
 }
 
-/** « <b>Rue des Pèlerins 35</b> 2900 Porrentruy » → rue + localité. */
+/** « <b>Rue des Tilleuls 12</b> 2900 Porrentruy » → rue + localité. */
 function parseLabel(label: string, detail: string): Suggestion | null {
   const text = label.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
   const m = text.match(/^(.*?)\s+(\d{4})\s+(.+)$/)
