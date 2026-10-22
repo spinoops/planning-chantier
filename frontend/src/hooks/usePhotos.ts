@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
+import { compressImage } from '@/lib/images'
 import type { AffectationPhoto } from '@/types'
 
 /** Photos d'une affectation. */
@@ -11,13 +12,13 @@ export function usePhotos(affectationId: number | null | undefined) {
   })
 }
 
-/** Téléverse une photo (multipart). */
+/** Téléverse une photo (multipart), compressée avant envoi (voir lib/images). */
 export function useUploadPhoto() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ affectationId, file, caption }: { affectationId: number; file: File; caption?: string }) => {
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', await compressImage(file))
       if (caption) form.append('caption', caption)
       return (await api.post<{ data: AffectationPhoto }>(`/planning/${affectationId}/photos`, form, { headers: { 'Content-Type': 'multipart/form-data' } })).data.data
     },

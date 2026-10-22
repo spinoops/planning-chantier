@@ -73,9 +73,7 @@ export default function PhotoGallery({ affectationId, canDelete = () => true, co
 
       {isLoading ? (
         <Spinner />
-      ) : photos.length === 0 ? (
-        !compact && <p className="text-xs text-gray-400">Aucune photo. Prends une photo du travail terminé ou choisis-en une dans la galerie.</p>
-      ) : (
+      ) : photos.length === 0 ? null : (
         <ul className={`grid gap-2 ${compact ? 'grid-cols-4' : 'grid-cols-3 sm:grid-cols-4'}`}>
           {photos.map((p) => (
             <li key={p.id} className="group relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100">

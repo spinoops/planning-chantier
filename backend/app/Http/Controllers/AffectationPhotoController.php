@@ -26,7 +26,8 @@ class AffectationPhotoController extends Controller
     {
         $this->authorizeAccess($request, $affectation);
         $data = $request->validate([
-            'file' => ['required', 'file', 'image', 'mimes:png,jpg,jpeg,webp,heic', 'max:8192'],
+            // Le front compresse avant envoi (≈ 0,5–1,5 Mo) ; la limite reste large pour les navigateurs qui n'y arrivent pas.
+            'file' => ['required', 'file', 'image', 'mimes:png,jpg,jpeg,webp,heic', 'max:20480'],
             'caption' => ['nullable', 'string', 'max:255'],
         ]);
 

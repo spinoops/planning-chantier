@@ -64,7 +64,10 @@ La version installée sous WAMP est **8.4.24** :
   Le front grise les absents (sélecteur) et les affiche en fond du calendrier.
 - **Imprévus** (`signalements`) : message court d'un employé au bureau (`absence|fin_anticipee|materiel|autre`),
   `read_at` quand traité ; compteur dans le tableau de bord.
-- **Photos** (`affectation_photos`) : disque `public`, dossier `affectations/{id}` (lien `storage:link`).
+- **Photos** (`affectation_photos`) : disque `public`, dossier `affectations/{id}` (lien `storage:link`). Le front
+  **compresse avant envoi** (`lib/images.ts` : ≤ 2048 px, JPEG 0.82, via `createImageBitmap`, original si échec) ; limite API
+  20 Mo (`max:20480`) et `public/.user.ini` (upload 24M / post 32M) en filet. Deux boutons dans `PhotoGallery` : « Photo »
+  (champ avec `capture`) et « Galerie » (sans `capture`, multiple) — `capture` seul forçait l'appareil photo.
 - **Récurrence** : `POST /planning` avec `repeat_until` + `repeat_days` (ISO, défaut lun–ven, 90 jours max)
   crée une affectation par jour ; réponse `{ data: première, created: n }`.
 - **Équipes temporaires** : `equipes.expires_at` ; `GET /equipes` ne renvoie que les actives (`?all=1` pour tout).
