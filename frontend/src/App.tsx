@@ -8,6 +8,7 @@ import PlanningPage from '@/pages/PlanningPage'
 import ChantiersPage from '@/pages/ChantiersPage'
 import ChantierDetailPage from '@/pages/ChantierDetailPage'
 import ClientsPage from '@/pages/ClientsPage'
+import SousTraitantsPage from '@/pages/SousTraitantsPage'
 import EquipesPage from '@/pages/EquipesPage'
 import HeuresPage from '@/pages/HeuresPage'
 import AbsencesPage from '@/pages/AbsencesPage'
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="/chantiers" element={<ChantiersPage />} />
             <Route path="/chantiers/:id" element={<ChantierDetailPage />} />
             <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/sous-traitants" element={<SousTraitantsPage />} />
             <Route path="/equipes" element={<EquipesPage />} />
             <Route path="/statistiques/heures" element={<HeuresPage />} />
             <Route path="/statistiques" element={<Navigate to="/statistiques/heures" replace />} />

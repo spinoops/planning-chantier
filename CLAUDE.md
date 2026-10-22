@@ -120,7 +120,7 @@ La version installée sous WAMP est **8.4.24** :
   `MyPlanningPage` (`/mon-planning`, vue ouvrier), `DashboardPage`. Accueil `/` → `HomeRedirect` selon le
   rôle (planificateurs → `/dashboard`).
 - **Menu** (`lib/navigation.ts`) : court, une pilule par domaine avec sous-menus (`children`) :
-  Tableau de bord · Planning · Chantiers (Tous les chantiers, Clients) · Équipe (Équipes, Absences) ·
+  Tableau de bord · Planning · Chantiers (Tous les chantiers, Clients, Sous-traitants) · Équipe (Équipes, Absences) ·
   Statistiques (Heures) · Mon planning · Administration. `NavDropdown` dans `AppLayout` (`<details>`, fermeture au
   clic / Échap / clic dehors) ; le tiroir mobile aplatit les groupes avec un en-tête.
 - **Tableau de bord** (planificateurs) : tuiles d'action rapide (`Tile` : Nouveau chantier →
@@ -198,7 +198,7 @@ La version installée sous WAMP est **8.4.24** :
   « Fiche de préparation » (client via `ClientSelect`, adresse, estimation, mesures, remarques, checklist matériel,
   sous-traitants, devis, reprise des mesures, estimation planning) et « Récapitulatif facturation » (période,
   cartes de synthèse, heures par personne, détail des pointages, bouton « Exporter CSV » via `downloadRecapCsv`).
-  `ClientsPage` (`/clients`, CRUD). `ClientSelect` = **champ de recherche** (combobox : les premières lettres
+  `ClientsPage` (`/clients`, CRUD), `SousTraitantsPage` (`/sous-traitants`, CRUD, filtre côté client). `ClientSelect` = **champ de recherche** (combobox : les premières lettres
   filtrent nom / ville / contact sans accents, flèches + Entrée, croix pour retirer, « Créer le client « … » » si
   aucun ne correspond, bouton « + ») utilisé dans `ChantiersPage`,
   `QuickChantierModal` et la fiche. `ChantierSheetModal` = fiche en lecture seule pour les employés (bouton

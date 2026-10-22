@@ -33,6 +33,7 @@ const CONTEXT: [prefix: string, section: string][] = [
   ['/planning', 'planning'],
   ['/chantiers', 'chantiers'],
   ['/clients', 'clients'],
+  ['/sous-traitants', 'la-fiche-du-chantier-les-7-etapes'],
   ['/equipes', 'equipes'],
   ['/absences', 'absences'],
   ['/statistiques', 'statistiques-les-heures'],

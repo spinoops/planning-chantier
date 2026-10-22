@@ -33,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { to: '/chantiers', label: 'Tous les chantiers' },
       { to: '/clients', label: 'Clients' },
+      { to: '/sous-traitants', label: 'Sous-traitants' },
     ],
   },
   {
