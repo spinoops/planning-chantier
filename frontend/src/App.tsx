@@ -49,11 +49,10 @@ export default function App() {
           {/* Planning personnel : tout le monde (ouvriers sur tablette / téléphone). */}
           <Route path="/mon-planning" element={<MyPlanningPage />} />
 
-          {/* Mode d'emploi intégré (bouton « ? » en bas à droite) : tout le monde. */}
-          <Route path="/aide" element={<AidePage />} />
-
           {/* Planification : chefs de chantier et admins. */}
           <Route element={<RoleRoute roles={PLANNER_ROLES} redirectTo="/mon-planning" />}>
+            {/* Mode d'emploi intégré (bouton « ? » en bas à droite) : planificateurs seulement. */}
+            <Route path="/aide" element={<AidePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/planning" element={<PlanningPage />} />
             <Route path="/chantiers" element={<ChantiersPage />} />

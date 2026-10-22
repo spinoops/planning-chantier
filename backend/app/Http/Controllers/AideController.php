@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 /**
  * Mode d'emploi intégré (page /aide du front). Le texte (resources/aide/aide.json) et les
  * captures (resources/aide/img) ne sont pas dans public/ : ils ne sont servis qu'aux
- * personnes connectées (routes sous auth:sanctum). Édition du mode d'emploi = ces fichiers.
+ * planificateurs (routes sous auth:sanctum + rôle). Édition du mode d'emploi = ces fichiers.
  */
 class AideController extends Controller
 {

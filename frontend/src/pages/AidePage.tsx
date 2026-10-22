@@ -1,8 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/auth/AuthContext'
-import { isPlanner } from '@/lib/navigation'
-import { AIDE_EMPLOYEE_SECTION, chaptersOf, type AideBlock, type AideChapter } from '@/lib/aide'
+import { chaptersOf, type AideBlock, type AideChapter } from '@/lib/aide'
 import { useAide, useAideImage } from '@/hooks/useAide'
 import { DEFAULT_LOGO } from '@/lib/branding'
 import Button from '@/components/ui/Button'
@@ -59,14 +57,12 @@ function AideImage({ block }: { block: Extract<AideBlock, { t: 'img' }> }) {
  * Ouvert par le bouton « ? » en bas à droite, directement sur la section de la page en cours.
  */
 export default function AidePage() {
-  const { user } = useAuth()
   const { hash } = useLocation()
   const { data: blocks = [], isLoading } = useAide()
   const groups = useMemo(() => groupBlocks(blocks), [blocks])
   const chapters = useMemo(() => chaptersOf(blocks), [blocks])
   const chapterNumbers = useMemo(() => new Map(chapters.map((c) => [c.id, c.number])), [chapters])
   const [active, setActive] = useState<string>('')
-  const employee = !isPlanner(user)
   const loaded = blocks.length > 0
 
   // Arrivée par le bouton « ? » ou un lien du sommaire : aller à la section demandée.
@@ -162,23 +158,6 @@ export default function AidePage() {
         {/* Contenu */}
         <article className="glass-panel aide-content min-w-0 flex-1 rounded-[18px] px-5 py-6 sm:px-8 sm:py-8">
           {isLoading && <Spinner block />}
-          {employee && (
-            <Link
-              to={`#${AIDE_EMPLOYEE_SECTION}`}
-              className="mb-6 flex items-center gap-3 rounded-2xl bg-primary-soft px-4 py-3 text-[14px] text-gray-800 transition hover:brightness-[0.98] print:hidden"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-                  <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
-                  <path d="M11 18.5h2" strokeLinecap="round" />
-                </svg>
-              </span>
-              <span>
-                <strong className="font-semibold">Vous êtes sur le terrain ?</strong> L'essentiel pour vous est au chapitre « Sur le téléphone : Mon planning ».
-              </span>
-            </Link>
-          )}
-
           {groups.map((g, i) => {
             if (g.kind === 'list') {
               const Tag = g.ordered ? 'ol' : 'ul'

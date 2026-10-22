@@ -5,7 +5,7 @@ import { useSettings } from '@/hooks/useSettings'
 import { applyBranding, DEFAULT_APP_NAME, DEFAULT_LOGO } from '@/lib/branding'
 import { initials } from '@/lib/format'
 import { aideSectionFor } from '@/lib/aide'
-import { ADMIN_ITEMS, isItemActive, NAV_ITEMS, visibleItems } from '@/lib/navigation'
+import { ADMIN_ITEMS, isItemActive, isPlanner, NAV_ITEMS, visibleItems } from '@/lib/navigation'
 import type { NavItem } from '@/lib/navigation'
 import { unlockScroll } from '@/lib/scrollLock'
 
@@ -255,8 +255,8 @@ export default function AppLayout() {
         <Outlet />
       </main>
 
-      {/* Mode d'emploi : bouton « ? » flottant, ouvre l'aide sur la section de la page en cours. */}
-      {!pathname.startsWith('/aide') && !pathname.startsWith('/planning/print') && (
+      {/* Mode d'emploi : bouton « ? » flottant (planificateurs), ouvre l'aide sur la section de la page en cours. */}
+      {isPlanner(user) && !pathname.startsWith('/aide') && !pathname.startsWith('/planning/print') && (
         <Link
           to={`/aide${aideSectionFor(pathname) ? `#${aideSectionFor(pathname)}` : ''}`}
           aria-label="Mode d'emploi"

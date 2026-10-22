@@ -2,13 +2,17 @@
 
 beforeEach(fn () => ensureRoles());
 
-it('réserve le mode d’emploi aux personnes connectées', function () {
+it('réserve le mode d’emploi aux planificateurs', function () {
     $this->getJson('/api/aide')->assertUnauthorized();
     $this->get('/api/aide/images/01-connexion.webp')->assertUnauthorized();
+
+    actingAsUser(); // ouvrier
+    $this->getJson('/api/aide')->assertForbidden();
+    $this->get('/api/aide/images/01-connexion.webp')->assertForbidden();
 });
 
-it('renvoie le texte et les captures du mode d’emploi à un employé connecté', function () {
-    actingAsUser();
+it('renvoie le texte et les captures du mode d’emploi à un planificateur', function () {
+    actingAsRole('chef');
 
     $blocks = $this->getJson('/api/aide')->assertOk()->json('data');
     $images = collect($blocks)->where('t', 'img')->pluck('src');
@@ -25,7 +29,7 @@ it('renvoie le texte et les captures du mode d’emploi à un employé connecté
 });
 
 it('refuse un nom de capture inconnu ou mal formé', function () {
-    actingAsUser();
+    actingAsRole('gestionnaire');
 
     $this->get('/api/aide/images/inconnue.webp')->assertNotFound();
     $this->get('/api/aide/images/..%2F..%2F.env')->assertNotFound();

@@ -90,10 +90,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Notifications push (un abonnement par appareil).
     Route::get('/push/public-key', [PushSubscriptionController::class, 'publicKey']);
-
-    // Mode d'emploi intégré : texte et captures réservés aux personnes connectées.
-    Route::get('/aide', [AideController::class, 'index']);
-    Route::get('/aide/images/{name}', [AideController::class, 'image'])->where('name', '[A-Za-z0-9._-]+');
     Route::post('/push/subscriptions', [PushSubscriptionController::class, 'store']);
     Route::delete('/push/subscriptions', [PushSubscriptionController::class, 'destroy']);
     Route::post('/push/test', [PushSubscriptionController::class, 'test']);
@@ -135,6 +131,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/planning/{affectation}/photos/{photo}', [AffectationPhotoController::class, 'destroy']);
 
     Route::middleware('role:'.implode('|', (array) config('roles.planners', ['admin'])))->group(function () {
+        // Mode d'emploi intégré : texte et captures, planificateurs seulement (retiré aux ouvriers à la demande).
+        Route::get('/aide', [AideController::class, 'index']);
+        Route::get('/aide/images/{name}', [AideController::class, 'image'])->where('name', '[A-Za-z0-9._-]+');
         Route::apiResource('chantiers', ChantierController::class)->only(['store', 'update', 'destroy']);
         // Récapitulatif pour la facturation (JSON + CSV).
         Route::get('/chantiers/{chantier}/recap', [ChantierController::class, 'recap']);

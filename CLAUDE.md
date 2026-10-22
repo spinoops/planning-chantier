@@ -202,13 +202,12 @@ La version installée sous WAMP est **8.4.24** :
   « Fiche » dans `MyPlanningPage` et lien dans `AffectationModal`). Hooks : `useClients`, `useSousTraitants`,
   `useChantier(id)`, `useChantierRecap`. `AddressInput` ne lance la recherche qu'après une frappe de l'utilisateur
   (pas lors d'un `reset` du formulaire).
-- **Mode d'emploi intégré** (demande explicite) : page `AidePage` (`/aide`, tout le monde). Texte et captures sont
-  **servis par l'API aux personnes connectées** : `GET /aide` (blocs h1/h2/p/li/ol/tip/img, **gras** / *italique*) et
+- **Mode d'emploi intégré** (demande explicite) : page `AidePage` (`/aide`, **planificateurs seulement** — retiré aux
+  ouvriers à la demande ; route dans le groupe `RoleRoute` + API sous le middleware `role:` planners). Texte et captures : `GET /aide` (blocs h1/h2/p/li/ol/tip/img, **gras** / *italique*) et
   `GET /aide/images/{nom}` (`AideController`, fichiers `backend/resources/aide/aide.json` + `img/*.webp`, test `AideTest`).
   Front : `hooks/useAide` (`useAide`, `useAideImage` = blob + URL d'objet car une balise img n'envoie pas le jeton),
-  `lib/aide.ts` (`chaptersOf`, `aideSectionFor`). Sommaire collant (section en cours surlignée), bandeau « terrain »
-  pour les non-planificateurs, bouton « Imprimer / PDF » (`window.print()`, styles `@media print` en fin d'`index.css` :
-  couverture, un chapitre par page). Bouton rond **« ? » en bas à droite** de toutes les pages (`AppLayout`, masqué sur
+  `lib/aide.ts` (`chaptersOf`, `aideSectionFor`). Sommaire collant (section en cours surlignée), bouton « Imprimer / PDF » (`window.print()`, styles `@media print` en fin d'`index.css` :
+  couverture, un chapitre par page). Bouton rond **« ? » en bas à droite** des pages des planificateurs (`AppLayout`, masqué sur
   `/aide` et à l'impression) qui ouvre l'aide sur la section de la page en cours. Pas de chapitre Administration
   (retiré à la demande). Modifier le mode d'emploi = éditer le JSON et les captures côté backend.
   **Jamais de fichier ni de dossier dans `frontend/public/` portant le nom d'une route** (`/aide`…) : Apache servirait
