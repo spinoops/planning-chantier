@@ -7,6 +7,7 @@ import { initials } from '@/lib/format'
 import { aideSectionFor } from '@/lib/aide'
 import { ADMIN_ITEMS, isItemActive, NAV_ITEMS, visibleItems } from '@/lib/navigation'
 import type { NavItem } from '@/lib/navigation'
+import { unlockScroll } from '@/lib/scrollLock'
 
 /** Routes affichées sur toute la largeur de l'écran (calendrier). */
 const FULL_WIDTH_PREFIXES = ['/planning']
@@ -66,6 +67,9 @@ export default function AppLayout() {
 
   // Couleur / titre / favicon suivent la configuration.
   useEffect(() => applyBranding(settings), [settings])
+
+  // Filet de sécurité : aucune modale ne survit à un changement de page, la page doit pouvoir défiler.
+  useEffect(() => unlockScroll(true), [pathname])
 
   // Fermetures : Échap, clic en dehors (menu utilisateur et sous-menus).
   const closeMenus = () => {

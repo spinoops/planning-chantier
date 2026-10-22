@@ -1,3 +1,4 @@
+import { lockScroll, unlockScroll } from '@/lib/scrollLock'
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -32,11 +33,10 @@ export default function Modal({ open, onClose, title, size = 'md', dismissible =
       if (e.key === 'Escape' && dismissible) onClose()
     }
     document.addEventListener('keydown', onKey)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    lockScroll()
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previousOverflow
+      unlockScroll()
     }
   }, [open, dismissible, onClose])
 
